@@ -33,7 +33,7 @@ time_func_dict = {'constant'                 :1,
                   'aperiodic'                :3,
                   'mult_time_aperiodic'      :4}
 
-# --> for geometry files: all of functional types, plus quasiperiodic
+# for geometry files: all of functional types, plus quasiperiodic types
 time_geom_dict = {**time_func_dict,
                   'quasiperiodic'            :5,
                   'mult_time_quasiperiodc'   :6}
@@ -101,7 +101,40 @@ class InputFile:
 
     def _read_XYZblock(self, bytes_data, start_index, num_dims, iMax, jMax):
         """
-        Reads block of XYZ coordinates in PLOT3D format. Data is organized as:
+        Reads a block of XYZ coordinates in PLOT3D format from a binary file.
+
+        The block of data is a (num_dims, iMax, jMax)-shaped array of float32
+        values.
+
+        Parameters
+        ----------
+        bytes_data : file object
+            File object obtained from calling 'open(filename)'.
+
+        start_index : int
+            Index indicating initial position of XYZ block within binary file.
+
+        num_dims : int
+            Number of dimensions to be read - e.g. '3' for XYZ, '2' for XY
+
+        iMax : int
+            First dimension of the data block
+
+        jMax : int
+            Second dimension of the data block
+
+        Returns
+        -------
+        XYZ_data : (num_dims, iMax, jMax) array_like
+            Numpy array containing the block data using float32 numbers.
+
+        next_index : int
+            Index for the next data field in the binary file.
+
+
+        Notes
+        -----
+        The data in the file is assumed to be organized as:
 
         #####################################################################
         -Dim 0 (i.e X):
@@ -119,12 +152,6 @@ class InputFile:
             ...etc...
 
         #####################################################################
-
-
-        Returns:
-            XYZ_data: (num_dims, iMax, jMax)-shaped numpy array containing block of data
-
-            next_index: index containing start of next data point
         """
 
         XYZ_data = np.zeros((num_dims, iMax, jMax), dtype=np.float32)
@@ -154,7 +181,7 @@ class LoadingFunctionalFile(InputFile):
     Child class to read, write and store PSU-WOPWOP loading file v1.0
     information.
 
-    -->> Pressure input is the *gage* pressure, NOT the absolute pressure! <<--
+    Note: Pressure input is the *gage* pressure, NOT the absolute pressure!
     """
 
     # **********************************************************************
@@ -178,7 +205,7 @@ class LoadingFunctionalFile(InputFile):
     # **********************************************************************
     def _build_format_string(self):
         """
-        Create list of data format values, later written to file as string
+        Create list of data format values, later written to file as string of ints.
         """
 
         self.format_string = []
@@ -231,7 +258,8 @@ class LoadingFunctionalFile(InputFile):
     # **********************************************************************
     def addStructuredConstantZone(self, name, data, zone_number):
         """
-        Adds data for Structured Constant pressure
+        Adds structured, constant zone containing pressure or loading vector data.
+
             name:           32-byte string
 
         If zone contains pressure info:
@@ -241,6 +269,25 @@ class LoadingFunctionalFile(InputFile):
             data:       (3, iMax, jMax) array
 
             zone_number: int with zone index in geom file
+
+
+        Parameters
+        ----------
+        name : string
+            Zone name as a 32-byte string.
+
+        data : (iMax, jMax) or (3, iMax, jMax) array_like
+            The array of data to be added. Its shape is (iMax, jMax) for
+            pressure data, and (3, iMax, jMax) for loading vector data.
+
+        zone_number : int
+            Zone number, as input to geometry patch file. For example, '5' if
+            this zone is the 5th zone inserted to the patch file.
+
+        Returns
+        -------
+        None.
+
         """
 
         # instantiate new zone
@@ -283,10 +330,12 @@ class LoadingFunctionalFile(InputFile):
 
     # **********************************************************************
     def write_functional_file(self, filename):
-         self._write_header(filename)
-         self._write_data(filename)
+        """ Writes loading functional data to 'filename'."""
+        self._write_header(filename)
+        self._write_data(filename)
 
     def read_functional_file(self, filename):
+        """ Reads 'filename' for loading functional data, and print a summary. """
         self._read_header(filename)
         self._read_data(filename)
         self.print_info()
@@ -295,7 +344,7 @@ class LoadingFunctionalFile(InputFile):
     # **********************************************************************
     def _read_header(self, filename):
         """
-        Reads a PSU-WOPWOP loading functional file header
+        Reads PSU-WOPWOP loading functional header info from 'filename'.
         """
 
         # do initial check for 'magic number' and endianness
@@ -314,6 +363,8 @@ class LoadingFunctionalFile(InputFile):
         # read comments string (1024 bytes, starting at index 12)
         self.comment_string = _read_string(bytes_data, 12, 1024)
 
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # read format string (10 ints, 40 bytes, starting at index 1036)
         self.format_string = []
         for n in range(10):
@@ -321,9 +372,9 @@ class LoadingFunctionalFile(InputFile):
                                                 self.value_length, self.endianness))
 
         # Populate file type description
-        # --> self.format_string[0] is '2' to indicate functional data file
-        # --> self.format_string[8] and self.format_string[9] are reserved for
-        #       future use, and must be '0' in this version
+        # --> format_string[0] is '2' to indicate functional data file
+        assert (self.format_string[0] == 2), "Format string does not start with '2', not a PSU-WOPWOP functional file!"
+
         self.n_zones            = self.format_string[1]
         self.is_structured      = _reverse_dict(structured_dict, self.format_string[2])
         self.time_type          = _reverse_dict(time_func_dict, self.format_string[3])
@@ -331,6 +382,8 @@ class LoadingFunctionalFile(InputFile):
         self.data_type          = _reverse_dict(data_dict, self.format_string[5])
         self.ref_frame_type     = _reverse_dict(ref_frame_dict, self.format_string[6])
         self.float_type         = _reverse_dict(float_dict, self.format_string[7])
+        # --> format_string[8] is reserved for future use, and must be '0' in this version
+        # --> format_string[9] is reserved for future use, and must be '0' in this version
 
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
@@ -345,6 +398,7 @@ class LoadingFunctionalFile(InputFile):
         self.zones_with_data = []
         for z in range(self.n_zones_with_data):
             self.zones_with_data.append(_read_int(bytes_data, 1080 + z*4, 4))
+
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # read header info
@@ -385,61 +439,6 @@ class LoadingFunctionalFile(InputFile):
             print('Reading functional data file v1.1 header not implemented yet!')
 
         # ------------------------------------------------------------------
-
-    # **********************************************************************
-    def _read_data(self, filename):
-
-        # open file and read binary content
-        with open(filename, 'rb') as f:
-            bytes_data = f.read()
-
-        # structured, constant geometry
-        if self.is_structured == 'y':
-            if self.time_type == 'constant':
-
-                # start index for reading functional data
-                field_start = (1080 + self.n_zones_with_data*4
-                               + self.n_zones_with_data*self.zones[0].header_length)
-
-                # -----------------------------------------------------------
-                # if data is surface pressure
-                if self.data_type == 'surf_pressure':
-
-                    # for each zone
-                    for nz in range(self.n_zones_with_data):
-
-                        # create empty numpy arrays for pressure data
-                        self.zones[nz].pressures = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
-                                                            dtype=np.float32)
-
-                        # read pressure data and next index
-                        self.zones[nz].pressures, field_start = self._read_XYZblock(bytes_data, field_start,
-                                                                                    1, self.zones[nz].iMax, self.zones[nz].jMax)
-
-                # -----------------------------------------------------------
-                elif self.data_type == 'surf_loading_vec':
-
-                    # for each zone
-                    for nz in range(self.n_zones_with_data):
-
-                        # create empty numpy arrays for pressure data
-                        self.zones[nz].loading_vectors = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                                            dtype=np.float32)
-
-                        # read pressure data and next index
-                        self.zones[nz].loading_vectors, field_start = self._read_XYZblock(bytes_data, field_start,
-                                                                                          3, self.zones[nz].iMax, self.zones[nz].jMax)
-                # -----------------------------------------------------------
-                elif self.data_type == 'flow_params':
-                    print('Reading flow parameters not implemented yet!')
-                # -----------------------------------------------------------
-
-            else:
-                # TODO: read non-constant functional data
-                print('Reading non-constant functional data not implemented yet!')
-        else:
-            # TODO: read non-structured functional data
-            print('Reading non-structured functional data not implemented yet!')
 
 
     # **********************************************************************
@@ -509,10 +508,70 @@ class LoadingFunctionalFile(InputFile):
 
 
     # **********************************************************************
+    def _read_data(self, filename):
+        """
+        Reads PSU-WOPWOP loading functional data from 'filename'.
+        """
+
+        # open file and read binary content
+        with open(filename, 'rb') as f:
+            bytes_data = f.read()
+
+        # structured, constant geometry
+        if self.is_structured == 'y':
+            if self.time_type == 'constant':
+
+                # start index for reading functional data
+                field_start = (1080 + self.n_zones_with_data*4
+                               + self.n_zones_with_data*self.zones[0].header_length)
+
+                # -----------------------------------------------------------
+                # if data is surface pressure
+                if self.data_type == 'surf_pressure':
+
+                    # for each zone
+                    for nz in range(self.n_zones_with_data):
+
+                        # create empty numpy arrays for pressure data
+                        self.zones[nz].pressures = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
+                                                            dtype=np.float32)
+
+                        # read pressure data and next index
+                        self.zones[nz].pressures, field_start = self._read_XYZblock(bytes_data, field_start,
+                                                                                    1, self.zones[nz].iMax, self.zones[nz].jMax)
+
+                # -----------------------------------------------------------
+                # if data is loading vectors
+                elif self.data_type == 'surf_loading_vec':
+
+                    # for each zone
+                    for nz in range(self.n_zones_with_data):
+
+                        # create empty numpy arrays for pressure data
+                        self.zones[nz].loading_vectors = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                                            dtype=np.float32)
+
+                        # read pressure data and next index
+                        self.zones[nz].loading_vectors, field_start = self._read_XYZblock(bytes_data, field_start,
+                                                                                          3, self.zones[nz].iMax, self.zones[nz].jMax)
+                # -----------------------------------------------------------
+                elif self.data_type == 'flow_params':
+                    print('Reading flow parameters not implemented yet!')
+                # -----------------------------------------------------------
+
+            else:
+                # TODO: read non-constant functional data
+                print('Reading non-constant functional data not implemented yet!')
+        else:
+            # TODO: read non-structured functional data
+            print('Reading non-structured functional data not implemented yet!')
+
+
+    # **********************************************************************
     def _write_data(self, filename):
         """
         Writes PSU-WOPWOP functional data to 'filename'
-        Must be preceded by a call to '_write_header(filename)'
+        Must be immediately preceded by a call to '_write_header(filename)'!
         """
 
         # open file in append mode - no need to adjust index
@@ -588,7 +647,7 @@ class GeometryPatchFile(InputFile):
     # **********************************************************************
     def _build_format_string(self):
         """
-        Create list of data format values, later written to file as string
+        Create list of data format values, later written to file as string of ints.
         """
 
         self.format_string = []
@@ -600,18 +659,6 @@ class GeometryPatchFile(InputFile):
         self.format_string.append(float_dict[self.float_type])
         self.format_string.append(iblank_dict[self.iblank_included])
         self.format_string.append(RESERVED_DIGIT)
-
-
-    # **********************************************************************
-    def write_patch_file(self, filename):
-        self._write_header(filename)
-        self._write_data(filename)
-
-
-    def read_patch_file(self, filename):
-        self._read_header(filename)
-        self._read_data(filename)
-        self.print_info()
 
 
     # **********************************************************************
@@ -654,11 +701,27 @@ class GeometryPatchFile(InputFile):
     # **********************************************************************
     def addStructuredConstantZone(self, name, XYZ_coord, normal_coord):
         """
-        Adds data for Structured Constant zone
+        Adds structured, constant zone containing mesh points and normal vectors.
 
-        name:           32-byte string
-        XYZ_coord:      (3, iMax, jMax) array
-        normal_coord:   (3, iMax, jMax) array
+        Parameters
+        ----------
+        name : string
+            Zone name as a 32-byte string.
+
+        XYZ_coord : (3, iMax, jMax) array_like
+            Array of mesh point coordinates to be added.
+
+        normal_coord : (3, iMax, jMax) array_like
+            Array of normal vector coordinates to be added.
+
+        zone_number : int
+            Zone number, as input to geometry patch file. For example, '5' if
+            this zone is the 5th zone inserted to the patch file.
+
+        Returns
+        -------
+        None.
+
         """
 
         # instantiate new zone
@@ -686,7 +749,35 @@ class GeometryPatchFile(InputFile):
     # **********************************************************************
     def _read_IBLANKblock(self, bytes_data, start_index, iMax, jMax):
         """
-        Reads block of IBLANK data in PLOT3D format. Data is organized as:
+        Reads a block of IBLANK data in PLOT3D format from a binary file.
+
+        The block of data is a (iMax, jMax)-shaped array of int32 values.
+
+        Parameters
+        ----------
+        bytes_data : file object
+            File object obtained from calling 'open(filename)'.
+
+        start_index : int
+            Index indicating initial position of XYZ block within binary file.
+
+        iMax : int
+            First dimension of the data block
+
+        jMax : int
+            Second dimension of the data block
+
+        Returns
+        -------
+        IBLANK_data : (iMax, jMax) array_like
+            Numpy array containing IBLANK data as int32 numbers.
+
+        next_index : int
+            Index for the next data field in the binary file.
+
+        Notes
+        -----
+        The data in the file is assumed to be organized as:
 
         #####################################################################
             X(i=0, j=0),    X(i=1, j=0),    ...     X(i=iMax, j=0)
@@ -695,11 +786,6 @@ class GeometryPatchFile(InputFile):
             X(i=0, j=jMax)  ...                     X(i=iMax, j=jMax)
         #####################################################################
 
-
-        Returns:
-            IBLANK_data: (iMax, jMax)-shaped numpy array containing data (int)
-
-            next_index: index containing start of next data point
         """
 
         IBLANK_data = np.zeros((iMax, jMax), dtype=np.int32)
@@ -721,9 +807,23 @@ class GeometryPatchFile(InputFile):
 
 
     # **********************************************************************
+    def write_patch_file(self, filename):
+        """ Writes geometry patch data to 'filename'."""
+        self._write_header(filename)
+        self._write_data(filename)
+
+
+    def read_patch_file(self, filename):
+        """ Reads 'filename' for geometry patch data, and prints a summary. """
+        self._read_header(filename)
+        self._read_data(filename)
+        self.print_info()
+
+
+    # **********************************************************************
     def _read_header(self, filename):
         """
-        Reads a PSU-WOPWOP geometry patch file header
+        Reads PSU-WOPWOP geometry patch header info from 'filename'.
         """
 
         # do initial check for 'magic number' and endianness
@@ -790,7 +890,7 @@ class GeometryPatchFile(InputFile):
     # **********************************************************************
     def _write_header(self, filename):
         """
-        Writes PSU-WOPWOP geometry patch file header to 'filename'
+        Writes PSU-WOPWOP geometry patch header to 'filename'.
         """
 
         # build format string with most recent format values
@@ -847,6 +947,9 @@ class GeometryPatchFile(InputFile):
 
     # **********************************************************************
     def _read_data(self, filename):
+        """
+        Reads PSU-WOPWOP geometry patch data from 'filename'.
+        """
 
         # open fileand read binary content
         with open(filename, 'rb') as f:
@@ -893,6 +996,10 @@ class GeometryPatchFile(InputFile):
 
     # **********************************************************************
     def _write_data(self, filename):
+        """
+        Writes PSU-WOPWOP geometry patch data to 'filename'
+        Must be immediately preceded by a call to '_write_header(filename)'!
+        """
 
         # open file in append mode - no need to adjust index
         with open(filename, 'ab') as f:
@@ -1019,6 +1126,7 @@ def _reverse_dict(my_dict, my_value):
     This code assumes no two keys share the same value - as is the case with
     PSU-WOPWOP dicts used here.
     """
+
     return {value: key for key, value in my_dict.items()}[my_value]
 
 
@@ -1053,12 +1161,28 @@ def initial_check(filename):
 
 def _read_int(obj_name, start_index, n_bytes, endianness_flag='little'):
     """
-    Reads data from a 'bytes' object in blocks of 'n_bytes', starting at
-    'start_index', and returns the unpacked values.
+    Reads one integer value from an open file and returns the unpacked value.
 
-    Assumes little endian format by default.
+    Parameters
+    ----------
+    obj_name : bytes_object
+        Object containing binary data, such as an open file object.
 
-    'n_bytes' can be 1, 2, 4, or 8 bytes.
+    start_index : int
+        Starting index of value to be read.
+
+    n_bytes : {1, 2, 4, 8}
+        Size of the integer to be read, in bytes.
+
+    endianness_flag : {'little', 'big'}, optional
+        String indicating the byte endinaness to be used. The default is
+        'little'.
+
+    Returns
+    -------
+    out : int
+        Integer value unpacked from file data.
+
     """
 
     n_bytes_dict = {1:'b', 2:'h', 4:'i', 8:'q'}
@@ -1071,12 +1195,28 @@ def _read_int(obj_name, start_index, n_bytes, endianness_flag='little'):
 
 def _read_float(obj_name, start_index, n_bytes, endianness_flag='little'):
     """
-    Reads data from a 'bytes' object in blocks of 'n_bytes', starting at
-    'start_index', and returns the unpacked values.
+    Reads one float value from an open file and returns the unpacked value.
 
-    Assumes little endian format by default.
+    Parameters
+    ----------
+    obj_name : bytes_object
+        Object containing binary data, such as an open file object.
 
-    'n_bytes' can be 1, 2, 4, or 8 bytes.
+    start_index : int
+        Starting index of value to be read.
+
+    n_bytes : {4, 8}
+        Size of the float to be read, in bytes.
+
+    endianness_flag : {'little', 'big'}, optional
+        String indicating the byte endinaness to be used. The default is
+        'little'.
+
+    Returns
+    -------
+    out : float
+        Float value unpacked from file data.
+
     """
 
     n_bytes_dict = {4:'f', 8:'d'}
@@ -1087,24 +1227,51 @@ def _read_float(obj_name, start_index, n_bytes, endianness_flag='little'):
                          obj_name[start_index:start_index + n_bytes])[0]
 
 
-def _write_binary(file, data, length=4, byteorder='little', is_signed=True):
+def _write_binary(file, data, length=4, endianness_flag='little', is_signed=True):
     """
-    Takes an open binary file object and writes data to it in binary form
-    with corresponding byte order (little or big endian), lengh (in bytes) and
-    whether the value is signed or unsigned (if int).
+    Writes one value of data to an open binary file.
 
-    'data' must be integer or float
+    Parameters
+    ----------
+    file : file object
+        File object obtained from calling 'open(filename)'.
+
+    data : int or float
+        Value to be written to file. Must be int or float.
+
+    length : {1, 2, 4, 8}, optional
+        Byte length of the value to be written. The default is 4 bytes.
+
+    endianness_flag : {'little', 'big'}, optional
+        String indicating the byte endinaness to be used. The default is
+        'little'.
+
+    is_signed : boolean, optional
+        Flag indicating whether the values are signed (True) or unsigned
+        (False). The default is True.
+
+    Returns
+    -------
+    None.
+
+    Notes
+    -----
+
+    Data value to be written must be integer or floating point.
+
+    Floating point data can only accept lengths of 4 and 8 bytes.
+
     """
 
     if type(data) is int:
-        file.write(data.to_bytes(length, byteorder, signed=is_signed))
+        file.write(data.to_bytes(length, endianness_flag, signed=is_signed))
 
     # if data is python float or numpy float, write to file as float
     elif (isinstance(data, (float, np.floating))):
 
         endianness = {'little':'<', 'big':'>'}
         floatlen = {4:'f', 8:'d'}
-        format_string = endianness[byteorder] + floatlen[length]
+        format_string = endianness[endianness_flag] + floatlen[length]
 
         file.write(struct.pack(format_string, data))
 
