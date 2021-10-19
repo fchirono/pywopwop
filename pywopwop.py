@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Collection of convenience routines to parse and create PSU-WOPWOP input files
-version 1.0.
+pywopwop - https://github.com/fchirono/pywopwop
+
+    Collection of convenience routines to parse and create PSU-WOPWOP input
+    files version 1.0.
 
 Author:
     Fabio Casagrande Hirono
