@@ -5,7 +5,7 @@ version 1.0.
 
 Author:
     Fabio Casagrande Hirono
-    Aug 2021
+    Oct 2021
 """
 
 
@@ -18,34 +18,39 @@ import numpy as np
 
 MAGICNUMBER = 42
 
+# values are little endian, 4-byte, signed by default
+ENDIANNESS = 'little'
+VALUE_LENGTH = 4
+IS_SIGNED = True
+
 # whether file is geometry file or node subset geometry file
 geom_dict = {'geometry'     : 1,
              'node_subset'  :-1}
 
 # whether file is structured or not
-structured_dict = {'y' : 1,
-                   'n' : 2}
+structured_dict = {True : 1,
+                   False : 2}
 
 # type of geometry (temporal behaviour)
-# --> for functional files:
-time_func_dict = {'constant'                 :1,
-                  'periodic'                 :2,
-                  'aperiodic'                :3,
-                  'mult_time_aperiodic'      :4}
+# --> for loading files:
+loading_time_dict = {'constant'                 :1,
+                     'periodic'                 :2,
+                     'aperiodic'                :3,
+                     'mult_time_aperiodic'      :4}
 
 # for geometry files: all of functional types, plus quasiperiodic types
-time_geom_dict = {**time_func_dict,
-                  'quasiperiodic'            :5,
-                  'mult_time_quasiperiodc'   :6}
+geometry_time_dict = {**loading_time_dict,
+                      'quasiperiodic'            :5,
+                      'mult_time_quasiperiodc'   :6}
 
 # whether normal vectors and areas are node-centered or face-centered
 centered_dict = {'node' : 1,
                  'face' : 2}
 
 # what type of loading data is contained in functional file
-data_dict = {'surf_pressure'    : 1,
-             'surf_loading_vec' : 2,
-             'flow_params'      : 3}
+loading_data_dict = {'surf_pressure'    : 1,
+                     'surf_loading_vec' : 2,
+                     'flow_params'      : 3}
 
 # reference frame for functional file (loading vectors and fluid momentum)
 ref_frame_dict = {'ground_fixed': 1,
@@ -59,46 +64,200 @@ float_dict = {'single' : 1,
               'double' : 2}
 
 # whether 'iblank' values are included with the geometry grid or not
-iblank_dict = {'y' : 1,
-               'n' : 0}
+iblank_dict = {True : 1,
+               False: 0}
 
 # Digit reserved for future use - must be '0' in this version
 RESERVED_DIGIT = 0
 
 
 # %% ############################################################################
-class InputFile:
+class PWWPatch:
     """
-    Parent class to read, write and store PSU-WOPWOP input files.
-
-    This is subclassed to obtain separate classes for functional loading files
-    and for geometry patch files.
+    Parent class to read, write and store PSU-WOPWOP data and  files.
     """
 
     def __init__(self):
         # PSU-WOPWOP input file v1.0 by default
-        self.version_number1 = 1
-        self.version_number2 = 0
+        self.version_number_major = 1
+        self.version_number_minor = 0
 
-        # values are little endian, 4-byte, signed by default
-        self.endianness = 'little'
-        self.value_length = 4
-        self.is_signed = True
-
-        # File type description (empty at initialization)
-        self.n_zones = 0
-        self.is_structured = ''
-        self.time_type = ''
+        # File type description
+        self.is_structured = True
+        self.has_iblank = False
+        self.float_type = 'single'
         self.centered_type = ''
-        self.float_type = ''
 
-        # 1024-byte comment string
-        self.comment_string = ''
+        # 32-byte string describing units of pressure to be used - e.g. 'Pa'
+        self.units_string = 'Pa'
+        self.geometry_type = 'geometry'
+
+        self.geometry_time_type = ''
+        self.loading_time_type = ''
+
+        self.loading_data_type = ''
+        self.loading_ref_frame = ''
+
+        self.geometry_format_string = []
+        self.loading_format_string = []
+
+        # 1024-byte comment string for geometry file
+        self.geometry_comment = ''
+
+        # 1024-byte comment string for loading file
+        self.loading_comment = ''
 
         # list of zones' information (stored as subclasses of Zone class)
         self.zones = []
 
+        # list of zones containing loading data
+        # --> use indices from self.zones
+        # --> negative values indicate 'calc_thickness_noise' is False
+        self.zones_with_loading_data = []
 
+        self.n_zones = 0
+        self.n_zones_with_loading_data = 0
+
+
+    # **********************************************************************
+    def print_info(self):
+        """
+        Prints a summary of the file info
+        """
+
+        print('\nPSU-WOPWOP version {}.{}'.format(self.version_number_major,
+                                                  self.version_number_minor))
+
+        print('\nGeneral info:')
+        print('\t--> Number of zones:               ', len(self.zones))
+        print('\t--> Is file structured:            ', self.is_structured)
+        print('\t--> Vectors/areas are centred at:  ', self.centered_type)
+        print('\t--> Float data precision:          ', self.float_type)
+
+        print('\nGeometry info:')
+        print('\t--> Geometry type:                 ', self.geometry_type)
+        print('\t--> Geometry temporal behaviour:   ', self.geometry_time_type)
+        print('\t--> IBLANK values are included:    ', self.has_iblank)
+        print('\t--> Geometry comment string:\n\t"' +   self.geometry_comment + '"\n')
+
+        print('\nLoading info:')
+        print('\t--> Type of loading data:          ', self.loading_data_type)
+        print('\t--> Loading temporal behaviour:    ', self.loading_time_type)
+        print('\t--> Loading data reference frame:  ', self.loading_ref_frame)
+        print('\t--> Loading comment string:\n\t"' +   self.loading_comment + '"\n')
+
+        print('\nZone specification:')
+        print('\tNo. zones:                 ', len(self.zones))
+        print('\tNo. zones w/ loading data: ', len(self.zones_with_loading_data))
+
+        for zone in self.zones:
+            print(zone)
+        print('\n\n')
+
+
+    # **********************************************************************
+    def write_geometry_file(self, geometry_filename):
+        self._write_geometry_header(geometry_filename)
+        self._write_geometry_data(geometry_filename)
+
+
+    def write_loading_file(self, loading_filename):
+        self._write_loading_header(loading_filename)
+        self._write_loading_data(loading_filename)
+
+
+    def read_geometry_file(self, geometry_filename):
+        self._read_geometry_header(geometry_filename)
+        self._read_geometry_data(geometry_filename)
+
+
+    def read_loading_file(self, loading_filename):
+        self._read_loading_header(loading_filename)
+        self._read_loading_data(loading_filename)
+
+
+    # **********************************************************************
+    def add_StructuredConstantZone(self, name, XYZ_coord, normal_coord,
+                                   loading_data=None, calc_thickness_noise=True):
+        """
+        Adds a new structured, constant zone to PWWPatch instance.
+
+        Parameters
+        ----------
+        XYZ_coord : (3, iMax, jMax) array_like
+            Array of mesh point coordinates to be added.
+
+        normal_coord : (3, iMax, jMax) array_like
+            Array of normal vector coordinates to be added.
+
+        loading_data : (iMax, jMax) or (3, iMax, jMax) array_like, optional
+            Array of constant loading data to be added. Its shape is (iMax,
+            jMax) for pressure data, and (3, iMax, jMax) for loading vector
+            data.
+
+        calc_thickness_noise : boolean
+
+        Returns
+        -------
+        None.
+
+        Notes
+        -----
+        This function assumes both geometry AND loading are constant.
+        """
+
+        # check PWWPatch instance is indeed structured and constant
+        assert ((self.is_structured == True) and (self.geometry_time_type == 'constant')), \
+            "Cannot add structured constant geometry - instance is not structured constant!"
+
+        # instantiate new zone
+        zone = StructuredConstantZone()
+
+        # cap 'name' length to 32 bytes
+        zone.geometry_name = name[:32]
+        zone.loading_name = name[:32]
+
+        # zone number will always be the current length of 'zones'
+        zone.number = len(self.zones)
+
+        # adds geometry data to zone
+        zone.add_structured_constant_geom(XYZ_coord, normal_coord)
+
+        # append new zone to zones list
+        self.zones.append(zone)
+
+        # adds loading data if there is any
+        if loading_data is not None:
+
+            # check instance loading data type string vs. loading data array shape
+            if self.loading_data_type == 'surf_pressure':
+                assert loading_data.shape == (zone.iMax, zone.jMax), \
+                    "'loading_data' does not match expected shape for 'surf_pressure' (iMax, jMax)!"
+
+            elif self.loading_data_type == 'surf_loading_vec':
+                assert loading_data.shape == (3, zone.iMax, zone.jMax), \
+                    "'loading_data' does not match expected shape for 'surf_loading_vec' (3, iMax, jMax)!"
+
+            elif self.loading_data_type == 'flow_params':
+                print('Flow parameter data not implemented yet!')
+
+            zone.add_structured_constant_loading(loading_data,
+                                                 self.loading_data_type)
+
+            # set thickness noise flag, append zone number to
+            # 'zones_with_loading_data'
+            if calc_thickness_noise:
+                zone.calc_thickness_noise = True
+                self.zones_with_loading_data.append(zone.number)
+            else:
+                zone.calc_thickness_noise = False
+                self.zones_with_loading_data.append(-zone.number)
+
+        # update number of zones in PWWPatch instance
+        self._update_n_zones()
+
+
+    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
     def _read_XYZblock(self, bytes_data, start_index, num_dims, iMax, jMax):
         """
         Reads a block of XYZ coordinates in PLOT3D format from a binary file.
@@ -115,7 +274,8 @@ class InputFile:
             Index indicating initial position of XYZ block within binary file.
 
         num_dims : int
-            Number of dimensions to be read - e.g. '3' for XYZ, '2' for XY
+            Number of dimensions to be read - e.g. '3' for XYZ, '2' for XY, or
+            '1' for surface pressure data
 
         iMax : int
             First dimension of the data block
@@ -154,596 +314,38 @@ class InputFile:
         #####################################################################
         """
 
-        XYZ_data = np.zeros((num_dims, iMax, jMax), dtype=np.float32)
+        # read surface pressures - i.e. (iMax, jMax)-shaped
+        if num_dims == 1:
+            XYZ_data = np.zeros((iMax, jMax), dtype=np.float32)
 
-        # read XYZ coords
-        for n in range(num_dims):
             for j in range(jMax):
                 for i in range(iMax):
 
                     # fields are (i,j) order, hence j*iMax + i
                     current_index = (start_index
-                                     + ((n*iMax*jMax + j*iMax + i)
-                                        *self.value_length))
+                                     + ((j*iMax + i)*VALUE_LENGTH))
 
-                    XYZ_data[n, i, j] = _read_float(bytes_data, current_index,
-                                                    self.value_length, self.endianness)
+                    XYZ_data[i, j] = _read_float(bytes_data, current_index)
+
+        # read XYZ or XY - i.e. (num_dims, iMax, jMax)-shaped
+        else:
+            XYZ_data = np.zeros((num_dims, iMax, jMax), dtype=np.float32)
+
+            for n in range(num_dims):
+                for j in range(jMax):
+                    for i in range(iMax):
+
+                        # fields are (i,j) order, hence j*iMax + i
+                        current_index = (start_index
+                                         + ((n*iMax*jMax + j*iMax + i)
+                                            * VALUE_LENGTH))
+
+                        XYZ_data[n, i, j] = _read_float(bytes_data, current_index)
 
         # increase start index by ('value_length' bytes * num_dims coords * iMax * jMax)
-        next_index = start_index + self.value_length*(num_dims*iMax*jMax)
+        next_index = start_index + VALUE_LENGTH*(num_dims*iMax*jMax)
 
         return XYZ_data, next_index
-
-
-# %% ############################################################################
-class LoadingFunctionalFile(InputFile):
-    """
-    Child class to read, write and store PSU-WOPWOP loading file v1.0
-    information.
-
-    Note: Pressure input is the *gage* pressure, NOT the absolute pressure!
-    """
-
-    # **********************************************************************
-    def __init__(self, filename=None):
-
-        # initialize superclass
-        super().__init__()
-
-        self.data_type = ''
-        self.ref_frame_type = ''
-
-        self.zones_with_data = []
-        self.n_zones_with_data = 0
-
-        # if a file name is given, read that file to current instance
-        if filename:
-            self.filename = filename
-            self.read_functional_file(filename)
-
-
-    # **********************************************************************
-    def _build_format_string(self):
-        """
-        Create list of data format values, later written to file as string of ints.
-        """
-
-        self.format_string = []
-        self.format_string.append(2)               # indicate functional data file
-        self.format_string.append(self.n_zones)
-        self.format_string.append(structured_dict[self.is_structured])
-        self.format_string.append(time_func_dict[self.time_type])
-        self.format_string.append(centered_dict[self.centered_type])
-        self.format_string.append(data_dict[self.data_type])
-        self.format_string.append(ref_frame_dict[self.ref_frame_type])
-        self.format_string.append(float_dict[self.float_type])
-        self.format_string.append(RESERVED_DIGIT)   # reserved digit '0' inserted twice
-        self.format_string.append(RESERVED_DIGIT)
-
-
-    # **********************************************************************
-    def print_info(self):
-        """
-        Prints a summary of the file info
-        """
-
-        if hasattr(self, 'filename'):
-            print('File {} is a loading functional file for PSU-WOPWOP v{}.{}'.format(self.filename, self.version_number1, self.version_number2))
-        else:
-            print('File is a loading functional file for PSU-WOPWOP v{}.{}'.format(self.version_number1, self.version_number2))
-
-        print('Comments: ', self.comment_string)
-
-        print('Parsing format string:')
-        print('\t--> Number of zones:               ', self.n_zones)
-        print('\t--> Is file structured:            ', self.is_structured)
-        print('\t--> Temporal behaviour:            ', self.time_type)
-        print('\t--> Vectors/areas are centred at:  ', self.centered_type)
-        print('\t--> Type of pressure/loading data: ', self.data_type)
-        print('\t--> Reference frame:               ', self.ref_frame_type)
-        print('\t--> Float data precision:          ', self.float_type)
-
-        print('\n')
-        print('Parsing zone specification:')
-
-        print('No. zones with functional data: ', self.n_zones_with_data)
-        for zone in self.zones:
-            print('\t--> Zone name: ', zone.name)
-            print('\t--> iMax: ', zone.iMax)
-            print('\t--> jMax: ', zone.jMax)
-
-        print('\n\n')
-
-
-    # **********************************************************************
-    def addStructuredConstantZone(self, name, data, zone_number):
-        """
-        Adds structured, constant zone containing pressure or loading vector data.
-
-            name:           32-byte string
-
-        If zone contains pressure info:
-            data:       (iMax, jMax) array
-
-        If zone contains loading vetors:
-            data:       (3, iMax, jMax) array
-
-            zone_number: int with zone index in geom file
-
-
-        Parameters
-        ----------
-        name : string
-            Zone name as a 32-byte string.
-
-        data : (iMax, jMax) or (3, iMax, jMax) array_like
-            The array of data to be added. Its shape is (iMax, jMax) for
-            pressure data, and (3, iMax, jMax) for loading vector data.
-
-        zone_number : int
-            Zone number, as input to geometry patch file. For example, '5' if
-            this zone is the 5th zone inserted to the patch file.
-
-        Returns
-        -------
-        None.
-
-        """
-
-        # instantiate new zone
-        zone = StructuredConstantZone(self.value_length)
-        zone.name = name[:32]           # cap 'name' length to 32 bytes
-
-        zone.number = self.n_zones+1
-
-        # ------------------------------------------------------------------
-        # if data is (iMax, jMax)-shaped  array of surface pressures
-        if self.data_type == 'surf_pressure':
-            zone.iMax = data.shape[0]
-            zone.jMax = data.shape[1]
-
-            # create empty numpy arrays for surface pressures, copy input data
-            zone.pressures = np.zeros((zone.iMax, zone.jMax), dtype=np.float32)
-            zone.pressures = np.copy(data)
-
-            self.zones.append(zone)
-            self.n_zones += 1
-            self.n_zones_with_data += 1
-            self.zones_with_data.append(zone_number)
-
-        # ------------------------------------------------------------------
-        # if data is (3, iMax, jMax)-shaped array of surface loading vectors
-        elif self.data_type == 'surf_loading_vec':
-            zone.iMax = data.shape[1]
-            zone.jMax = data.shape[2]
-
-            # create empty numpy arrays for surface loading vectors, copy input data
-            zone.loading_vectors = np.zeros((3, zone.iMax, zone.jMax), dtype=np.float32)
-            zone.loading_vectors = np.copy(data)
-
-            self.zones.append(zone)
-            self.n_zones += 1
-            self.n_zones_with_data += 1
-
-        # ------------------------------------------------------------------
-
-
-    # **********************************************************************
-    def write_functional_file(self, filename):
-        """ Writes loading functional data to 'filename'."""
-        self._write_header(filename)
-        self._write_data(filename)
-
-    def read_functional_file(self, filename):
-        """ Reads 'filename' for loading functional data, and print a summary. """
-        self._read_header(filename)
-        self._read_data(filename)
-        self.print_info()
-
-
-    # **********************************************************************
-    def _read_header(self, filename):
-        """
-        Reads PSU-WOPWOP loading functional header info from 'filename'.
-        """
-
-        # do initial check for 'magic number' and endianness
-        self.endianness = initial_check(filename)
-
-        # open fileand read binary content
-        with open(filename, 'rb') as f:
-            bytes_data = f.read()
-
-        # check version number - must be '1'and '0'
-        self.version_number1 = _read_int(bytes_data, 4, 4)
-        self.version_number2 = _read_int(bytes_data, 8, 4)
-
-        assert ((self.version_number1 == 1) and (self.version_number2 == 0)), 'File version is not v1.0!'
-
-        # read comments string (1024 bytes, starting at index 12)
-        self.comment_string = _read_string(bytes_data, 12, 1024)
-
-
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # read format string (10 ints, 40 bytes, starting at index 1036)
-        self.format_string = []
-        for n in range(10):
-            self.format_string.append(_read_int(bytes_data, 1036 + 4*n,
-                                                self.value_length, self.endianness))
-
-        # Populate file type description
-        # --> format_string[0] is '2' to indicate functional data file
-        assert (self.format_string[0] == 2), "Format string does not start with '2', not a PSU-WOPWOP functional file!"
-
-        self.n_zones            = self.format_string[1]
-        self.is_structured      = _reverse_dict(structured_dict, self.format_string[2])
-        self.time_type          = _reverse_dict(time_func_dict, self.format_string[3])
-        self.centered_type      = _reverse_dict(centered_dict, self.format_string[4])
-        self.data_type          = _reverse_dict(data_dict, self.format_string[5])
-        self.ref_frame_type     = _reverse_dict(ref_frame_dict, self.format_string[6])
-        self.float_type         = _reverse_dict(float_dict, self.format_string[7])
-        # --> format_string[8] is reserved for future use, and must be '0' in this version
-        # --> format_string[9] is reserved for future use, and must be '0' in this version
-
-
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # zone specification
-
-        # read number of zones containing functional data (4 bytes)
-        self.n_zones_with_data = _read_int(bytes_data, 1076, 4)
-
-        # create list of zones containing functional data
-        # -->>  negative numbers indicate zones for which WOPWOP should *NOT*
-        #       calculate thickness noise - e.g. loading patch
-        self.zones_with_data = []
-        for z in range(self.n_zones_with_data):
-            self.zones_with_data.append(_read_int(bytes_data, 1080 + z*4, 4))
-
-
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # read header info
-
-        zone_info_start = 1080 + self.n_zones_with_data*4
-
-        # version 1.0
-        if self.version_number2 == 0:
-
-            # ------------------------------------------------------------------
-            # structured, constant geometry
-            if self.is_structured == 'y':
-                if self.time_type == 'constant':
-
-                    for nz in range(self.n_zones_with_data):
-                        # instantiate zone and read info from file
-                        zone = StructuredConstantZone(self.value_length)
-
-                        zone.name = _read_string(bytes_data, zone_info_start + nz*zone.header_length, 32)
-                        zone.iMax = _read_int(bytes_data, zone_info_start + 32 + nz*zone.header_length, 4)
-                        zone.jMax = _read_int(bytes_data, zone_info_start + 36 + nz*zone.header_length, 4)
-
-                        self.zones.append(zone)
-
-                else:
-                    # ------------------------------------------------------------------
-                    # TODO: implement non-constant loading
-                    print('Reading non-constant functional zone info not implemented yet!')
-
-            # ------------------------------------------------------------------
-            else:
-                # TODO: implement non-structured headers
-                print('Reading non-structured functional zone info not implemented yet!')
-
-        # ------------------------------------------------------------------
-        # TODO: implement header reader for version 1.1
-        elif self.version_number2 == '1':
-            print('Reading functional data file v1.1 header not implemented yet!')
-
-        # ------------------------------------------------------------------
-
-
-    # **********************************************************************
-    def _write_header(self, filename):
-        """
-        Writes PSU-WOPWOP functional file header to 'filename'
-        """
-
-        # build format string with most recent format values
-        self._build_format_string()
-
-        with open(filename, 'wb') as f:
-
-            # write 'magic number' 42 to first 4 bytes
-            _write_binary(f, MAGICNUMBER, self.value_length, self.endianness,
-                          self.is_signed)
-
-            # write version number
-            _write_binary(f, self.version_number1, self.value_length, self.endianness,
-                          self.is_signed)
-            _write_binary(f, self.version_number2, self.value_length, self.endianness,
-                          self.is_signed)
-
-            # write comments string (1024 bytes)
-            _write_string(f, self.comment_string, 1024)
-
-            # write format string (10 ints, 40 bytes)
-            for n in range(10):
-                _write_binary(f, self.format_string[n], self.value_length,
-                              self.endianness, self.is_signed)
-
-            #****************************************************************
-            # write zone specification
-
-            # write number of zones with data
-            _write_binary(f, self.n_zones_with_data, self.value_length,
-                          self.endianness, self.is_signed)
-
-            # write list of those zones
-            for z in range(self.n_zones_with_data):
-                _write_binary(f, self.zones_with_data[z], self.value_length,
-                              self.endianness, self.is_signed)
-
-            #****************************************************************
-            # write zone info
-
-            if self.is_structured == 'y':
-                if self.time_type == 'constant':
-
-                    # for each zone containing data...
-                    for nz in range(self.n_zones_with_data):
-
-                        # write name (32-byte string)
-                        _write_string(f, self.zones[nz].name, 32)
-
-                        # write iMax and jMax (4 byte ints)
-                        _write_binary(f, self.zones[nz].iMax)
-                        _write_binary(f, self.zones[nz].jMax)
-
-                else:
-                    # TODO: implement non-constant functional data header
-                    print('Writing non-constant functional data header not implemented yet!')
-
-            else:
-                # TODO: implement non-structured headers
-                print('Writing non-structured functional data header not implemented yet!')
-
-
-    # **********************************************************************
-    def _read_data(self, filename):
-        """
-        Reads PSU-WOPWOP loading functional data from 'filename'.
-        """
-
-        # open file and read binary content
-        with open(filename, 'rb') as f:
-            bytes_data = f.read()
-
-        # structured, constant geometry
-        if self.is_structured == 'y':
-            if self.time_type == 'constant':
-
-                # start index for reading functional data
-                field_start = (1080 + self.n_zones_with_data*4
-                               + self.n_zones_with_data*self.zones[0].header_length)
-
-                # -----------------------------------------------------------
-                # if data is surface pressure
-                if self.data_type == 'surf_pressure':
-
-                    # for each zone
-                    for nz in range(self.n_zones_with_data):
-
-                        # create empty numpy arrays for pressure data
-                        self.zones[nz].pressures = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
-                                                            dtype=np.float32)
-
-                        # read pressure data and next index
-                        self.zones[nz].pressures, field_start = self._read_XYZblock(bytes_data, field_start,
-                                                                                    1, self.zones[nz].iMax, self.zones[nz].jMax)
-
-                # -----------------------------------------------------------
-                # if data is loading vectors
-                elif self.data_type == 'surf_loading_vec':
-
-                    # for each zone
-                    for nz in range(self.n_zones_with_data):
-
-                        # create empty numpy arrays for pressure data
-                        self.zones[nz].loading_vectors = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                                            dtype=np.float32)
-
-                        # read pressure data and next index
-                        self.zones[nz].loading_vectors, field_start = self._read_XYZblock(bytes_data, field_start,
-                                                                                          3, self.zones[nz].iMax, self.zones[nz].jMax)
-                # -----------------------------------------------------------
-                elif self.data_type == 'flow_params':
-                    print('Reading flow parameters not implemented yet!')
-                # -----------------------------------------------------------
-
-            else:
-                # TODO: read non-constant functional data
-                print('Reading non-constant functional data not implemented yet!')
-        else:
-            # TODO: read non-structured functional data
-            print('Reading non-structured functional data not implemented yet!')
-
-
-    # **********************************************************************
-    def _write_data(self, filename):
-        """
-        Writes PSU-WOPWOP functional data to 'filename'
-        Must be immediately preceded by a call to '_write_header(filename)'!
-        """
-
-        # open file in append mode - no need to adjust index
-        with open(filename, 'ab') as f:
-
-            # -----------------------------------------------------------
-            # constant geometry
-            if self.time_type == 'constant':
-
-                # -----------------------------------------------------------
-                # if data is surface pressure
-                if self.data_type == 'surf_pressure':
-
-                    # for each zone
-                    for nz in range(self.n_zones_with_data):
-
-                        # write pressure data in Fortran (column-major) order
-                        for j in range(self.zones[nz].jMax):
-                            for i in range(self.zones[nz].iMax):
-                                _write_binary(f, self.zones[nz].pressures[i, j])
-
-                # -----------------------------------------------------------
-                # if data is surface loading vectors
-                elif self.data_type == 'surf_loading_vec':
-
-                    # for each zone
-                    for nz in range(self.n_zones_with_data):
-
-                        # write loading vectors in Fortran (column-major) order
-                        for n in range(3):
-                            for j in range(self.zones[nz].jMax):
-                                for i in range(self.zones[nz].iMax):
-                                    _write_binary(f, self.zones[nz].loading_vectors[n, i, j])
-
-                # -----------------------------------------------------------
-                elif self.data_type == 'flow_params':
-                    # TODO: write flow params data
-                    print('Reading flow parameters not implemented yet!')
-
-            # -----------------------------------------------------------
-            else:
-                # TODO: write non-constant functional data
-                print('Writing non-constant functional data not implemented yet!')
-            # -----------------------------------------------------------
-
-
-# %% #########################################################################
-class GeometryPatchFile(InputFile):
-    """
-    Child class to read, write and store PSU-WOPWOP geometry patch file v1.0
-    information
-    """
-
-    def __init__(self, filename=None):
-
-        # initialize superclass
-        super().__init__()
-
-        self.geom_type = ''
-        self.iblank_included = ''
-
-        # 32-byte string describing units of pressure to be used - e.g. 'Pa'
-        self.units_string = ''
-
-        # format string (8 ints)
-        self.format_string = []
-
-        # if a file name is given, read that file to current instance
-        if filename:
-            self.filename = filename
-            self.read_patch_file(filename)
-
-    # **********************************************************************
-    def _build_format_string(self):
-        """
-        Create list of data format values, later written to file as string of ints.
-        """
-
-        self.format_string = []
-        self.format_string.append(geom_dict[self.geom_type])
-        self.format_string.append(self.n_zones)
-        self.format_string.append(structured_dict[self.is_structured])
-        self.format_string.append(time_geom_dict[self.time_type])
-        self.format_string.append(centered_dict[self.centered_type])
-        self.format_string.append(float_dict[self.float_type])
-        self.format_string.append(iblank_dict[self.iblank_included])
-        self.format_string.append(RESERVED_DIGIT)
-
-
-    # **********************************************************************
-    def print_info(self):
-        """
-        Prints a summary of the patch file info
-        """
-
-        if hasattr(self, 'filename'):
-            print('File {} is a geometry patch file for PSU-WOPWOP v{}.{}'.format(self.filename, self.version_number1, self.version_number2))
-        else:
-            print('File is a geometry patch file for PSU-WOPWOP v{}.{}'.format(self.version_number1, self.version_number2))
-
-
-        print('Units: ', self.units_string)
-
-        print('Comments: ', self.comment_string)
-
-        print('Parsing format string:')
-        print('\t--> Geometry type:                 ', self.geom_type)
-        print('\t--> Number of zones:               ', self.n_zones)
-        print('\t--> Is file structured:            ', self.is_structured)
-        print('\t--> Temporal behaviour:            ', self.time_type)
-        print('\t--> Vectors/areas are centred at:  ', self.centered_type)
-        print('\t--> Float data precision:          ', self.float_type)
-        print('\t--> IBLANK values are included:    ', self.iblank_included)
-
-        print('\n')
-        print('Parsing zones info:')
-        print('Number of zones: ', self.n_zones)
-
-        for zone in self.zones:
-            print('\n')
-            print('\t--> Zone name: ', zone.name)
-            print('\t--> iMax: ', zone.iMax)
-            print('\t--> jMax: ', zone.jMax)
-
-        print('\n\n')
-
-    # **********************************************************************
-    def addStructuredConstantZone(self, name, XYZ_coord, normal_coord):
-        """
-        Adds structured, constant zone containing mesh points and normal vectors.
-
-        Parameters
-        ----------
-        name : string
-            Zone name as a 32-byte string.
-
-        XYZ_coord : (3, iMax, jMax) array_like
-            Array of mesh point coordinates to be added.
-
-        normal_coord : (3, iMax, jMax) array_like
-            Array of normal vector coordinates to be added.
-
-        zone_number : int
-            Zone number, as input to geometry patch file. For example, '5' if
-            this zone is the 5th zone inserted to the patch file.
-
-        Returns
-        -------
-        None.
-
-        """
-
-        # instantiate new zone
-        zone = StructuredConstantZone(self.value_length)
-
-        # cap 'name' length to 32 bytes
-        zone.name = name[:32]
-
-        zone.number = self.n_zones+1
-        zone.iMax = XYZ_coord.shape[1]
-        zone.jMax = XYZ_coord.shape[2]
-
-        # create empty numpy arrays for XYZ coordinates and normal
-        # coordinates, copy input data
-        zone.XYZ_coord    = np.zeros((3, zone.iMax, zone.jMax), dtype=np.float32)
-        zone.normal_coord = np.zeros((3, zone.iMax, zone.jMax), dtype=np.float32)
-
-        zone.XYZ_coord = np.copy(XYZ_coord)
-        zone.normal_coord = np.copy(normal_coord)
-
-        self.zones.append(zone)
-        self.n_zones += 1
 
 
     # **********************************************************************
@@ -797,84 +399,71 @@ class GeometryPatchFile(InputFile):
                 current_index = (start_index
                                   + (j*iMax + i)*self.value_length)
 
-                IBLANK_data[i, j] = _read_int(bytes_data, current_index,
-                                              self.value_length, self.endianness)
+                IBLANK_data[i, j] = _read_int(bytes_data, current_index)
 
         # increase start index by ('value_length' bytes * iMax * jMax)
-        next_index = start_index + self.value_length*(iMax*jMax)
+        next_index = start_index + VALUE_LENGTH*(iMax*jMax)
 
         return IBLANK_data, next_index
 
 
     # **********************************************************************
-    def write_patch_file(self, filename):
-        """ Writes geometry patch data to 'filename'."""
-        self._write_header(filename)
-        self._write_data(filename)
-
-
-    def read_patch_file(self, filename):
-        """ Reads 'filename' for geometry patch data, and prints a summary. """
-        self._read_header(filename)
-        self._read_data(filename)
-        self.print_info()
-
-
-    # **********************************************************************
-    def _read_header(self, filename):
+    def _read_geometry_header(self, filename):
         """
-        Reads PSU-WOPWOP geometry patch header info from 'filename'.
+        Reads PSU-WOPWOP geometry header info from 'filename'.
         """
 
         # do initial check for 'magic number' and endianness
-        self.endianness = initial_check(filename)
+        file_endianness = initial_check(filename)
+        assert file_endianness == ENDIANNESS, "File endianness does not match pywopwop default!"
 
         # open fileand read binary content
         with open(filename, 'rb') as f:
             bytes_data = f.read()
 
         # check version number - must be '1'and '0'
-        self.version_number1 = _read_int(bytes_data, 4, 4)
-        self.version_number2 = _read_int(bytes_data, 8, 4)
+        self.version_number_major = _read_int(bytes_data, 4)
+        self.version_number_minor = _read_int(bytes_data, 8)
 
-        assert ((self.version_number1 == 1) and (self.version_number2 == 0)), 'File version is not v1.0!'
+        assert ((self.version_number_major == 1) and (self.version_number_minor == 0)), \
+            'File version is not v1.0!'
 
         # read units string (32 chars, starting at index 12)
         self.units_string = _read_string(bytes_data, 12, 32)
 
         # read comments string (1024 bytes, starting at index 44)
-        self.comment_string = _read_string(bytes_data, 44, 1024)
+        self.geometry_comment = _read_string(bytes_data, 44, 1024)
 
         # read format string (8 ints, 32 bytes, starting at index 1068)
-        self.format_string = []
+        self.geometry_format_string = []
         for n in range(8):
-            self.format_string.append(_read_int(bytes_data, 1068 + 4*n,
-                                                self.value_length, self.endianness))
+            self.geometry_format_string.append(_read_int(bytes_data, 1068 + 4*n))
 
         # Populate file type description
-        self.geom_type          = _reverse_dict(geom_dict, self.format_string[0])
-        self.n_zones            = self.format_string[1]
-        self.is_structured      = _reverse_dict(structured_dict, self.format_string[2])
-        self.time_type          = _reverse_dict(time_geom_dict, self.format_string[3])
-        self.centered_type      = _reverse_dict(centered_dict, self.format_string[4])
-        self.float_type         = _reverse_dict(float_dict, self.format_string[5])
-        self.iblank_included    = _reverse_dict(iblank_dict, self.format_string[6])
+        self.geometry_type      = _reverse_dict(geom_dict, self.geometry_format_string[0])
+        self.n_zones            = self.geometry_format_string[1]
+        self.is_structured      = _reverse_dict(structured_dict, self.geometry_format_string[2])
+        self.geometry_time_type = _reverse_dict(geometry_time_dict, self.geometry_format_string[3])
+        self.centered_type      = _reverse_dict(centered_dict, self.geometry_format_string[4])
+        self.float_type         = _reverse_dict(float_dict, self.geometry_format_string[5])
+        self.has_iblank         = _reverse_dict(iblank_dict, self.geometry_format_string[6])
 
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # read zone info (starting at index 1100)
 
-        if self.is_structured == 'y':
+        if self.is_structured == True:
 
-            if self.time_type == 'constant':
+            if self.geometry_time_type == 'constant':
 
                 for nz in range(self.n_zones):
                     # instantiate zone and read info from file
-                    zone = StructuredConstantZone(self.value_length)
+                    zone = StructuredConstantZone()
 
-                    zone.name = _read_string(bytes_data, 1100 + nz*zone.header_length, 32)
-                    zone.iMax = _read_int(bytes_data, 1100 + 32 + nz*zone.header_length, 4)
-                    zone.jMax = _read_int(bytes_data, 1100 + 36 + nz*zone.header_length, 4)
+                    zone.geometry_name = _read_string(bytes_data, 1100 + nz*zone.header_length, 32)
+                    zone.loading_name = ''
+                    zone.iMax = _read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
+                    zone.jMax = _read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
 
                     self.zones.append(zone)
 
@@ -886,51 +475,48 @@ class GeometryPatchFile(InputFile):
             # TODO: implement non-structured headers
             print('Reading non-structured geometry zone info not implemented yet!')
 
+        assert (self.n_zones == len(self.zones)), "Number of zones in format string doesn't match file data!"
 
-    # **********************************************************************
-    def _write_header(self, filename):
+
+    def _write_geometry_header(self, filename):
         """
-        Writes PSU-WOPWOP geometry patch header to 'filename'.
+        Writes PSU-WOPWOP geometry header to 'filename'.
         """
 
         # build format string with most recent format values
-        self._build_format_string()
+        self._build_geometry_format_string()
 
         with open(filename, 'wb') as f:
 
             # write 'magic number' 42 to first 4 bytes
-            _write_binary(f, MAGICNUMBER, self.value_length, self.endianness,
-                          self.is_signed)
+            _write_binary(f, MAGICNUMBER)
 
             # write version number
-            _write_binary(f, self.version_number1, self.value_length, self.endianness,
-                          self.is_signed)
-            _write_binary(f, self.version_number2, self.value_length, self.endianness,
-                          self.is_signed)
+            _write_binary(f, self.version_number_major)
+            _write_binary(f, self.version_number_minor)
 
             # write units string (32 chars)
             _write_string(f, self.units_string, 32)
 
             # write comments string (1024 bytes)
-            _write_string(f, self.comment_string, 1024)
+            _write_string(f, self.geometry_comment, 1024)
 
             # write format string (8 ints, 32 bytes)
             for n in range(8):
-                _write_binary(f, self.format_string[n], self.value_length,
-                              self.endianness, self.is_signed)
+                _write_binary(f, self.geometry_format_string[n])
 
             #****************************************************************
             # write zone info
 
-            if self.is_structured == 'y':
+            if self.is_structured == True:
 
-                if self.time_type == 'constant':
+                if self.geometry_time_type == 'constant':
 
                     # for each zone...
                     for nz in range(self.n_zones):
 
                         # write name (32-byte string)
-                        _write_string(f, self.zones[nz].name, 32)
+                        _write_string(f, self.zones[nz].geometry_name, 32)
 
                         # write iMax and jMax (4 byte ints)
                         _write_binary(f, self.zones[nz].iMax)
@@ -946,9 +532,9 @@ class GeometryPatchFile(InputFile):
 
 
     # **********************************************************************
-    def _read_data(self, filename):
+    def _read_geometry_data(self, filename):
         """
-        Reads PSU-WOPWOP geometry patch data from 'filename'.
+        Reads PSU-WOPWOP geometry data from 'filename'.
         """
 
         # open fileand read binary content
@@ -956,7 +542,7 @@ class GeometryPatchFile(InputFile):
             bytes_data = f.read()
 
         # constant geometry
-        if self.time_type == 'constant':
+        if self.geometry_time_type == 'constant':
 
             # start index for reading coordinates and normal vectors data
             field_start = 1100 + self.n_zones*self.zones[0].header_length
@@ -971,7 +557,7 @@ class GeometryPatchFile(InputFile):
                 self.zones[nz].XYZ_coord    = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax), dtype=np.float32)
                 self.zones[nz].normal_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax), dtype=np.float32)
 
-                if self.iblank_included == 'y':
+                if self.has_iblank == True:
                     self.zones[nz].iblank = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax), dtype=np.int32)
 
                 # -----------------------------------------------------------
@@ -984,7 +570,7 @@ class GeometryPatchFile(InputFile):
                                                                                3, self.zones[nz].iMax, self.zones[nz].jMax)
                 # -----------------------------------------------------------
                 # if file contains IBLANK (int) data, read that
-                if self.iblank_included == 'y':
+                if self.has_iblank == True:
                     self.zones[nz].iblank, field_start = self._read_IBLANKblock(bytes_data, field_start,
                                                                                 self.zones[nz].iMax, self.zones[nz].jMax)
                 # -----------------------------------------------------------
@@ -994,11 +580,10 @@ class GeometryPatchFile(InputFile):
             print('Reading non-constant geometry data not implemented yet!')
 
 
-    # **********************************************************************
-    def _write_data(self, filename):
+    def _write_geometry_data(self, filename):
         """
         Writes PSU-WOPWOP geometry patch data to 'filename'
-        Must be immediately preceded by a call to '_write_header(filename)'!
+        Must be immediately preceded by a call to '_write_geometry_header(filename)'!
         """
 
         # open file in append mode - no need to adjust index
@@ -1006,13 +591,14 @@ class GeometryPatchFile(InputFile):
 
             # -----------------------------------------------------------
             # constant geometry
-            if self.time_type == 'constant':
+            if self.geometry_time_type == 'constant':
 
                 # for each zone
                 for nz in range(self.n_zones):
 
-                    #write XYZ coords
+                    # write XYZ coords
                     for n in range(3):
+
                         # write order is Fortran (column-major)
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
@@ -1025,7 +611,7 @@ class GeometryPatchFile(InputFile):
                                 _write_binary(f, self.zones[nz].normal_coord[n, i, j])
 
                     # write IBLANK data
-                    if self.iblank_included == 'y':
+                    if self.has_iblank == True:
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
                                 _write_binary(f, self.zones[nz].iblank[i, j])
@@ -1037,19 +623,382 @@ class GeometryPatchFile(InputFile):
             # -----------------------------------------------------------
 
 
-# %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+    # **********************************************************************
+    def _read_loading_header(self, filename):
+        """
+        Reads PSU-WOPWOP loading functional header info from 'filename'.
+        """
 
+        # do initial check for 'magic number' and endianness
+        file_endianness = initial_check(filename)
+        assert file_endianness == ENDIANNESS, "File endianness does not match pywopwop default!"
+
+        # open fileand read binary content
+        with open(filename, 'rb') as f:
+            bytes_data = f.read()
+
+        # check version number - must be '1'and '0'
+        self.version_number_major = _read_int(bytes_data, 4)
+        self.version_number_minor = _read_int(bytes_data, 8)
+
+        assert ((self.version_number_major == 1) and (self.version_number_minor == 0)), \
+            'File version is not v1.0!'
+
+        # read comments string (1024 bytes, starting at index 12)
+        self.loading_comment = _read_string(bytes_data, 12, 1024)
+
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # read format string (10 ints, 40 bytes, starting at index 1036),
+        # assert loading file info vs. previously read from geometry file
+
+        self.loading_format_string = []
+        for n in range(10):
+            self.loading_format_string.append(_read_int(bytes_data, 1036 + 4*n))
+
+        # Verify file type description
+        # --> loading_format_string[0] is '2' to indicate functional data file
+        assert (self.loading_format_string[0] == 2), \
+            "Format string does not start with '2', not a PSU-WOPWOP functional file!"
+
+        assert (self.n_zones == self.loading_format_string[1]), \
+            "Number of zones in loading file does not match geometry file!"
+
+        assert (self.is_structured == _reverse_dict(structured_dict, self.loading_format_string[2])), \
+            "Loading file 'is_structured' property does not match!"
+
+        self.loading_time_type = _reverse_dict(loading_time_dict, self.loading_format_string[3])
+
+        assert (self.centered_type == _reverse_dict(centered_dict, self.loading_format_string[4])), \
+            "Loading file 'centered_type' property does not match!"
+
+        self.loading_data_type  = _reverse_dict(loading_data_dict, self.loading_format_string[5])
+        self.loading_ref_frame  = _reverse_dict(ref_frame_dict, self.loading_format_string[6])
+
+        assert (self.float_type == _reverse_dict(float_dict, self.loading_format_string[7])), \
+            "Loading file 'float_type' property does not match!"
+
+        # --> loading_format_string[8] is reserved for future use, and must be '0' in this version
+        # --> loading_format_string[9] is reserved for future use, and must be '0' in this version
+
+
+        # ------------------------------------------------------------------
+        # zone specification
+
+        # read number of zones containing functional data (4 bytes)
+        self.n_zones_with_loading_data = _read_int(bytes_data, 1076)
+
+        # create list of zones containing functional data
+        # -->>  negative numbers indicate zones for which WOPWOP should *NOT*
+        #       calculate thickness noise - e.g. loading patch
+        #
+        # -->> zone list indices are one-based - subtract one for internal
+        #       consistency!
+        self.zones_with_loading_data = []
+        for z in range(self.n_zones_with_loading_data):
+            self.zones_with_loading_data.append(_read_int(bytes_data, 1080 + z*4) - 1)
+
+
+        # ------------------------------------------------------------------
+        # read header info
+
+        zone_info_start = 1080 + self.n_zones_with_loading_data*4
+
+        # version 1.0
+        if self.version_number_minor == 0:
+
+            # ------------------------------------------------------------------
+            # structured, constant loading
+            if self.is_structured == True:
+                if self.loading_time_type == 'constant':
+
+                    for i, nz in enumerate(self.zones_with_loading_data):
+
+                        # remove sign from zone index
+                        nz = abs(nz)
+
+                        # get handle to existing zone in list
+                        zone = self.zones[nz]
+
+                        # read loading zone name, assert iMax and jMax match
+                        zone.loading_name = _read_string(bytes_data, zone_info_start + i*zone.header_length, 32)
+                        iMax_fromfile = _read_int(bytes_data, zone_info_start + 32 + i*zone.header_length)
+                        jMax_fromfile = _read_int(bytes_data, zone_info_start + 36 + i*zone.header_length)
+
+                        assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
+                            "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
+
+                        # set loading data flag
+                        zone.has_loading_data = True
+
+                        #self.zones.append(zone)
+
+                else:
+                    # ------------------------------------------------------------------
+                    # TODO: implement non-constant loading
+                    print('Reading non-constant functional zone info not implemented yet!')
+
+            # ------------------------------------------------------------------
+            else:
+                # TODO: implement non-structured headers
+                print('Reading non-structured functional zone info not implemented yet!')
+
+        # ------------------------------------------------------------------
+        # TODO: implement header reader for version 1.1
+        elif self.version_number2 == '1':
+            print('Reading functional data file v1.1 header not implemented yet!')
+
+        # ------------------------------------------------------------------
+
+
+    def _write_loading_header(self, filename):
+        """
+        Writes PSU-WOPWOP functional file header to 'filename'
+        """
+
+        # build format string with most recent format values
+        self._build_loading_format_string()
+
+        with open(filename, 'wb') as f:
+
+            # write 'magic number' 42 to first 4 bytes
+            _write_binary(f, MAGICNUMBER)
+
+            # write version number
+            _write_binary(f, self.version_number_major)
+            _write_binary(f, self.version_number_minor)
+
+            # write comments string (1024 bytes)
+            _write_string(f, self.loading_comment, 1024)
+
+            # write format string (10 ints, 40 bytes)
+            for n in range(10):
+                _write_binary(f, self.loading_format_string[n])
+
+            #****************************************************************
+            # write zone specification
+
+            # write number of zones with data
+            _write_binary(f, self.n_zones_with_loading_data)
+
+            # write list of those zones - add one to create one-based indices
+            for z in self.zones_with_loading_data:
+                _write_binary(f, (z + 1))
+
+            #****************************************************************
+            # write zone info
+
+            if self.is_structured == True:
+                if self.loading_time_type == 'constant':
+
+                    # for each zone containing data...
+                    for nz in self.zones_with_loading_data:
+
+                        # write name (32-byte string)
+                        _write_string(f, self.zones[nz].loading_name, 32)
+
+                        # write iMax and jMax (4 byte ints)
+                        _write_binary(f, self.zones[nz].iMax)
+                        _write_binary(f, self.zones[nz].jMax)
+
+                else:
+                    # TODO: implement non-constant functional data header
+                    print('Writing non-constant functional data header not implemented yet!')
+
+            else:
+                # TODO: implement non-structured headers
+                print('Writing non-structured functional data header not implemented yet!')
+
+
+    def _read_loading_data(self, filename):
+        """
+        Reads PSU-WOPWOP loading data from 'filename'.
+        """
+
+        # open file and read binary content
+        with open(filename, 'rb') as f:
+            bytes_data = f.read()
+
+        # structured, constant geometry
+        if self.is_structured == True:
+            if self.loading_time_type == 'constant':
+
+                # start index for reading functional data
+                # end of format string + zone specification + header
+                field_start = (1076
+                               + (1 + self.n_zones_with_loading_data)*4
+                               + self.n_zones_with_loading_data*self.zones[0].header_length)
+
+                # -----------------------------------------------------------
+                # if data is surface pressure
+                if self.loading_data_type == 'surf_pressure':
+
+                    # for each zone
+                    for nz in self.zones_with_loading_data:
+
+                        # create empty numpy arrays for pressure data
+                        self.zones[nz].pressures = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
+                                                            dtype=np.float32)
+
+                        # read pressure data and next index
+                        self.zones[nz].pressures, field_start = self._read_XYZblock(bytes_data, field_start,
+                                                                                    1, self.zones[nz].iMax, self.zones[nz].jMax)
+
+                # -----------------------------------------------------------
+                # if data is loading vectors
+                elif self.loading_data_type == 'surf_loading_vec':
+
+                    # for each zone containing data:
+                    for nz in self.zones_with_loading_data:
+
+                        # create empty numpy arrays for pressure data
+                        self.zones[nz].loading_vectors = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                                                  dtype=np.float32)
+
+                        # read pressure data and next index
+                        self.zones[nz].loading_vectors, field_start = self._read_XYZblock(bytes_data, field_start,
+                                                                                          3, self.zones[nz].iMax, self.zones[nz].jMax)
+                # -----------------------------------------------------------
+                elif self.data_type == 'flow_params':
+                    print('Reading flow parameters not implemented yet!')
+                # -----------------------------------------------------------
+
+            else:
+                # TODO: read non-constant functional data
+                print('Reading non-constant functional data not implemented yet!')
+        else:
+            # TODO: read non-structured functional data
+            print('Reading non-structured functional data not implemented yet!')
+
+
+
+    def _write_loading_data(self, filename):
+        """
+        Writes PSU-WOPWOP functional data to 'filename'
+        Must be immediately preceded by a call to '_write_header(filename)'!
+        """
+
+        # open file in append mode - no need to adjust index
+        with open(filename, 'ab') as f:
+
+            # -----------------------------------------------------------
+            # constant geometry
+            if self.loading_time_type == 'constant':
+
+                # -----------------------------------------------------------
+                # if data is surface pressure
+                if self.loading_data_type == 'surf_pressure':
+
+                    # for each zone
+                    for nz in self.zones_with_loading_data:
+                        #print('nz = {}'.format(nz))
+
+                        # write pressure data in Fortran (column-major) order
+                        for j in range(self.zones[nz].jMax):
+                            for i in range(self.zones[nz].iMax):
+                                _write_binary(f, self.zones[nz].pressures[i, j])
+
+                # -----------------------------------------------------------
+                # if data is surface loading vectors
+                elif self.loading_data_type == 'surf_loading_vec':
+
+                    # for each zone
+                    for nz in self.zones_with_loading_data:
+
+                        # write loading vectors in Fortran (column-major) order
+                        for n in range(3):
+                            for j in range(self.zones[nz].jMax):
+                                for i in range(self.zones[nz].iMax):
+                                    _write_binary(f, self.zones[nz].loading_vectors[n, i, j])
+
+                # -----------------------------------------------------------
+                elif self.data_type == 'flow_params':
+                    # TODO: write flow params data
+                    print('Reading flow parameters not implemented yet!')
+
+            # -----------------------------------------------------------
+            else:
+                # TODO: write non-constant functional data
+                print('Writing non-constant functional data not implemented yet!')
+            # -----------------------------------------------------------
+
+
+    # **********************************************************************
+    def _update_n_zones(self):
+        self.n_zones = len(self.zones)
+        self.n_zones_with_loading_data = len(self.zones_with_loading_data)
+
+
+    # **********************************************************************
+    def _build_loading_format_string(self):
+        """
+        Create list of data format values, later written to loading file as
+        string of ints.
+        """
+
+        self._update_n_zones()
+
+        self.loading_format_string = []
+        self.loading_format_string.append(2)               # indicate functional data file
+        self.loading_format_string.append(self.n_zones)
+        self.loading_format_string.append(structured_dict[self.is_structured])
+        self.loading_format_string.append(loading_time_dict[self.loading_time_type])
+        self.loading_format_string.append(centered_dict[self.centered_type])
+        self.loading_format_string.append(loading_data_dict[self.loading_data_type])
+        self.loading_format_string.append(ref_frame_dict[self.loading_ref_frame])
+        self.loading_format_string.append(float_dict[self.float_type])
+        self.loading_format_string.append(RESERVED_DIGIT)   # reserved digit '0' inserted twice
+        self.loading_format_string.append(RESERVED_DIGIT)
+
+
+    def _build_geometry_format_string(self):
+        """
+        Create list of data format values, later written to geometry file as
+        string of ints.
+        """
+
+        self._update_n_zones()
+
+        self.geometry_format_string = []
+        self.geometry_format_string.append(geom_dict[self.geometry_type])
+        self.geometry_format_string.append(self.n_zones)
+        self.geometry_format_string.append(structured_dict[self.is_structured])
+        self.geometry_format_string.append(geometry_time_dict[self.geometry_time_type])
+        self.geometry_format_string.append(centered_dict[self.centered_type])
+        self.geometry_format_string.append(float_dict[self.float_type])
+        self.geometry_format_string.append(iblank_dict[self.has_iblank])
+        self.geometry_format_string.append(RESERVED_DIGIT)
+
+    # **********************************************************************
+
+
+# %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+# TODO: create separate subclasses for geometry data and for loading data,
+#       as they can have different temporal behaviour!
 class Zone:
     """
-    Parent class for zone data containing zone name, value length (typically 4
-    bytes) and header length (fixed at 32 bytes)
+    Parent class for zone data containing zone name, header length (fixed at
+    32 bytes) and some calculation flags.
     """
-    def __init__(self, value_length):
+    def __init__(self):
         self.name = ''
         self.number = 0                     # zone numbers use 1-based index
-        self.value_length = value_length    # length in bytes of values
+
+        self.calc_thickness_noise = True
+        self.has_loading_data = False
+
         self.header_length = 32             # 'name' string has 32 bytes
 
+
+    def __str__(self):
+        str1 = '\n\tGeometry name:          ' + self.geometry_name
+        str2 = '\n\tLoading name:           ' + self.loading_name
+        str3 = '\n\t--> iMax:               ' + str(self.iMax)
+        str4 = '\n\t--> jMax:               ' + str(self.jMax)
+        str5 = '\n\tCalc thickness noise:   ' + str(self.calc_thickness_noise)
+        str6 = '\n\tHas loading data:       ' + str(self.has_loading_data)
+
+        return str1+str2+str3+str4+str5+str6
 
 # **********************************************************************
 class StructuredZone(Zone):
@@ -1057,11 +1006,11 @@ class StructuredZone(Zone):
     Parent class for structured zone, containing structured dimensions (2 ints)
     """
 
-    def __init__(self, value_length):
-        super().__init__(value_length)
+    def __init__(self):
+        super().__init__()
         self.iMax = 0
         self.jMax = 0
-        self.header_length += 2*self.value_length
+        self.header_length += 2*VALUE_LENGTH
 
 
 class PeriodicZone(Zone):
@@ -1069,11 +1018,11 @@ class PeriodicZone(Zone):
     Parent class for time-varying period zone, containing period (in seconds)
     and number of time steps (integer)
     """
-    def __init__(self, value_length):
-        super().__init__(value_length)
+    def __init__(self):
+        super().__init__()
         self.period = 0.
         self.nt = 0
-        self.header_length += 2*self.value_length
+        self.header_length += 2*VALUE_LENGTH
 
 
 class AperiodicZone(Zone):
@@ -1081,10 +1030,10 @@ class AperiodicZone(Zone):
     Parent class for time-varying aperiod zone, containing number of time
     steps (integer)
     """
-    def __init__(self, value_length):
-        super().__init__(value_length)
+    def __init__(self):
+        super().__init__()
         self.nt = 0
-        self.header_length += value_length
+        self.header_length += VALUE_LENGTH
 
 
 # **********************************************************************
@@ -1092,8 +1041,80 @@ class StructuredConstantZone(StructuredZone):
     """
     Class for structured, constant zone - contains no time information
     """
-    def __init__(self, value_length):
-        super().__init__(value_length)
+    def __init__(self):
+        super().__init__()
+
+
+    def add_structured_constant_geom(self, XYZ_coord, normal_coord):
+        """
+        Adds structured, constant geometry data.
+
+        Parameters
+        ----------
+        XYZ_coord : (3, iMax, jMax) array_like
+            Array of mesh point coordinates to be added.
+
+        normal_coord : (3, iMax, jMax) array_like
+            Array of normal vector coordinates to be added.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.iMax = XYZ_coord.shape[1]
+        self.jMax = XYZ_coord.shape[2]
+
+        # copy input data XYZ coordinates and normal coordinates
+        self.XYZ_coord = np.copy(XYZ_coord)
+        self.normal_coord = np.copy(normal_coord)
+
+
+    def add_structured_constant_loading(self, loading_data, loading_data_type):
+        """
+        Adds structured, constant pressure or loading vector data.
+
+        Parameters
+        ----------
+        data : (iMax, jMax) or (3, iMax, jMax) array_like
+            The array of data to be added. Its shape is (iMax, jMax) for
+            pressure data, and (3, iMax, jMax) for loading vector data.
+
+        loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
+            A string describing the type of loading data.
+
+        Returns
+        -------
+        None.
+
+        """
+
+        self.has_loading_data = True
+
+        # ------------------------------------------------------------------
+        # if data is (iMax, jMax)-shaped  array of surface pressures
+        if loading_data_type == 'surf_pressure':
+            self.iMax = loading_data.shape[0]
+            self.jMax = loading_data.shape[1]
+
+            # copy input data
+            self.pressures = np.copy(loading_data)
+
+        # ------------------------------------------------------------------
+        # if data is (3, iMax, jMax)-shaped array of surface loading vectors
+        elif loading_data_type == 'surf_loading_vec':
+            self.iMax = loading_data.shape[1]
+            self.jMax = loading_data.shape[2]
+
+            # create empty numpy arrays for surface loading vectors, copy input data
+            self.loading_vectors = np.copy(loading_data)
+
+        # ------------------------------------------------------------------
+        elif loading_data_type == 'flow_params':
+            # TODO: implement structured constant loading using flow params!
+            print('Structured constant loading using flow params not implemented yet!')
+
+        # ------------------------------------------------------------------
 
 
 # TODO: add period and nt info on initialization
@@ -1101,8 +1122,8 @@ class StructuredPeriodicZone(StructuredZone, PeriodicZone):
     """
     Class for structured, periodic zone
     """
-    def __init__(self, value_length):
-        super().__init__(value_length)
+    def __init__(self):
+        super().__init__()
 
 
 # TODO: add nt info on initialization
@@ -1110,9 +1131,8 @@ class StructuredAperiodicZone(StructuredZone, AperiodicZone):
     """
     Class for structured, aperiodic zone
     """
-    def __init__(self, value_length):
-        super().__init__(value_length)
-
+    def __init__(self):
+        super().__init__()
 
 
 # %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1145,12 +1165,12 @@ def initial_check(filename):
 
     # if little endian, continue
     if bytes_data == b'*\x00\x00\x00':
-        print('Magic number is correct - file is little endian\n')
+        print('Magic number is correct - file {} is little endian\n'.format(filename))
 
     # if big endian, change flag and continue
     elif bytes_data == b'\x00\x00\x00*':
         endianness_flag = 'big'
-        print('Magic number is correct - file is big endian\n')
+        print('Magic number is correct - file {} is big endian\n'.format(filename))
 
     # if none, magic number is incorrect - probably not PSU-WOPWOP file!
     else:
@@ -1159,7 +1179,8 @@ def initial_check(filename):
     return endianness_flag
 
 
-def _read_int(obj_name, start_index, n_bytes, endianness_flag='little'):
+def _read_int(obj_name, start_index, n_bytes=VALUE_LENGTH,
+              endianness_flag=ENDIANNESS):
     """
     Reads one integer value from an open file and returns the unpacked value.
 
@@ -1172,11 +1193,12 @@ def _read_int(obj_name, start_index, n_bytes, endianness_flag='little'):
         Starting index of value to be read.
 
     n_bytes : {1, 2, 4, 8}
-        Size of the integer to be read, in bytes.
+        Size of the integer to be read, in bytes. The default is the constant
+        'VALUE_LENGTH' = 4.
 
     endianness_flag : {'little', 'big'}, optional
         String indicating the byte endinaness to be used. The default is
-        'little'.
+        the constant 'ENDIANNESS' = 'little'.
 
     Returns
     -------
@@ -1193,7 +1215,8 @@ def _read_int(obj_name, start_index, n_bytes, endianness_flag='little'):
                          obj_name[start_index:start_index + n_bytes])[0]
 
 
-def _read_float(obj_name, start_index, n_bytes, endianness_flag='little'):
+def _read_float(obj_name, start_index, n_bytes=VALUE_LENGTH,
+                endianness_flag=ENDIANNESS):
     """
     Reads one float value from an open file and returns the unpacked value.
 
@@ -1227,7 +1250,8 @@ def _read_float(obj_name, start_index, n_bytes, endianness_flag='little'):
                          obj_name[start_index:start_index + n_bytes])[0]
 
 
-def _write_binary(file, data, length=4, endianness_flag='little', is_signed=True):
+def _write_binary(file, data, length=VALUE_LENGTH,
+                  endianness_flag=ENDIANNESS, is_signed=IS_SIGNED):
     """
     Writes one value of data to an open binary file.
 
