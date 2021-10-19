@@ -128,27 +128,27 @@ plotter.show(auto_close=False)
 # %%
 # Build pywopwop patch object with structured grid geometry
 
-# create empty instance of Geometry Patch File
-rotorblade_geom = PWW.GeometryPatchFile()
+# create empty instance of PWW Patch File
+rotorblade_patch = PWW.PWWPatch()
 
 # add header info
-rotorblade_geom.geom_type = 'geometry'
-rotorblade_geom.is_structured = 'y'
-rotorblade_geom.time_type = 'constant'
-rotorblade_geom.centered_type = 'node'
-rotorblade_geom.float_type = 'single'
-rotorblade_geom.iblank_included = 'n'
+rotorblade_patch.geom_type = 'geometry'
+rotorblade_patch.is_structured = True
+rotorblade_patch.geometry_time_type = 'constant'
+rotorblade_patch.centered_type = 'node'
+rotorblade_patch.float_type = 'single'
+rotorblade_patch.iblank_included = 'n'
+rotorblade_patch.units_string = 'Pa'
 
-rotorblade_geom.units_string = 'Pa'
-rotorblade_geom.comment_string = 'Test geometry file for single rotor blade'
+rotorblade_patch.geometry_comment = 'Test geometry file for single blade'
 
 
 # add rotor blade geometry and normals to patch obj
-rotorblade_geom.addStructuredConstantZone('Rotor blade', XYZ.T, normals.T)
+rotorblade_patch.add_StructuredConstantZone('Rotor blade', XYZ.T, normals.T)
 
 # print info
-rotorblade_geom.print_info()
+rotorblade_patch.print_info()
 
 # create PSU-WOPWOP patch file
 rotorblade_geom_filename = 'NACA4812_patch.dat'
-rotorblade_geom.write_patch_file(rotorblade_geom_filename)
+rotorblade_patch.write_geometry_file(rotorblade_geom_filename)
