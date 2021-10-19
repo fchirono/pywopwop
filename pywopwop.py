@@ -893,7 +893,9 @@ class PWWPatch:
 
                     # for each zone
                     for nz in self.zones_with_loading_data:
-                        #print('nz = {}'.format(nz))
+
+                        # remove negative sign
+                        nz = abs(nz)
 
                         # write pressure data in Fortran (column-major) order
                         for j in range(self.zones[nz].jMax):
@@ -906,6 +908,9 @@ class PWWPatch:
 
                     # for each zone
                     for nz in self.zones_with_loading_data:
+
+                        # remove negative sign
+                        nz = abs(nz)
 
                         # write loading vectors in Fortran (column-major) order
                         for n in range(3):
