@@ -1000,14 +1000,13 @@ class Zone:
     def __str__(self):
         str1 = '\n\tGeometry name:          ' + self.geometry_name
         str2 = '\n\tLoading name:           ' + self.loading_name
-        str3 = '\n\t--> iMax:               ' + str(self.iMax)
-        str4 = '\n\t--> jMax:               ' + str(self.jMax)
-        str5 = '\n\tCalc thickness noise:   ' + str(self.calc_thickness_noise)
-        str6 = '\n\tHas loading data:       ' + str(self.has_loading_data)
+        str3 = '\n\tGeometry info:          ' + self.geometry_info
+        str4 = '\n\tCalc thickness noise:   ' + str(self.calc_thickness_noise)
+        str5 = '\n\tHas loading data:       ' + str(self.has_loading_data)
 
-        return str1+str2+str3+str4+str5+str6
+        return str1+str2+str3+str4+str5
 
-# **********************************************************************
+
 class StructuredZone(Zone):
     """
     Parent class for structured zone, containing structured dimensions (2 ints)
@@ -1019,28 +1018,28 @@ class StructuredZone(Zone):
         self.jMax = 0
         self.header_length += 2*VALUE_LENGTH
 
+        str_geometry_type = '\n\t--> Structured geometry'
+        str_iMax = '\n\t--> iMax:               ' + str(self.iMax)
+        str_jMax = '\n\t--> jMax:               ' + str(self.jMax)
+        self.geometry_info = str_geometry_type + str_iMax + str_jMax
 
-class PeriodicZone(Zone):
+
+
+class UnstructuredZone(Zone):
     """
-    Parent class for time-varying period zone, containing period (in seconds)
-    and number of time steps (integer)
+    Parent class for unstructured zone, containing number of notes (int),
+    number of faces (int), and a connectivity list.
+
+    The connectivity list contains
     """
+
     def __init__(self):
         super().__init__()
-        self.period = 0.
-        self.nt = 0
+        self.nbNodes = 0
+        self.nbFaces = 0
+        self.connectivity = None
         self.header_length += 2*VALUE_LENGTH
 
-
-class AperiodicZone(Zone):
-    """
-    Parent class for time-varying aperiod zone, containing number of time
-    steps (integer)
-    """
-    def __init__(self):
-        super().__init__()
-        self.nt = 0
-        self.header_length += VALUE_LENGTH
 
 
 # **********************************************************************
@@ -1124,22 +1123,46 @@ class StructuredConstantZone(StructuredZone):
         # ------------------------------------------------------------------
 
 
-# TODO: add period and nt info on initialization
-class StructuredPeriodicZone(StructuredZone, PeriodicZone):
-    """
-    Class for structured, periodic zone
-    """
-    def __init__(self):
-        super().__init__()
+# **********************************************************************
+# class PeriodicZone(Zone):
+#     """
+#     Parent class for time-varying period zone, containing period (in seconds)
+#     and number of time steps (integer)
+#     """
+#     def __init__(self):
+#         super().__init__()
+#         self.period = 0.
+#         self.nt = 0
+#         self.header_length += 2*VALUE_LENGTH
 
 
-# TODO: add nt info on initialization
-class StructuredAperiodicZone(StructuredZone, AperiodicZone):
-    """
-    Class for structured, aperiodic zone
-    """
-    def __init__(self):
-        super().__init__()
+# class AperiodicZone(Zone):
+#     """
+#     Parent class for time-varying aperiod zone, containing number of time
+#     steps (integer)
+#     """
+#     def __init__(self):
+#         super().__init__()
+#         self.nt = 0
+#         self.header_length += VALUE_LENGTH
+
+
+# # TODO: add period and nt info on initialization
+# class StructuredPeriodicZone(StructuredZone, PeriodicZone):
+#     """
+#     Class for structured, periodic zone
+#     """
+#     def __init__(self):
+#         super().__init__()
+
+
+# # TODO: add nt info on initialization
+# class StructuredAperiodicZone(StructuredZone, AperiodicZone):
+#     """
+#     Class for structured, aperiodic zone
+#     """
+#     def __init__(self):
+#         super().__init__()
 
 
 # %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
