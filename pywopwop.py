@@ -225,6 +225,9 @@ class PWWPatch:
         # adds geometry data to zone
         zone.add_structured_constant_geom(XYZ_coord, normal_coord)
 
+        # updates geometry info string in zone
+        zone._update_geometry_info()
+
         # append new zone to zones list
         self.zones.append(zone)
 
@@ -1018,10 +1021,13 @@ class StructuredZone(Zone):
         self.jMax = 0
         self.header_length += 2*VALUE_LENGTH
 
-        str_geometry_type = '\n\t--> Structured geometry'
+        self._update_geometry_info()
+
+
+    def _update_geometry_info(self):
         str_iMax = '\n\t--> iMax:               ' + str(self.iMax)
         str_jMax = '\n\t--> jMax:               ' + str(self.jMax)
-        self.geometry_info = str_geometry_type + str_iMax + str_jMax
+        self.geometry_info = str_iMax + str_jMax
 
 
 
@@ -1030,7 +1036,13 @@ class UnstructuredZone(Zone):
     Parent class for unstructured zone, containing number of notes (int),
     number of faces (int), and a connectivity list.
 
-    The connectivity list contains
+    The connectivity list contains lists of integers defining each face: each
+    face is specified by one int indicating how many nodes it contains,
+    followed by that many integers defining the face. It is not used internally
+    by PSU-WOPWOP, but is used to output sigma surfaces.
+
+    Indices are one-based instead of zero-based, and are ordered clockwise
+    around the outward-facing normal for each face.
     """
 
     def __init__(self):
@@ -1040,6 +1052,7 @@ class UnstructuredZone(Zone):
         self.connectivity = None
         self.header_length += 2*VALUE_LENGTH
 
+        # TODO: define geometry_info string!
 
 
 # **********************************************************************
