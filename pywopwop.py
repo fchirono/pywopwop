@@ -1027,9 +1027,10 @@ class PWWPatch:
                     for nz in self.zones_with_loading_data:
 
                         # create empty numpy arrays for pressure data
-                        self.zones[nz].loading.pressures = \
-                            np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
-                                     dtype=np.float32)
+                        pressures = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
+                                             dtype=np.float32)
+
+                        self.zones[nz].add_StructuredConstantLoading(pressures, 'surf_pressure')
 
                         # read pressure data and next index
                         self.zones[nz].loading.pressures, field_start = \
@@ -1045,12 +1046,17 @@ class PWWPatch:
                     for nz in self.zones_with_loading_data:
 
                         # create empty numpy arrays for pressure data
-                        self.zones[nz].loading_vectors = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                                                  dtype=np.float32)
+                        loading_vectors = np.zeros((3, self.zones[nz].iMax,
+                                                    self.zones[nz].jMax),
+                                                   dtype=np.float32)
+
+                        self.zones[nz].add_StructuredConstantLoading(pressures, 'surf_loading_vec')
 
                         # read pressure data and next index
-                        self.zones[nz].loading_vectors, field_start = self._read_XYZblock(bytes_data, field_start,
-                                                                                          3, self.zones[nz].iMax, self.zones[nz].jMax)
+                        self.zones[nz].loading.loading_vectors, field_start = \
+                            self._read_XYZblock(bytes_data, field_start, 3,
+                                                self.zones[nz].iMax,
+                                                self.zones[nz].jMax)
                 # -----------------------------------------------------------
                 elif self.data_type == 'flow_params':
                     print('Reading flow parameters not implemented yet!')
@@ -1077,51 +1083,58 @@ class PWWPatch:
         with open(filename, 'ab') as f:
 
             # -----------------------------------------------------------
-            # constant geometry
-            if self.loading_time_type == 'constant':
+            # structured loading
+            if self.is_structured == True:
 
                 # -----------------------------------------------------------
-                # if data is surface pressure
-                if self.loading_data_type == 'surf_pressure':
+                # constant geometry
+                if self.loading_time_type == 'constant':
 
-                    # for each zone
-                    for nz in self.zones_with_loading_data:
+                    # -----------------------------------------------------------
+                    # if data is surface pressure
+                    if self.loading_data_type == 'surf_pressure':
 
-                        # remove negative sign
-                        nz = abs(nz)
+                        # for each zone
+                        for nz in self.zones_with_loading_data:
 
-                        # write pressure data in Fortran (column-major) order
-                        for j in range(self.zones[nz].jMax):
-                            for i in range(self.zones[nz].iMax):
-                                _write_binary(f, self.zones[nz].pressures[i, j])
+                            # remove negative sign
+                            nz = abs(nz)
 
-                # -----------------------------------------------------------
-                # if data is surface loading vectors
-                elif self.loading_data_type == 'surf_loading_vec':
-
-                    # for each zone
-                    for nz in self.zones_with_loading_data:
-
-                        # remove negative sign
-                        nz = abs(nz)
-
-                        # write loading vectors in Fortran (column-major) order
-                        for n in range(3):
+                            # write pressure data in Fortran (column-major) order
                             for j in range(self.zones[nz].jMax):
                                 for i in range(self.zones[nz].iMax):
-                                    _write_binary(f, self.zones[nz].loading_vectors[n, i, j])
+                                    _write_binary(f, self.zones[nz].loading.pressures[i, j])
+
+                    # -----------------------------------------------------------
+                    # if data is surface loading vectors
+                    elif self.loading_data_type == 'surf_loading_vec':
+
+                        # for each zone
+                        for nz in self.zones_with_loading_data:
+
+                            # remove negative sign
+                            nz = abs(nz)
+
+                            # write loading vectors in Fortran (column-major) order
+                            for n in range(3):
+                                for j in range(self.zones[nz].jMax):
+                                    for i in range(self.zones[nz].iMax):
+                                        _write_binary(f, self.zones[nz].loading.loading_vectors[n, i, j])
+
+                    # -----------------------------------------------------------
+                    elif self.loading_data_type == 'flow_params':
+                        # TODO: write flow params data
+                        print('Writing flow parameters not implemented yet!')
 
                 # -----------------------------------------------------------
-                elif self.data_type == 'flow_params':
-                    # TODO: write flow params data
-                    print('Reading flow parameters not implemented yet!')
+                else:
+                    # TODO: write non-constant loading data
+                    print('Writing non-constant loading data not implemented yet!')
 
             # -----------------------------------------------------------
             else:
-                # TODO: write non-constant functional data
-                print('Writing non-constant functional data not implemented yet!')
-            # -----------------------------------------------------------
-
+                # TODO: write non-structured loading data
+                print('Writing non-structured loading data not implemented yet!')
 
     # **********************************************************************
     def _update_n_zones(self):
@@ -1173,8 +1186,6 @@ class PWWPatch:
 
 
 # %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-# TODO: create separate subclasses for geometry data and for loading data,
-#       as they can have different temporal behaviour!
 class Zone:
     """
     Parent class for zone data containing zone name, header length (fixed at
