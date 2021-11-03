@@ -570,7 +570,8 @@ class PWWPatch:
 
         # do initial check for 'magic number' and endianness
         file_endianness = initial_check(filename)
-        assert file_endianness == ENDIANNESS, "File endianness does not match pywopwop default!"
+        assert file_endianness == ENDIANNESS, \
+            "File endianness does not match pywopwop default!"
 
         # open fileand read binary content
         with open(filename, 'rb') as f:
@@ -580,7 +581,8 @@ class PWWPatch:
         self.version_number_major = _read_int(bytes_data, 4)
         self.version_number_minor = _read_int(bytes_data, 8)
 
-        assert ((self.version_number_major == 1) and (self.version_number_minor == 0)), \
+        assert ((self.version_number_major == 1)
+                and (self.version_number_minor == 0)), \
             'File version is not v1.0!'
 
         # read units string (32 chars, starting at index 12)
@@ -620,6 +622,7 @@ class PWWPatch:
                     zone.iMax = _read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
                     zone.jMax = _read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
 
+                    zone._update_geometry_info()
                     self.zones.append(zone)
 
             else:
@@ -630,9 +633,11 @@ class PWWPatch:
             # TODO: implement non-structured headers
             print('Reading non-structured geometry zone info not implemented yet!')
 
-        assert (self.n_zones == len(self.zones)), "Number of zones in format string doesn't match file data!"
+        assert (self.n_zones == len(self.zones)), \
+            "Number of zones in format string doesn't match file data!"
 
 
+    # **********************************************************************
     def _write_geometry_header(self, filename):
         """
         Writes PSU-WOPWOP geometry header to 'filename'.
@@ -696,45 +701,58 @@ class PWWPatch:
         with open(filename, 'rb') as f:
             bytes_data = f.read()
 
+        # *******************************************************************
         # constant geometry
         if self.geometry_time_type == 'constant':
 
             # start index for reading coordinates and normal vectors data
             field_start = 1100 + self.n_zones*self.zones[0].header_length
 
-            # ***************************************************************
             # for each zone
             for nz in range(self.n_zones):
 
                 # -----------------------------------------------------------
                 # create empty numpy arrays for XYZ coordinates and normal
                 # coordinates (and IBLANK data, if included)
-                self.zones[nz].XYZ_coord    = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax), dtype=np.float32)
-                self.zones[nz].normal_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax), dtype=np.float32)
+                XYZ_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                     dtype=np.float32)
+
+                normal_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
+                             dtype=np.float32)
+
+                self.zones[nz].geometry = StructuredConstantGeometry(XYZ_coord, normal_coord)
 
                 if self.has_iblank == True:
-                    self.zones[nz].iblank = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax), dtype=np.int32)
+                    self.zones[nz].geometry.iblank = \
+                        np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
+                                 dtype=np.int32)
 
                 # -----------------------------------------------------------
                 # read XYZ coords and next index
-                self.zones[nz].XYZ_coord, field_start = self._read_XYZblock(bytes_data, field_start,
-                                                                            3, self.zones[nz].iMax, self.zones[nz].jMax)
+                self.zones[nz].geometry.XYZ_coord, field_start = \
+                    self._read_XYZblock(bytes_data, field_start, 3,
+                                        self.zones[nz].iMax, self.zones[nz].jMax)
                 # -----------------------------------------------------------
                 # read normal vector coords and next index
-                self.zones[nz].normal_coord, field_start = self._read_XYZblock(bytes_data, field_start,
-                                                                               3, self.zones[nz].iMax, self.zones[nz].jMax)
+                self.zones[nz].geometry.normal_coord, field_start = \
+                    self._read_XYZblock(bytes_data, field_start, 3,
+                                        self.zones[nz].iMax, self.zones[nz].jMax)
                 # -----------------------------------------------------------
                 # if file contains IBLANK (int) data, read that
                 if self.has_iblank == True:
-                    self.zones[nz].iblank, field_start = self._read_IBLANKblock(bytes_data, field_start,
-                                                                                self.zones[nz].iMax, self.zones[nz].jMax)
+                    self.zones[nz].geometry.iblank, field_start = \
+                        self._read_IBLANKblock(bytes_data, field_start,
+                                               self.zones[nz].iMax,
+                                               self.zones[nz].jMax)
                 # -----------------------------------------------------------
 
+        # *******************************************************************
         else:
             # TODO: read non-constant geometry data
             print('Reading non-constant geometry data not implemented yet!')
 
 
+    # ************************************************************************
     def _write_geometry_data(self, filename):
         """
         Writes PSU-WOPWOP geometry patch data to 'filename'
@@ -757,19 +775,19 @@ class PWWPatch:
                         # write order is Fortran (column-major)
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
-                                _write_binary(f, self.zones[nz].XYZ_coord[n, i, j])
+                                _write_binary(f, self.zones[nz].geometry.XYZ_coord[n, i, j])
 
                     # write normal vector coords
                     for n in range(3):
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
-                                _write_binary(f, self.zones[nz].normal_coord[n, i, j])
+                                _write_binary(f, self.zones[nz].geometry.normal_coord[n, i, j])
 
                     # write IBLANK data
                     if self.has_iblank == True:
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
-                                _write_binary(f, self.zones[nz].iblank[i, j])
+                                _write_binary(f, self.zones[nz].geometry.iblank[i, j])
 
             # -----------------------------------------------------------
             else:
@@ -786,7 +804,8 @@ class PWWPatch:
 
         # do initial check for 'magic number' and endianness
         file_endianness = initial_check(filename)
-        assert file_endianness == ENDIANNESS, "File endianness does not match pywopwop default!"
+        assert file_endianness == ENDIANNESS, \
+            "File endianness does not match pywopwop default!"
 
         # open fileand read binary content
         with open(filename, 'rb') as f:
@@ -819,18 +838,25 @@ class PWWPatch:
         assert (self.n_zones == self.loading_format_string[1]), \
             "Number of zones in loading file does not match geometry file!"
 
-        assert (self.is_structured == _reverse_dict(structured_dict, self.loading_format_string[2])), \
+        assert (self.is_structured
+                == _reverse_dict(structured_dict, self.loading_format_string[2])), \
             "Loading file 'is_structured' property does not match!"
 
-        self.loading_time_type = _reverse_dict(loading_time_dict, self.loading_format_string[3])
+        self.loading_time_type = \
+            _reverse_dict(loading_time_dict, self.loading_format_string[3])
 
-        assert (self.centered_type == _reverse_dict(centered_dict, self.loading_format_string[4])), \
+        assert (self.centered_type
+                == _reverse_dict(centered_dict, self.loading_format_string[4])), \
             "Loading file 'centered_type' property does not match!"
 
-        self.loading_data_type  = _reverse_dict(loading_data_dict, self.loading_format_string[5])
-        self.loading_ref_frame  = _reverse_dict(ref_frame_dict, self.loading_format_string[6])
+        self.loading_data_type  = \
+            _reverse_dict(loading_data_dict, self.loading_format_string[5])
 
-        assert (self.float_type == _reverse_dict(float_dict, self.loading_format_string[7])), \
+        self.loading_ref_frame  = \
+            _reverse_dict(ref_frame_dict, self.loading_format_string[6])
+
+        assert (self.float_type
+                == _reverse_dict(float_dict, self.loading_format_string[7])), \
             "Loading file 'float_type' property does not match!"
 
         # --> loading_format_string[8] is reserved for future use, and must be '0' in this version
@@ -847,9 +873,10 @@ class PWWPatch:
         # -->>  negative numbers indicate zones for which WOPWOP should *NOT*
         #       calculate thickness noise - e.g. loading patch
         #
-        # -->> zone list indices are one-based - subtract one for internal
-        #       consistency!
+        # -->> PSU_WOPWOP zone list indices are one-based - subtract one to
+        #       obtain zero-based (Python) indices
         self.zones_with_loading_data = []
+
         for z in range(self.n_zones_with_loading_data):
             self.zones_with_loading_data.append(_read_int(bytes_data, 1080 + z*4) - 1)
 
@@ -888,8 +915,8 @@ class PWWPatch:
 
                         #self.zones.append(zone)
 
+                # ------------------------------------------------------------------
                 else:
-                    # ------------------------------------------------------------------
                     # TODO: implement non-constant loading
                     print('Reading non-constant functional zone info not implemented yet!')
 
@@ -905,7 +932,7 @@ class PWWPatch:
 
         # ------------------------------------------------------------------
 
-
+    # ***********************************************************************
     def _write_loading_header(self, filename):
         """
         Writes PSU-WOPWOP functional file header to 'filename'
@@ -930,17 +957,18 @@ class PWWPatch:
             for n in range(10):
                 _write_binary(f, self.loading_format_string[n])
 
-            #****************************************************************
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
             # write zone specification
 
             # write number of zones with data
             _write_binary(f, self.n_zones_with_loading_data)
 
-            # write list of those zones - add one to create one-based indices
+            # write list of those zones - add one to create one-based
+            # (PSU-WOPWOP) indices
             for z in self.zones_with_loading_data:
                 _write_binary(f, (z + 1))
 
-            #****************************************************************
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
             # write zone info
 
             if self.is_structured == True:
@@ -956,15 +984,19 @@ class PWWPatch:
                         _write_binary(f, self.zones[nz].iMax)
                         _write_binary(f, self.zones[nz].jMax)
 
+                # ------------------------------------------------------------
                 else:
                     # TODO: implement non-constant functional data header
                     print('Writing non-constant functional data header not implemented yet!')
 
+            # ------------------------------------------------------------
             else:
                 # TODO: implement non-structured headers
                 print('Writing non-structured functional data header not implemented yet!')
 
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
 
+    # ***********************************************************************
     def _read_loading_data(self, filename):
         """
         Reads PSU-WOPWOP loading data from 'filename'.
@@ -974,8 +1006,11 @@ class PWWPatch:
         with open(filename, 'rb') as f:
             bytes_data = f.read()
 
-        # structured, constant geometry
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # structured loading
         if self.is_structured == True:
+
+            # ----------------------------------------------------------------
             if self.loading_time_type == 'constant':
 
                 # start index for reading functional data
@@ -988,16 +1023,19 @@ class PWWPatch:
                 # if data is surface pressure
                 if self.loading_data_type == 'surf_pressure':
 
-                    # for each zone
+                    # for each zone with loading data
                     for nz in self.zones_with_loading_data:
 
                         # create empty numpy arrays for pressure data
-                        self.zones[nz].pressures = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
-                                                            dtype=np.float32)
+                        self.zones[nz].loading.pressures = \
+                            np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
+                                     dtype=np.float32)
 
                         # read pressure data and next index
-                        self.zones[nz].pressures, field_start = self._read_XYZblock(bytes_data, field_start,
-                                                                                    1, self.zones[nz].iMax, self.zones[nz].jMax)
+                        self.zones[nz].loading.pressures, field_start = \
+                            self._read_XYZblock(bytes_data, field_start, 1,
+                                                self.zones[nz].iMax,
+                                                self.zones[nz].jMax)
 
                 # -----------------------------------------------------------
                 # if data is loading vectors
@@ -1016,17 +1054,19 @@ class PWWPatch:
                 # -----------------------------------------------------------
                 elif self.data_type == 'flow_params':
                     print('Reading flow parameters not implemented yet!')
-                # -----------------------------------------------------------
 
+            # ----------------------------------------------------------------
             else:
                 # TODO: read non-constant functional data
                 print('Reading non-constant functional data not implemented yet!')
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         else:
             # TODO: read non-structured functional data
             print('Reading non-structured functional data not implemented yet!')
 
 
-
+    # ***********************************************************************
     def _write_loading_data(self, filename):
         """
         Writes PSU-WOPWOP functional data to 'filename'
@@ -1156,7 +1196,7 @@ class Zone:
     def __str__(self):
         str1 = '\n\tGeometry name:          ' + self.geometry_name
         str2 = '\n\tLoading name:           ' + self.loading_name
-        str3 = '\n\tGeometry info:          ' + self.geometry_info
+        str3 = '\n\tGeometry info:          ' + self.geometry_info_str
         str4 = '\n\tCalc thickness noise:   ' + str(self.calc_thickness_noise)
         str5 = '\n\tHas loading data:       ' + str(self.has_loading_data)
 
@@ -1175,13 +1215,13 @@ class StructuredZone(Zone):
         self.jMax = 0
         self.header_length += 2*VALUE_LENGTH
 
-        self._update_geometry_info()
+        self._update_geometry_info_str()
 
 
-    def _update_geometry_info(self):
+    def _update_geometry_info_str(self):
         str_iMax = '\n\t--> iMax:               ' + str(self.iMax)
         str_jMax = '\n\t--> jMax:               ' + str(self.jMax)
-        self.geometry_info = str_iMax + str_jMax
+        self.geometry_info_str = str_iMax + str_jMax
 
 
     # **********************************************************************
@@ -1206,7 +1246,7 @@ class StructuredZone(Zone):
         _, self.iMax, self.jMax = XYZ_coord.shape
 
         self.geometry = StructuredConstantGeometry(XYZ_coord, normal_coord)
-        self._update_geometry_info()
+        self._update_geometry_info_str()
 
 
     def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord):
@@ -1432,7 +1472,7 @@ class UnstructuredZone(Zone):
         self.connectivity = None
         self.header_length += 2*VALUE_LENGTH
 
-        # TODO: define geometry_info string!
+        # TODO: define geometry_info_str!
 
 # **********************************************************************
 # class PeriodicZone(Zone):
