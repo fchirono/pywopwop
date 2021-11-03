@@ -14,9 +14,17 @@ Author:
 import struct
 import numpy as np
 
+# ##########################################################################
+    # **********************************************************************
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # --------------------------------------------------------------
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                    # ......................................................
 
-# %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-# PySU-WOPWOP program constants and dicts
+
+
+# %% ##########################################################################
+# PSU-WOPWOP program constants and dicts
 
 MAGICNUMBER = 42
 
@@ -73,7 +81,7 @@ iblank_dict = {True : 1,
 RESERVED_DIGIT = 0
 
 
-# %% ############################################################################
+# %% ##########################################################################
 class PWWPatch:
     """
     Parent class to read, write and store PSU-WOPWOP data and  files.
@@ -277,7 +285,7 @@ class PWWPatch:
         # adds loading data, if there is any
         if loading_data is not None:
 
-            # ----------------------------------------------------------------
+            # --------------------------------------------------------------
             if self.loading_time_type == 'constant':
 
                 # check instance loading data type string vs. loading data array shape
@@ -329,90 +337,7 @@ class PWWPatch:
         self._update_n_zones()
 
 
-    # def add_StructuredConstantZone(self, name, XYZ_coord, normal_coord,
-    #                                loading_data=None, calc_thickness_noise=True):
-    #     """
-    #     Adds a new structured, constant zone to PWWPatch instance.
-
-    #     Parameters
-    #     ----------
-    #     XYZ_coord : (3, iMax, jMax) array_like
-    #         Array of mesh point coordinates to be added.
-
-    #     normal_coord : (3, iMax, jMax) array_like
-    #         Array of normal vector coordinates to be added.
-
-    #     loading_data : (iMax, jMax) or (3, iMax, jMax) array_like, optional
-    #         Array of constant loading data to be added. Its shape is (iMax,
-    #         jMax) for pressure data, and (3, iMax, jMax) for loading vector
-    #         data.
-
-    #     calc_thickness_noise : boolean
-
-    #     Returns
-    #     -------
-    #     None.
-
-    #     Notes
-    #     -----
-    #     This function assumes both geometry AND loading are constant.
-    #     """
-
-    #     # check PWWPatch instance is indeed structured and constant
-    #     assert ((self.is_structured == True) and (self.geometry_time_type == 'constant')), \
-    #         "Cannot add structured constant geometry - instance is not structured constant!"
-
-    #     # instantiate new zone
-    #     zone = StructuredZone()
-
-    #     # cap 'name' length to 32 bytes
-    #     zone.geometry_name = name[:32]
-    #     zone.loading_name = name[:32]
-
-    #     # zone number will always be the current length of 'zones'
-    #     zone.number = len(self.zones)
-
-    #     # adds geometry data to zone
-    #     zone.add_structured_constant_geom(XYZ_coord, normal_coord)
-
-    #     # updates geometry info string in zone
-    #     zone._update_geometry_info()
-
-    #     # append new zone to zones list
-    #     self.zones.append(zone)
-
-    #     # adds loading data if there is any
-    #     if loading_data is not None:
-
-    #         # check instance loading data type string vs. loading data array shape
-    #         if self.loading_data_type == 'surf_pressure':
-    #             assert loading_data.shape == (zone.iMax, zone.jMax), \
-    #                 "'loading_data' does not match expected shape for 'surf_pressure' (iMax, jMax)!"
-
-    #         elif self.loading_data_type == 'surf_loading_vec':
-    #             assert loading_data.shape == (3, zone.iMax, zone.jMax), \
-    #                 "'loading_data' does not match expected shape for 'surf_loading_vec' (3, iMax, jMax)!"
-
-    #         elif self.loading_data_type == 'flow_params':
-    #             print('Flow parameter data not implemented yet!')
-
-    #         zone.add_structured_constant_loading(loading_data,
-    #                                              self.loading_data_type)
-
-    #         # set thickness noise flag, append zone number to
-    #         # 'zones_with_loading_data'
-    #         if calc_thickness_noise:
-    #             zone.calc_thickness_noise = True
-    #             self.zones_with_loading_data.append(zone.number)
-    #         else:
-    #             zone.calc_thickness_noise = False
-    #             self.zones_with_loading_data.append(-zone.number)
-
-    #     # update number of zones in PWWPatch instance
-    #     self._update_n_zones()
-
-
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # **********************************************************************
     def _read_XYZblock(self, bytes_data, start_index, num_dims, iMax, jMax):
         """
         Reads a block of XYZ coordinates in PLOT3D format from a binary file.
@@ -665,11 +590,11 @@ class PWWPatch:
             for n in range(8):
                 _write_binary(f, self.geometry_format_string[n])
 
-            #****************************************************************
+            # --------------------------------------------------------------
             # write zone info
-
             if self.is_structured == True:
 
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 if self.geometry_time_type == 'constant':
 
                     # for each zone...
@@ -682,10 +607,12 @@ class PWWPatch:
                         _write_binary(f, self.zones[nz].iMax)
                         _write_binary(f, self.zones[nz].jMax)
 
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:
                     # TODO: implement non-constant geometries
                     print('Writing non-constant geometry zone info not implemented yet!')
 
+            # --------------------------------------------------------------
             else:
                 # TODO: implement non-structured headers
                 print('Writing non-structured geometry zone info not implemented yet!')
@@ -701,7 +628,7 @@ class PWWPatch:
         with open(filename, 'rb') as f:
             bytes_data = f.read()
 
-        # *******************************************************************
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # constant geometry
         if self.geometry_time_type == 'constant':
 
@@ -711,7 +638,7 @@ class PWWPatch:
             # for each zone
             for nz in range(self.n_zones):
 
-                # -----------------------------------------------------------
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # create empty numpy arrays for XYZ coordinates and normal
                 # coordinates (and IBLANK data, if included)
                 XYZ_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
@@ -727,26 +654,30 @@ class PWWPatch:
                         np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
                                  dtype=np.int32)
 
-                # -----------------------------------------------------------
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # read XYZ coords and next index
                 self.zones[nz].geometry.XYZ_coord, field_start = \
                     self._read_XYZblock(bytes_data, field_start, 3,
                                         self.zones[nz].iMax, self.zones[nz].jMax)
-                # -----------------------------------------------------------
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # read normal vector coords and next index
                 self.zones[nz].geometry.normal_coord, field_start = \
                     self._read_XYZblock(bytes_data, field_start, 3,
                                         self.zones[nz].iMax, self.zones[nz].jMax)
-                # -----------------------------------------------------------
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # if file contains IBLANK (int) data, read that
                 if self.has_iblank == True:
                     self.zones[nz].geometry.iblank, field_start = \
                         self._read_IBLANKblock(bytes_data, field_start,
                                                self.zones[nz].iMax,
                                                self.zones[nz].jMax)
-                # -----------------------------------------------------------
 
-        # *******************************************************************
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         else:
             # TODO: read non-constant geometry data
             print('Reading non-constant geometry data not implemented yet!')
@@ -863,7 +794,7 @@ class PWWPatch:
         # --> loading_format_string[9] is reserved for future use, and must be '0' in this version
 
 
-        # ------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # zone specification
 
         # read number of zones containing functional data (4 bytes)
@@ -881,7 +812,7 @@ class PWWPatch:
             self.zones_with_loading_data.append(_read_int(bytes_data, 1080 + z*4) - 1)
 
 
-        # ------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # read header info
 
         zone_info_start = 1080 + self.n_zones_with_loading_data*4
@@ -889,9 +820,11 @@ class PWWPatch:
         # version 1.0
         if self.version_number_minor == 0:
 
-            # ------------------------------------------------------------------
+            # --------------------------------------------------------------
             # structured, constant loading
             if self.is_structured == True:
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 if self.loading_time_type == 'constant':
 
                     for i, nz in enumerate(self.zones_with_loading_data):
@@ -915,22 +848,21 @@ class PWWPatch:
 
                         #self.zones.append(zone)
 
-                # ------------------------------------------------------------------
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:
                     # TODO: implement non-constant loading
                     print('Reading non-constant functional zone info not implemented yet!')
 
             # ------------------------------------------------------------------
             else:
-                # TODO: implement non-structured headers
+                # TODO: implement non-structured loading
                 print('Reading non-structured functional zone info not implemented yet!')
 
-        # ------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # TODO: implement header reader for version 1.1
         elif self.version_number2 == '1':
             print('Reading functional data file v1.1 header not implemented yet!')
 
-        # ------------------------------------------------------------------
 
     # ***********************************************************************
     def _write_loading_header(self, filename):
@@ -957,7 +889,7 @@ class PWWPatch:
             for n in range(10):
                 _write_binary(f, self.loading_format_string[n])
 
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # --------------------------------------------------------------
             # write zone specification
 
             # write number of zones with data
@@ -968,7 +900,7 @@ class PWWPatch:
             for z in self.zones_with_loading_data:
                 _write_binary(f, (z + 1))
 
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # --------------------------------------------------------------
             # write zone info
 
             if self.is_structured == True:
@@ -984,7 +916,6 @@ class PWWPatch:
                         _write_binary(f, self.zones[nz].iMax)
                         _write_binary(f, self.zones[nz].jMax)
 
-                # ------------------------------------------------------------
                 else:
                     # TODO: implement non-constant functional data header
                     print('Writing non-constant functional data header not implemented yet!')
@@ -994,7 +925,6 @@ class PWWPatch:
                 # TODO: implement non-structured headers
                 print('Writing non-structured functional data header not implemented yet!')
 
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
 
     # ***********************************************************************
     def _read_loading_data(self, filename):
@@ -1019,7 +949,7 @@ class PWWPatch:
                                + (1 + self.n_zones_with_loading_data)*4
                                + self.n_zones_with_loading_data*self.zones[0].header_length)
 
-                # -----------------------------------------------------------
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # if data is surface pressure
                 if self.loading_data_type == 'surf_pressure':
 
@@ -1038,7 +968,7 @@ class PWWPatch:
                                                 self.zones[nz].iMax,
                                                 self.zones[nz].jMax)
 
-                # -----------------------------------------------------------
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # if data is loading vectors
                 elif self.loading_data_type == 'surf_loading_vec':
 
@@ -1050,18 +980,20 @@ class PWWPatch:
                                                     self.zones[nz].jMax),
                                                    dtype=np.float32)
 
-                        self.zones[nz].add_StructuredConstantLoading(pressures, 'surf_loading_vec')
+                        self.zones[nz].add_StructuredConstantLoading(loading_vectors, 'surf_loading_vec')
 
                         # read pressure data and next index
                         self.zones[nz].loading.loading_vectors, field_start = \
                             self._read_XYZblock(bytes_data, field_start, 3,
                                                 self.zones[nz].iMax,
                                                 self.zones[nz].jMax)
-                # -----------------------------------------------------------
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 elif self.data_type == 'flow_params':
                     print('Reading flow parameters not implemented yet!')
 
-            # ----------------------------------------------------------------
+
+            # --------------------------------------------------------------
             else:
                 # TODO: read non-constant functional data
                 print('Reading non-constant functional data not implemented yet!')
@@ -1086,11 +1018,11 @@ class PWWPatch:
             # structured loading
             if self.is_structured == True:
 
-                # -----------------------------------------------------------
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # constant geometry
                 if self.loading_time_type == 'constant':
 
-                    # -----------------------------------------------------------
+                    # ......................................................
                     # if data is surface pressure
                     if self.loading_data_type == 'surf_pressure':
 
@@ -1105,7 +1037,7 @@ class PWWPatch:
                                 for i in range(self.zones[nz].iMax):
                                     _write_binary(f, self.zones[nz].loading.pressures[i, j])
 
-                    # -----------------------------------------------------------
+                    # ......................................................
                     # if data is surface loading vectors
                     elif self.loading_data_type == 'surf_loading_vec':
 
@@ -1121,12 +1053,12 @@ class PWWPatch:
                                     for i in range(self.zones[nz].iMax):
                                         _write_binary(f, self.zones[nz].loading.loading_vectors[n, i, j])
 
-                    # -----------------------------------------------------------
+                    # ......................................................
                     elif self.loading_data_type == 'flow_params':
                         # TODO: write flow params data
                         print('Writing flow parameters not implemented yet!')
 
-                # -----------------------------------------------------------
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:
                     # TODO: write non-constant loading data
                     print('Writing non-constant loading data not implemented yet!')
@@ -1135,6 +1067,7 @@ class PWWPatch:
             else:
                 # TODO: write non-structured loading data
                 print('Writing non-structured loading data not implemented yet!')
+
 
     # **********************************************************************
     def _update_n_zones(self):
@@ -1182,10 +1115,8 @@ class PWWPatch:
         self.geometry_format_string.append(iblank_dict[self.has_iblank])
         self.geometry_format_string.append(RESERVED_DIGIT)
 
-    # **********************************************************************
 
-
-# %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+# %% ##########################################################################
 class Zone:
     """
     Parent class for zone data containing zone name, header length (fixed at
@@ -1214,7 +1145,7 @@ class Zone:
         return str1+str2+str3+str4+str5
 
 
-# ****************************************************************************
+# ##########################################################################
 class StructuredZone(Zone):
     """
     Parent class for structured zone, containing structured dimensions (2 ints)
@@ -1305,18 +1236,18 @@ class StructuredZone(Zone):
         self.loading = StructuredConstantLoading(loading_data, loading_data_type)
 
 
+    # **********************************************************************
     def add_StructuredPeriodicLoading(self, loading_data, loading_data_type):
         # TODO: implement Structured Periodic Loading
         print("Structured Periodic Loading data not implemented yet!")
 
 
+    # **********************************************************************
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
         # TODO: implement Structured Aperiodic Loading
         print("Structured Aperiodic Loading data not implemented yet!")
 
 
-
-# **********************************************************************
 class StructuredConstantGeometry():
     """
     Class to store structured, constant geometry data - contains no time
@@ -1361,129 +1292,50 @@ class StructuredConstantLoading():
 
     def __init__(self, loading_data, loading_data_type):
 
-        # ------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # if data is (iMax, jMax)-shaped array of surface pressures
         if loading_data_type == 'surf_pressure':
 
             # copy input data
             self.pressures = np.copy(loading_data)
 
-        # ------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # if data is (3, iMax, jMax)-shaped array of surface loading vectors
         elif loading_data_type == 'surf_loading_vec':
 
             # copy input data
             self.loading_vectors = np.copy(loading_data)
 
-        # ------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         elif loading_data_type == 'flow_params':
             # TODO: implement structured constant loading using flow params!
             print('Structured constant loading using flow params not implemented yet!')
 
-        # ------------------------------------------------------------------
 
-# class StructuredConstantZone(StructuredZone):
+
+# %% ##########################################################################
+# class UnstructuredZone(Zone):
 #     """
-#     Class for structured, constant zone - contains no time information
+#     Parent class for unstructured zone, containing number of notes (int),
+#     number of faces (int), and a connectivity list.
+
+#     The connectivity list contains lists of integers defining each face: each
+#     face is specified by one int indicating how many nodes it contains,
+#     followed by that many integers defining the face. It is not used internally
+#     by PSU-WOPWOP, but is used to output sigma surfaces.
+
+#     Indices are one-based instead of zero-based, and are ordered clockwise
+#     around the outward-facing normal for each face.
 #     """
+
 #     def __init__(self):
 #         super().__init__()
+#         self.nbNodes = 0
+#         self.nbFaces = 0
+#         self.connectivity = None
+#         self.header_length += 2*VALUE_LENGTH
 
-
-#     def add_structured_constant_geom(self, XYZ_coord, normal_coord):
-#         """
-#         Adds structured, constant geometry data.
-
-#         Parameters
-#         ----------
-#         XYZ_coord : (3, iMax, jMax) array_like
-#             Array of mesh point coordinates to be added.
-
-#         normal_coord : (3, iMax, jMax) array_like
-#             Array of normal vector coordinates to be added.
-
-#         Returns
-#         -------
-#         None.
-
-#         """
-#         self.iMax = XYZ_coord.shape[1]
-#         self.jMax = XYZ_coord.shape[2]
-
-#         # copy input data XYZ coordinates and normal coordinates
-#         self.XYZ_coord = np.copy(XYZ_coord)
-#         self.normal_coord = np.copy(normal_coord)
-
-
-#     def add_structured_constant_loading(self, loading_data, loading_data_type):
-#         """
-#         Adds structured, constant pressure or loading vector data.
-
-#         Parameters
-#         ----------
-#         data : (iMax, jMax) or (3, iMax, jMax) array_like
-#             The array of data to be added. Its shape is (iMax, jMax) for
-#             pressure data, and (3, iMax, jMax) for loading vector data.
-
-#         loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
-#             A string describing the type of loading data.
-
-#         Returns
-#         -------
-#         None.
-
-#         """
-
-#         self.has_loading_data = True
-
-#         # ------------------------------------------------------------------
-#         # if data is (iMax, jMax)-shaped  array of surface pressures
-#         if loading_data_type == 'surf_pressure':
-#             self.iMax = loading_data.shape[0]
-#             self.jMax = loading_data.shape[1]
-
-#             # copy input data
-#             self.pressures = np.copy(loading_data)
-
-#         # ------------------------------------------------------------------
-#         # if data is (3, iMax, jMax)-shaped array of surface loading vectors
-#         elif loading_data_type == 'surf_loading_vec':
-#             self.iMax = loading_data.shape[1]
-#             self.jMax = loading_data.shape[2]
-
-#             # create empty numpy arrays for surface loading vectors, copy input data
-#             self.loading_vectors = np.copy(loading_data)
-
-#         # ------------------------------------------------------------------
-#         elif loading_data_type == 'flow_params':
-#             # TODO: implement structured constant loading using flow params!
-#             print('Structured constant loading using flow params not implemented yet!')
-
-#         # ------------------------------------------------------------------
-
-# ****************************************************************************
-class UnstructuredZone(Zone):
-    """
-    Parent class for unstructured zone, containing number of notes (int),
-    number of faces (int), and a connectivity list.
-
-    The connectivity list contains lists of integers defining each face: each
-    face is specified by one int indicating how many nodes it contains,
-    followed by that many integers defining the face. It is not used internally
-    by PSU-WOPWOP, but is used to output sigma surfaces.
-
-    Indices are one-based instead of zero-based, and are ordered clockwise
-    around the outward-facing normal for each face.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.nbNodes = 0
-        self.nbFaces = 0
-        self.connectivity = None
-        self.header_length += 2*VALUE_LENGTH
-
-        # TODO: define geometry_info_str!
+#         # TODO: define geometry_info_str!
 
 # **********************************************************************
 # class PeriodicZone(Zone):
@@ -1527,7 +1379,7 @@ class UnstructuredZone(Zone):
 #         super().__init__()
 
 
-# %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+# %% ##########################################################################
 # Assorted functions and checks
 
 def _reverse_dict(my_dict, my_value):
