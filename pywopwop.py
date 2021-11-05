@@ -731,7 +731,7 @@ class PWWPatch:
         assert file_endianness == ENDIANNESS, \
             "File endianness does not match pywopwop default!"
 
-        # open fileand read binary content
+        # open file and read binary content
         with open(filename, 'rb') as f:
             bytes_data = f.read()
 

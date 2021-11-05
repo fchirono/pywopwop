@@ -22,14 +22,14 @@ import pywopwop as PWW
 
 # %% Define directory containing geometry and loading files, plus filenames
 
-# wopwop_dir = '../../../PSU-WOPWOP_v3.4.4/case1/'
-# geometry_filename = 'gyrodyne.dat'
-# loading_filename = 'gyrodyneLoading.dat'
+wopwop_dir = '../../../PSU-WOPWOP_v3.4.4/case1/'
+geometry_filename = 'gyrodyne.dat'
+loading_filename = 'gyrodyneLoading.dat'
 
-# aperiodic loading not supported yet - loading file will not be identical
-wopwop_dir = '../../../PSU-WOPWOP_v3.4.4/case5/'
-geometry_filename = 'constGeo_short.dat'
-loading_filename = 'AperLoadingShort.dat'
+# # aperiodic loading not supported yet - loading file will not be identical
+# wopwop_dir = '../../../PSU-WOPWOP_v3.4.4/case5/'
+# geometry_filename = 'constGeo_short.dat'
+# loading_filename = 'AperLoadingShort.dat'
 
 # %%
 # initialize new instance, read files

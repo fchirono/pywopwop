@@ -144,7 +144,8 @@ rotorblade_patch.geometry_comment = 'Test geometry file for single blade'
 
 
 # add rotor blade geometry and normals to patch obj
-rotorblade_patch.add_StructuredConstantZone('Rotor blade', XYZ.T, normals.T)
+rotorblade_patch.add_StructuredZone('Rotor blade', XYZ.T, normals.T,
+                                    calc_thickness_noise=True)
 
 # print info
 rotorblade_patch.print_info()
