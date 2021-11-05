@@ -14,14 +14,6 @@ Author:
 import struct
 import numpy as np
 
-# ##########################################################################
-    # **********************************************************************
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-            # --------------------------------------------------------------
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-                    # ......................................................
-
-
 
 # %% ##########################################################################
 # PSU-WOPWOP program constants and dicts
@@ -547,7 +539,7 @@ class PWWPatch:
                     zone.iMax = _read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
                     zone.jMax = _read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
 
-                    zone._update_geometry_info()
+                    zone._update_geometry_info_str()
                     self.zones.append(zone)
 
             else:
@@ -570,8 +562,9 @@ class PWWPatch:
 
         # build format string with most recent format values
         self._build_geometry_format_string()
-
-        with open(filename, 'wb') as f:
+        
+        # open or create new file
+        with open(filename, 'wb+') as f:
 
             # write 'magic number' 42 to first 4 bytes
             _write_binary(f, MAGICNUMBER)
