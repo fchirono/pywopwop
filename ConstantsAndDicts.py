@@ -9,8 +9,8 @@ Author:
     Oct 2021
 """
 
-# ##########################################################################
-# PSU-WOPWOP program constants and dicts
+# %% #######################################################################
+# PSU-WOPWOP program constants
 # ##########################################################################
 
 MAGICNUMBER = 42
@@ -19,6 +19,14 @@ MAGICNUMBER = 42
 ENDIANNESS = 'little'
 VALUE_LENGTH = 4
 IS_SIGNED = True
+
+# Digit reserved for future use - must be '0' in this version
+RESERVED_DIGIT = 0
+
+
+# %% #######################################################################
+# PSU-WOPWOP program dictionaries
+# ##########################################################################
 
 # whether file is geometry file or node subset geometry file
 geom_dict = {'geometry'     : 1,
@@ -63,6 +71,3 @@ float_dict = {'single' : 1,
 # whether 'iblank' values are included with the geometry grid or not
 iblank_dict = {True : 1,
                False: 0}
-
-# Digit reserved for future use - must be '0' in this version
-RESERVED_DIGIT = 0
