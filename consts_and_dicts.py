@@ -8,7 +8,7 @@ pywopwop - https://github.com/fchirono/pywopwop
 
 Author:
     Fabio Casagrande Hirono
-    Oct 2021
+    Dec 2021
 """
 
 # %% #######################################################################

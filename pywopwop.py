@@ -7,7 +7,7 @@ pywopwop - https://github.com/fchirono/pywopwop
 
 Author:
     Fabio Casagrande Hirono
-    Oct 2021
+    Dec 2021
 """
 
 
@@ -23,6 +23,7 @@ from readers_and_writers import read_XYZblock, read_IBLANKblock, read_int, \
 
 from zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading
+
 
 # %% ##########################################################################
 class PWWPatch:
