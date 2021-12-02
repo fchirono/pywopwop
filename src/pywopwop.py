@@ -14,7 +14,7 @@ Author:
 import struct
 import numpy as np
 
-
+from .ConstantsAndDicts import *
 
 
 
