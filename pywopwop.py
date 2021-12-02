@@ -21,7 +21,8 @@ from constants_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
 from readers_and_writers import read_XYZblock, read_IBLANKblock, read_int, \
     read_float, write_binary, write_string, read_string
 
-
+from zones import Zone, StructuredZone, StructuredConstantGeometry, \
+    StructuredConstantLoading
 
 # %% ##########################################################################
 class PWWPatch:
@@ -295,23 +296,23 @@ class PWWPatch:
             bytes_data = f.read()
 
         # check version number - must be '1'and '0'
-        self.version_number_major = _read_int(bytes_data, 4)
-        self.version_number_minor = _read_int(bytes_data, 8)
+        self.version_number_major = read_int(bytes_data, 4)
+        self.version_number_minor = read_int(bytes_data, 8)
 
         assert ((self.version_number_major == 1)
                 and (self.version_number_minor == 0)), \
             'File version is not v1.0!'
 
         # read units string (32 chars, starting at index 12)
-        self.units_string = _read_string(bytes_data, 12, 32)
+        self.units_string = read_string(bytes_data, 12, 32)
 
         # read comments string (1024 bytes, starting at index 44)
-        self.geometry_comment = _read_string(bytes_data, 44, 1024)
+        self.geometry_comment = read_string(bytes_data, 44, 1024)
 
         # read format string (8 ints, 32 bytes, starting at index 1068)
         self.geometry_format_string = []
         for n in range(8):
-            self.geometry_format_string.append(_read_int(bytes_data, 1068 + 4*n))
+            self.geometry_format_string.append(read_int(bytes_data, 1068 + 4*n))
 
         # Populate file type description
         self.geometry_type      = _reverse_dict(geom_dict, self.geometry_format_string[0])
@@ -334,10 +335,10 @@ class PWWPatch:
                     # instantiate zone and read info from file
                     zone = StructuredZone()
 
-                    zone.geometry_name = _read_string(bytes_data, 1100 + nz*zone.header_length, 32)
+                    zone.geometry_name = read_string(bytes_data, 1100 + nz*zone.header_length, 32)
                     zone.loading_name = ''
-                    zone.iMax = _read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
-                    zone.jMax = _read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
+                    zone.iMax = read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
+                    zone.jMax = read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
 
                     zone._update_geometry_info_str()
                     self.zones.append(zone)
@@ -367,21 +368,21 @@ class PWWPatch:
         with open(filename, 'wb+') as f:
 
             # write 'magic number' 42 to first 4 bytes
-            _write_binary(f, MAGICNUMBER)
+            write_binary(f, MAGICNUMBER)
 
             # write version number
-            _write_binary(f, self.version_number_major)
-            _write_binary(f, self.version_number_minor)
+            write_binary(f, self.version_number_major)
+            write_binary(f, self.version_number_minor)
 
             # write units string (32 chars)
-            _write_string(f, self.units_string, 32)
+            write_string(f, self.units_string, 32)
 
             # write comments string (1024 bytes)
-            _write_string(f, self.geometry_comment, 1024)
+            write_string(f, self.geometry_comment, 1024)
 
             # write format string (8 ints, 32 bytes)
             for n in range(8):
-                _write_binary(f, self.geometry_format_string[n])
+                write_binary(f, self.geometry_format_string[n])
 
             # --------------------------------------------------------------
             # write zone info
@@ -394,11 +395,11 @@ class PWWPatch:
                     for nz in range(self.n_zones):
 
                         # write name (32-byte string)
-                        _write_string(f, self.zones[nz].geometry_name, 32)
+                        write_string(f, self.zones[nz].geometry_name, 32)
 
                         # write iMax and jMax (4 byte ints)
-                        _write_binary(f, self.zones[nz].iMax)
-                        _write_binary(f, self.zones[nz].jMax)
+                        write_binary(f, self.zones[nz].iMax)
+                        write_binary(f, self.zones[nz].jMax)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:
@@ -499,19 +500,19 @@ class PWWPatch:
                         # write order is Fortran (column-major)
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
-                                _write_binary(f, self.zones[nz].geometry.XYZ_coord[n, i, j])
+                                write_binary(f, self.zones[nz].geometry.XYZ_coord[n, i, j])
 
                     # write normal vector coords
                     for n in range(3):
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
-                                _write_binary(f, self.zones[nz].geometry.normal_coord[n, i, j])
+                                write_binary(f, self.zones[nz].geometry.normal_coord[n, i, j])
 
                     # write IBLANK data
                     if self.has_iblank == True:
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
-                                _write_binary(f, self.zones[nz].geometry.iblank[i, j])
+                                write_binary(f, self.zones[nz].geometry.iblank[i, j])
 
             # -----------------------------------------------------------
             else:
@@ -536,14 +537,14 @@ class PWWPatch:
             bytes_data = f.read()
 
         # check version number - must be '1'and '0'
-        self.version_number_major = _read_int(bytes_data, 4)
-        self.version_number_minor = _read_int(bytes_data, 8)
+        self.version_number_major = read_int(bytes_data, 4)
+        self.version_number_minor = read_int(bytes_data, 8)
 
         assert ((self.version_number_major == 1) and (self.version_number_minor == 0)), \
             'File version is not v1.0!'
 
         # read comments string (1024 bytes, starting at index 12)
-        self.loading_comment = _read_string(bytes_data, 12, 1024)
+        self.loading_comment = read_string(bytes_data, 12, 1024)
 
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
@@ -552,7 +553,7 @@ class PWWPatch:
 
         self.loading_format_string = []
         for n in range(10):
-            self.loading_format_string.append(_read_int(bytes_data, 1036 + 4*n))
+            self.loading_format_string.append(read_int(bytes_data, 1036 + 4*n))
 
         # Verify file type description
         # --> loading_format_string[0] is '2' to indicate functional data file
@@ -591,7 +592,7 @@ class PWWPatch:
         # zone specification
 
         # read number of zones containing functional data (4 bytes)
-        self.n_zones_with_loading_data = _read_int(bytes_data, 1076)
+        self.n_zones_with_loading_data = read_int(bytes_data, 1076)
 
         # create list of zones containing functional data
         # -->>  negative numbers indicate zones for which WOPWOP should *NOT*
@@ -602,7 +603,7 @@ class PWWPatch:
         self.zones_with_loading_data = []
 
         for z in range(self.n_zones_with_loading_data):
-            self.zones_with_loading_data.append(_read_int(bytes_data, 1080 + z*4) - 1)
+            self.zones_with_loading_data.append(read_int(bytes_data, 1080 + z*4) - 1)
 
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
@@ -629,9 +630,9 @@ class PWWPatch:
                         zone = self.zones[nz]
 
                         # read loading zone name, assert iMax and jMax match
-                        zone.loading_name = _read_string(bytes_data, zone_info_start + i*zone.header_length, 32)
-                        iMax_fromfile = _read_int(bytes_data, zone_info_start + 32 + i*zone.header_length)
-                        jMax_fromfile = _read_int(bytes_data, zone_info_start + 36 + i*zone.header_length)
+                        zone.loading_name = read_string(bytes_data, zone_info_start + i*zone.header_length, 32)
+                        iMax_fromfile = read_int(bytes_data, zone_info_start + 32 + i*zone.header_length)
+                        jMax_fromfile = read_int(bytes_data, zone_info_start + 36 + i*zone.header_length)
 
                         assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
                             "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
@@ -669,29 +670,29 @@ class PWWPatch:
         with open(filename, 'wb') as f:
 
             # write 'magic number' 42 to first 4 bytes
-            _write_binary(f, MAGICNUMBER)
+            write_binary(f, MAGICNUMBER)
 
             # write version number
-            _write_binary(f, self.version_number_major)
-            _write_binary(f, self.version_number_minor)
+            write_binary(f, self.version_number_major)
+            write_binary(f, self.version_number_minor)
 
             # write comments string (1024 bytes)
-            _write_string(f, self.loading_comment, 1024)
+            write_string(f, self.loading_comment, 1024)
 
             # write format string (10 ints, 40 bytes)
             for n in range(10):
-                _write_binary(f, self.loading_format_string[n])
+                write_binary(f, self.loading_format_string[n])
 
             # --------------------------------------------------------------
             # write zone specification
 
             # write number of zones with data
-            _write_binary(f, self.n_zones_with_loading_data)
+            write_binary(f, self.n_zones_with_loading_data)
 
             # write list of those zones - add one to create one-based
             # (PSU-WOPWOP) indices
             for z in self.zones_with_loading_data:
-                _write_binary(f, (z + 1))
+                write_binary(f, (z + 1))
 
             # --------------------------------------------------------------
             # write zone info
@@ -703,11 +704,11 @@ class PWWPatch:
                     for nz in self.zones_with_loading_data:
 
                         # write name (32-byte string)
-                        _write_string(f, self.zones[nz].loading_name, 32)
+                        write_string(f, self.zones[nz].loading_name, 32)
 
                         # write iMax and jMax (4 byte ints)
-                        _write_binary(f, self.zones[nz].iMax)
-                        _write_binary(f, self.zones[nz].jMax)
+                        write_binary(f, self.zones[nz].iMax)
+                        write_binary(f, self.zones[nz].jMax)
 
                 else:
                     # TODO: implement non-constant functional data header
@@ -828,7 +829,7 @@ class PWWPatch:
                             # write pressure data in Fortran (column-major) order
                             for j in range(self.zones[nz].jMax):
                                 for i in range(self.zones[nz].iMax):
-                                    _write_binary(f, self.zones[nz].loading.pressures[i, j])
+                                    write_binary(f, self.zones[nz].loading.pressures[i, j])
 
                     # ......................................................
                     # if data is surface loading vectors
@@ -844,7 +845,7 @@ class PWWPatch:
                             for n in range(3):
                                 for j in range(self.zones[nz].jMax):
                                     for i in range(self.zones[nz].iMax):
-                                        _write_binary(f, self.zones[nz].loading.loading_vectors[n, i, j])
+                                        write_binary(f, self.zones[nz].loading.loading_vectors[n, i, j])
 
                     # ......................................................
                     elif self.loading_data_type == 'flow_params':
@@ -908,268 +909,6 @@ class PWWPatch:
         self.geometry_format_string.append(iblank_dict[self.has_iblank])
         self.geometry_format_string.append(RESERVED_DIGIT)
 
-
-# %% ##########################################################################
-class Zone:
-    """
-    Parent class for zone data containing zone name, header length (fixed at
-    32 bytes) and some calculation flags.
-    """
-    def __init__(self):
-        self.name = ''
-        self.number = 0                     # zone numbers use 1-based index
-
-        self.calc_thickness_noise = True
-        self.has_loading_data = False
-
-        self.header_length = 32             # 'name' string has 32 bytes
-
-        self.geometry = None
-        self.loading = None
-
-
-    def __str__(self):
-        str1 = '\n\tGeometry name:          ' + self.geometry_name
-        str2 = '\n\tLoading name:           ' + self.loading_name
-        str3 = '\n\tGeometry info:          ' + self.geometry_info_str
-        str4 = '\n\tCalc thickness noise:   ' + str(self.calc_thickness_noise)
-        str5 = '\n\tHas loading data:       ' + str(self.has_loading_data)
-
-        return str1+str2+str3+str4+str5
-
-
-# ##########################################################################
-class StructuredZone(Zone):
-    """
-    Parent class for structured zone, containing structured dimensions (2 ints)
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.iMax = 0
-        self.jMax = 0
-        self.header_length += 2*VALUE_LENGTH
-
-        self._update_geometry_info_str()
-
-
-    def _update_geometry_info_str(self):
-        str_iMax = '\n\t--> iMax:               ' + str(self.iMax)
-        str_jMax = '\n\t--> jMax:               ' + str(self.jMax)
-        self.geometry_info_str = str_iMax + str_jMax
-
-
-    # **********************************************************************
-    def add_StructuredConstantGeometry(self, XYZ_coord, normal_coord):
-        """
-        Adds structured, constant geometry data to current structured zone.
-
-        Parameters
-        ----------
-        XYZ_coord : (3, iMax, jMax) array_like
-            Array of mesh point coordinates to be added.
-
-        normal_coord : (3, iMax, jMax) array_like
-            Array of normal vector coordinates to be added.
-
-        Returns
-        -------
-        None.
-        """
-
-        # updates iMax, jMax
-        _, self.iMax, self.jMax = XYZ_coord.shape
-
-        self.geometry = StructuredConstantGeometry(XYZ_coord, normal_coord)
-        self._update_geometry_info_str()
-
-
-    def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord):
-        # TODO: implement Structured Periodic Geometry
-        print("Structured Periodic Geometry data not implemented yet!")
-
-
-    def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord):
-        # TODO: implement Structured Aperiodic Geometry
-        print("Structured Aperiodic Geometry data not implemented yet!")
-
-
-    # **********************************************************************
-    def add_StructuredConstantLoading(self, loading_data, loading_data_type):
-        """
-        Adds structured constant loading to current structured zone.
-
-        Parameters
-        ----------
-        loading_data : (iMax, jMax) or (3, iMax, jMax) array_like
-            The array of data to be added. Its shape is (iMax, jMax) for
-            pressure data, and (3, iMax, jMax) for loading vector data.
-
-        loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
-            A string describing the type of loading data.
-
-        Returns
-        -------
-        None.
-
-        """
-
-        # check 'loading_data_type' arg vs. loading data array shape
-        if loading_data_type == 'surf_pressure':
-            assert loading_data.shape == (self.iMax, self.jMax), \
-                "'loading_data' does not match expected shape for 'surf_pressure' (iMax, jMax)!"
-
-        elif loading_data_type == 'surf_loading_vec':
-            assert loading_data.shape == (3, self.iMax, self.jMax), \
-                "'loading_data' does not match expected shape for 'surf_loading_vec' (3, iMax, jMax)!"
-
-        elif loading_data_type == 'flow_params':
-            print("Cannot add 'flow_params' data to StructuredZone - not implemented yet!")
-
-        self.loading = StructuredConstantLoading(loading_data, loading_data_type)
-
-
-    # **********************************************************************
-    def add_StructuredPeriodicLoading(self, loading_data, loading_data_type):
-        # TODO: implement Structured Periodic Loading
-        print("Structured Periodic Loading data not implemented yet!")
-
-
-    # **********************************************************************
-    def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
-        # TODO: implement Structured Aperiodic Loading
-        print("Structured Aperiodic Loading data not implemented yet!")
-
-
-class StructuredConstantGeometry():
-    """
-    Class to store structured, constant geometry data - contains no time
-    information.
-
-    Parameters
-    ----------
-    XYZ_coord : (3, iMax, jMax) array_like
-        Array of mesh point coordinates to be added.
-
-    normal_coord : (3, iMax, jMax) array_like
-        Array of normal vector coordinates to be added.
-
-    Returns
-    -------
-    None.
-    """
-
-    def __init__(self, XYZ_coord, normal_coord):
-        self.XYZ_coord = np.copy(XYZ_coord)
-        self.normal_coord = np.copy(normal_coord)
-
-
-class StructuredConstantLoading():
-    """
-    Class to store structured, constant pressure or loading vector data.
-
-    Parameters
-    ----------
-    loading_data : (iMax, jMax) or (3, iMax, jMax) array_like
-        The array of data to be added. Its shape is (iMax, jMax) for
-        pressure data, and (3, iMax, jMax) for loading vector data.
-
-    loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
-        A string describing the type of loading data.
-
-    Returns
-    -------
-    None.
-
-    """
-
-    def __init__(self, loading_data, loading_data_type):
-
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # if data is (iMax, jMax)-shaped array of surface pressures
-        if loading_data_type == 'surf_pressure':
-
-            # copy input data
-            self.pressures = np.copy(loading_data)
-
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # if data is (3, iMax, jMax)-shaped array of surface loading vectors
-        elif loading_data_type == 'surf_loading_vec':
-
-            # copy input data
-            self.loading_vectors = np.copy(loading_data)
-
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        elif loading_data_type == 'flow_params':
-            # TODO: implement structured constant loading using flow params!
-            print('Structured constant loading using flow params not implemented yet!')
-
-
-
-# %% ##########################################################################
-# class UnstructuredZone(Zone):
-#     """
-#     Parent class for unstructured zone, containing number of notes (int),
-#     number of faces (int), and a connectivity list.
-
-#     The connectivity list contains lists of integers defining each face: each
-#     face is specified by one int indicating how many nodes it contains,
-#     followed by that many integers defining the face. It is not used internally
-#     by PSU-WOPWOP, but is used to output sigma surfaces.
-
-#     Indices are one-based instead of zero-based, and are ordered clockwise
-#     around the outward-facing normal for each face.
-#     """
-
-#     def __init__(self):
-#         super().__init__()
-#         self.nbNodes = 0
-#         self.nbFaces = 0
-#         self.connectivity = None
-#         self.header_length += 2*VALUE_LENGTH
-
-#         # TODO: define geometry_info_str!
-
-# **********************************************************************
-# class PeriodicZone(Zone):
-#     """
-#     Parent class for time-varying period zone, containing period (in seconds)
-#     and number of time steps (integer)
-#     """
-#     def __init__(self):
-#         super().__init__()
-#         self.period = 0.
-#         self.nt = 0
-#         self.header_length += 2*VALUE_LENGTH
-
-
-# class AperiodicZone(Zone):
-#     """
-#     Parent class for time-varying aperiod zone, containing number of time
-#     steps (integer)
-#     """
-#     def __init__(self):
-#         super().__init__()
-#         self.nt = 0
-#         self.header_length += VALUE_LENGTH
-
-
-# # TODO: add period and nt info on initialization
-# class StructuredPeriodicZone(StructuredZone, PeriodicZone):
-#     """
-#     Class for structured, periodic zone
-#     """
-#     def __init__(self):
-#         super().__init__()
-
-
-# # TODO: add nt info on initialization
-# class StructuredAperiodicZone(StructuredZone, AperiodicZone):
-#     """
-#     Class for structured, aperiodic zone
-#     """
-#     def __init__(self):
-#         super().__init__()
 
 
 # %% ##########################################################################
