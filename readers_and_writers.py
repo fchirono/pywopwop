@@ -52,7 +52,7 @@ def initial_check(filename):
 
 
 # %% #######################################################################
-# PSU-WOPWOP Plot3D-like block readers
+# PSU-WOPWOP Plot3D-like block readers and writers
 # ##########################################################################
 
 def read_block(bytes_data, start_index, num_dims, iMax, jMax):
@@ -60,8 +60,8 @@ def read_block(bytes_data, start_index, num_dims, iMax, jMax):
     Reads a block of data in PLOT3D-like format from a binary file.
 
     The block of data is a (num_dims, iMax, jMax)-shaped array of float32
-    values. It can be a block of 3D coordinates (x,y,z) if 'num_dims=3', 2D
-    coordinates (x,y) if 'num_dims=2', or one-dimensional
+    values. It can be a block of 3D data (x,y,z) if 'num_dims=3', 2D
+    data (x,y) if 'num_dims=2', or one-dimensional data (x) if 'num_dims=1'.
 
     Parameters
     ----------
@@ -144,6 +144,46 @@ def read_block(bytes_data, start_index, num_dims, iMax, jMax):
     next_index = start_index + VALUE_LENGTH*(num_dims*iMax*jMax)
 
     return block_data, next_index
+
+
+def write_block(file, block_data):
+    """
+    Writes a block of data in PLOT3D-like format to a binary file.
+
+    The block of data is a (num_dims, iMax, jMax)-shaped array of float32
+    values, and the write order is Fortran (column-major).
+
+    Parameters
+    ----------
+    file : file object
+        File object obtained from calling 'open(some_filename)'.
+
+    block_data : (iMax, jMax) or (num_dims, iMax, jMax) array_like
+        Numpy array containing the data to be written. Data can be integer
+        or floating-point.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    See documentation for 'pywopwop.write_binary' function for more info on
+    supported data types.
+    """
+
+    # if block_data is (iMax, jMax)-shaped, reshape to have 3 dims
+    if block_data.ndim == 2:
+        block_data = block_data[np.newaxis, :, :]
+
+    num_dims, iMax, jMax = block_data.shape
+
+    # write block data
+    for n in range(num_dims):
+        for j in range(jMax):
+            for i in range(iMax):
+                write_binary(file, block_data[n, i, j])
+
 
 
 def read_IBLANKblock(bytes_data, start_index, iMax, jMax):

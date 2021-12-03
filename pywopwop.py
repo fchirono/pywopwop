@@ -500,7 +500,6 @@ class PWWPatch:
 
                     # write XYZ coords
                     for n in range(3):
-
                         # write order is Fortran (column-major)
                         for j in range(self.zones[nz].jMax):
                             for i in range(self.zones[nz].iMax):
