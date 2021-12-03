@@ -171,7 +171,42 @@ def read_IBLANKblock(bytes_data, start_index, iMax, jMax):
     return IBLANK_data, next_index
 
 
-# %%
+# %% #######################################################################
+# PSU-WOPWOP string reader / writer
+# ##########################################################################
+
+def write_string(file, string, max_length):
+    """
+    Writes a ASCII-compatible string to an open binary file object, up to a
+    maximum length. If string is shorter than 'max_length', pad with spaces.
+    """
+
+    # check string is ASCII compatible
+    ascii_error = 'String is not ASCII compatible!'
+    assert string[:max_length].isascii(), ascii_error
+
+    # check string has length 'max_length', pad with spaces otherwise
+    if len(string) < max_length:
+        string += (max_length-len(string))*' '
+
+    file.write(string[:max_length].encode('ascii'))
+
+
+def read_string(obj_name, start_index, len_string):
+    """
+    Reads strings of arbitrary length from binary file object.
+    """
+    mystring = ''
+    for i in range(len_string):
+        mystring += chr(read_int(obj_name, start_index + i, 1))
+
+    return mystring
+
+
+# %% #######################################################################
+# PSU-WOPWOP int and float reader / writer
+# ##########################################################################
+
 def read_int(obj_name, start_index, n_bytes=VALUE_LENGTH,
              endianness_flag=ENDIANNESS):
     """
@@ -291,31 +326,3 @@ def write_binary(file, data, length=VALUE_LENGTH,
         format_string = endianness[endianness_flag] + floatlen[length]
 
         file.write(struct.pack(format_string, data))
-
-
-def write_string(file, string, max_length):
-    """
-    Writes a ASCII-compatible string to an open binary file object, up to a
-    maximum length. If string is shorter than 'max_length', pad with spaces.
-    """
-
-    # check string is ASCII compatible
-    ascii_error = 'String is not ASCII compatible!'
-    assert string[:max_length].isascii(), ascii_error
-
-    # check string has length 'max_length', pad with spaces otherwise
-    if len(string) < max_length:
-        string += (max_length-len(string))*' '
-
-    file.write(string[:max_length].encode('ascii'))
-
-
-def read_string(obj_name, start_index, len_string):
-    """
-    Reads strings of arbitrary length stored in binary format.
-    """
-    mystring = ''
-    for i in range(len_string):
-        mystring += chr(read_int(obj_name, start_index + i, 1))
-
-    return mystring
