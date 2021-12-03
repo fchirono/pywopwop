@@ -17,7 +17,10 @@ import numpy as np
 from constants_and_dicts import VALUE_LENGTH
 
 
-# %% ##########################################################################
+# %% #######################################################################
+# PSU-WOPWOP parent class Zone
+# ##########################################################################
+
 class Zone:
     """
     Parent class for zone data containing zone name, header length (fixed at
@@ -46,7 +49,10 @@ class Zone:
         return str1+str2+str3+str4+str5
 
 
+# %% #######################################################################
+# PSU-WOPWOP classes for structured data
 # ##########################################################################
+
 class StructuredZone(Zone):
     """
     Parent class for structured zone, containing structured dimensions (2 ints)
@@ -214,7 +220,10 @@ class StructuredConstantLoading():
 
 
 
-# %% ##########################################################################
+# %% #######################################################################
+# PSU-WOPWOP classes for unstructured data - UNDER DEVELOPMENT
+# ##########################################################################
+
 # class UnstructuredZone(Zone):
 #     """
 #     Parent class for unstructured zone, containing number of notes (int),
