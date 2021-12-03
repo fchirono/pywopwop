@@ -15,7 +15,7 @@ Author:
 import numpy as np
 import struct
 
-from constants_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
+from consts_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
 
 
 # %% #######################################################################
