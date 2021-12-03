@@ -25,7 +25,10 @@ from zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading
 
 
-# %% ##########################################################################
+# %% #######################################################################
+# PSU-WOPWOP main class PWWPatch
+# ##########################################################################
+
 class PWWPatch:
     """
     Parent class to read, write and store PSU-WOPWOP data and  files.
@@ -915,16 +918,7 @@ class PWWPatch:
 # %% ##########################################################################
 # Assorted functions and checks
 
-def _reverse_dict(my_dict, my_value):
-    """
-    Tries to find which key corresponds to a given value in a dictionary - i.e.
-    reverses the dict lookup.
 
-    This code assumes no two keys share the same value - as is the case with
-    PSU-WOPWOP dicts used here.
-    """
-
-    return {value: key for key, value in my_dict.items()}[my_value]
 
 
 def initial_check(filename):

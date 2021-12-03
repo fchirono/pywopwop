@@ -27,8 +27,20 @@ RESERVED_DIGIT = 0
 
 
 # %% #######################################################################
-# PSU-WOPWOP program dictionaries
+# PSU-WOPWOP program dictionaries and reverse_dict function
 # ##########################################################################
+
+def reverse_dict(my_dict, my_value):
+    """
+    Tries to find which key corresponds to a given value in a dictionary - i.e.
+    reverses the dict lookup.
+
+    This code assumes no two keys share the same value - as is the case with
+    PSU-WOPWOP dicts used here.
+    """
+
+    return {value: key for key, value in my_dict.items()}[my_value]
+
 
 # whether file is geometry file or node subset geometry file
 geom_dict = {'geometry'     : 1,
