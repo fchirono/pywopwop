@@ -14,12 +14,13 @@ Author:
 import numpy as np
 
 from consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
-    IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, loading_time_dict, \
-    geometry_time_dict, centered_dict, loading_data_dict, ref_frame_dict, \
-    float_dict, iblank_dict
+    IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, \
+    loading_time_dict, geometry_time_dict, centered_dict, loading_data_dict, \
+    ref_frame_dict, float_dict, iblank_dict
 
-from readers_and_writers import initial_check, read_block, read_IBLANKblock, \
-    read_int, read_float, write_binary, write_string, read_string
+from readers_and_writers import initial_check, read_block, write_block, \
+    read_IBLANKblock, read_int, read_float, write_binary, write_string, \
+    read_string
 
 from zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading
@@ -499,23 +500,26 @@ class PWWPatch:
                 for nz in range(self.n_zones):
 
                     # write XYZ coords
-                    for n in range(3):
-                        # write order is Fortran (column-major)
-                        for j in range(self.zones[nz].jMax):
-                            for i in range(self.zones[nz].iMax):
-                                write_binary(f, self.zones[nz].geometry.XYZ_coord[n, i, j])
+                    write_block(f, self.zones[nz].geometry.XYZ_coord)
+                    # for n in range(3):
+                    #     # write order is Fortran (column-major)
+                    #     for j in range(self.zones[nz].jMax):
+                    #         for i in range(self.zones[nz].iMax):
+                    #             write_binary(f, self.zones[nz].geometry.XYZ_coord[n, i, j])
 
                     # write normal vector coords
-                    for n in range(3):
-                        for j in range(self.zones[nz].jMax):
-                            for i in range(self.zones[nz].iMax):
-                                write_binary(f, self.zones[nz].geometry.normal_coord[n, i, j])
+                    write_block(f, self.zones[nz].geometry.normal_coord)
+                    # for n in range(3):
+                    #     for j in range(self.zones[nz].jMax):
+                    #         for i in range(self.zones[nz].iMax):
+                    #             write_binary(f, self.zones[nz].geometry.normal_coord[n, i, j])
 
                     # write IBLANK data
                     if self.has_iblank == True:
-                        for j in range(self.zones[nz].jMax):
-                            for i in range(self.zones[nz].iMax):
-                                write_binary(f, self.zones[nz].geometry.iblank[i, j])
+                        write_block(f, self.zones[nz].geometry.iblank)
+                        # for j in range(self.zones[nz].jMax):
+                        #     for i in range(self.zones[nz].iMax):
+                        #         write_binary(f, self.zones[nz].geometry.iblank[i, j])
 
             # -----------------------------------------------------------
             else:
@@ -830,9 +834,10 @@ class PWWPatch:
                             nz = abs(nz)
 
                             # write pressure data in Fortran (column-major) order
-                            for j in range(self.zones[nz].jMax):
-                                for i in range(self.zones[nz].iMax):
-                                    write_binary(f, self.zones[nz].loading.pressures[i, j])
+                            write_block(f, self.zones[nz].loading.pressures)
+                            # for j in range(self.zones[nz].jMax):
+                            #     for i in range(self.zones[nz].iMax):
+                            #         write_binary(f, self.zones[nz].loading.pressures[i, j])
 
                     # ......................................................
                     # if data is surface loading vectors
@@ -845,10 +850,11 @@ class PWWPatch:
                             nz = abs(nz)
 
                             # write loading vectors in Fortran (column-major) order
-                            for n in range(3):
-                                for j in range(self.zones[nz].jMax):
-                                    for i in range(self.zones[nz].iMax):
-                                        write_binary(f, self.zones[nz].loading.loading_vectors[n, i, j])
+                            write_block(f, self.zones[nz].loading.loading_vectors)
+                            # for n in range(3):
+                            #     for j in range(self.zones[nz].jMax):
+                            #         for i in range(self.zones[nz].iMax):
+                            #             write_binary(f, self.zones[nz].loading.loading_vectors[n, i, j])
 
                     # ......................................................
                     elif self.loading_data_type == 'flow_params':
