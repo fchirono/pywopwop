@@ -14,12 +14,12 @@ Author:
 import numpy as np
 
 from constants_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
-    IS_SIGNED, RESERVED_DIGIT, geom_dict, structured_dict, loading_time_dict, \
+    IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, loading_time_dict, \
     geometry_time_dict, centered_dict, loading_data_dict, ref_frame_dict, \
     float_dict, iblank_dict
 
-from readers_and_writers import read_block, read_IBLANKblock, read_int, \
-    read_float, write_binary, write_string, read_string
+from readers_and_writers import initial_check, read_block, read_IBLANKblock, \
+    read_int, read_float, write_binary, write_string, read_string
 
 from zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading
@@ -319,13 +319,13 @@ class PWWPatch:
             self.geometry_format_string.append(read_int(bytes_data, 1068 + 4*n))
 
         # Populate file type description
-        self.geometry_type      = _reverse_dict(geom_dict, self.geometry_format_string[0])
+        self.geometry_type      = reverse_dict(geom_dict, self.geometry_format_string[0])
         self.n_zones            = self.geometry_format_string[1]
-        self.is_structured      = _reverse_dict(structured_dict, self.geometry_format_string[2])
-        self.geometry_time_type = _reverse_dict(geometry_time_dict, self.geometry_format_string[3])
-        self.centered_type      = _reverse_dict(centered_dict, self.geometry_format_string[4])
-        self.float_type         = _reverse_dict(float_dict, self.geometry_format_string[5])
-        self.has_iblank         = _reverse_dict(iblank_dict, self.geometry_format_string[6])
+        self.is_structured      = reverse_dict(structured_dict, self.geometry_format_string[2])
+        self.geometry_time_type = reverse_dict(geometry_time_dict, self.geometry_format_string[3])
+        self.centered_type      = reverse_dict(centered_dict, self.geometry_format_string[4])
+        self.float_type         = reverse_dict(float_dict, self.geometry_format_string[5])
+        self.has_iblank         = reverse_dict(iblank_dict, self.geometry_format_string[6])
 
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
@@ -568,24 +568,24 @@ class PWWPatch:
             "Number of zones in loading file does not match geometry file!"
 
         assert (self.is_structured
-                == _reverse_dict(structured_dict, self.loading_format_string[2])), \
+                == reverse_dict(structured_dict, self.loading_format_string[2])), \
             "Loading file 'is_structured' property does not match!"
 
         self.loading_time_type = \
-            _reverse_dict(loading_time_dict, self.loading_format_string[3])
+            reverse_dict(loading_time_dict, self.loading_format_string[3])
 
         assert (self.centered_type
-                == _reverse_dict(centered_dict, self.loading_format_string[4])), \
+                == reverse_dict(centered_dict, self.loading_format_string[4])), \
             "Loading file 'centered_type' property does not match!"
 
         self.loading_data_type  = \
-            _reverse_dict(loading_data_dict, self.loading_format_string[5])
+            reverse_dict(loading_data_dict, self.loading_format_string[5])
 
         self.loading_ref_frame  = \
-            _reverse_dict(ref_frame_dict, self.loading_format_string[6])
+            reverse_dict(ref_frame_dict, self.loading_format_string[6])
 
         assert (self.float_type
-                == _reverse_dict(float_dict, self.loading_format_string[7])), \
+                == reverse_dict(float_dict, self.loading_format_string[7])), \
             "Loading file 'float_type' property does not match!"
 
         # --> loading_format_string[8] is reserved for future use, and must be '0' in this version
@@ -912,39 +912,3 @@ class PWWPatch:
         self.geometry_format_string.append(float_dict[self.float_type])
         self.geometry_format_string.append(iblank_dict[self.has_iblank])
         self.geometry_format_string.append(RESERVED_DIGIT)
-
-
-
-# %% ##########################################################################
-# Assorted functions and checks
-
-
-
-
-def initial_check(filename):
-    """
-    Check the first 4 bytes of a file for the 'magic number' and return the
-    file endianness. If the 'magic number' is not found, the file is probably
-    not a PSU-WOPWOP file and an error is raised.
-    """
-
-    endianness_flag = 'little'
-
-    # read first four bytes to check for 'magic number' 42 and endianness
-    with open(filename, 'rb') as file:
-        bytes_data = file.read(4)
-
-    # if little endian, continue
-    if bytes_data == b'*\x00\x00\x00':
-        print('Magic number is correct - file {} is little endian\n'.format(filename))
-
-    # if big endian, change flag and continue
-    elif bytes_data == b'\x00\x00\x00*':
-        endianness_flag = 'big'
-        print('Magic number is correct - file {} is big endian\n'.format(filename))
-
-    # if none, magic number is incorrect - probably not PSU-WOPWOP file!
-    else:
-        raise ValueError('Magic number is incorrect - file {} is probably not a PSU-WOPWOP patch file v1.0!'.format(filename))
-
-    return endianness_flag

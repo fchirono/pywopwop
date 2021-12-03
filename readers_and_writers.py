@@ -19,6 +19,39 @@ from constants_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
 
 
 # %% #######################################################################
+# PSU-WOPWOP initial file check for 'magic number' and endianness
+# ##########################################################################
+
+def initial_check(filename):
+    """
+    Check the first 4 bytes of a file for the 'magic number' and return the
+    file endianness. If the 'magic number' is not found, the file is probably
+    not a PSU-WOPWOP file and an error is raised.
+    """
+
+    endianness_flag = 'little'
+
+    # read first four bytes to check for 'magic number' 42 and endianness
+    with open(filename, 'rb') as file:
+        bytes_data = file.read(4)
+
+    # if data is 42 in little endian, continue
+    if bytes_data == b'*\x00\x00\x00':
+        print('Magic number is correct - file {} is little endian\n'.format(filename))
+
+    # if data is 42 in little endian, change flag and continue
+    elif bytes_data == b'\x00\x00\x00*':
+        endianness_flag = 'big'
+        print('Magic number is correct - file {} is big endian\n'.format(filename))
+
+    # if magic number is incorrect, it's probably not PSU-WOPWOP file!
+    else:
+        raise ValueError('Magic number is incorrect - file {} is probably not a PSU-WOPWOP patch file v1.0!'.format(filename))
+
+    return endianness_flag
+
+
+# %% #######################################################################
 # PSU-WOPWOP Plot3D-like block readers
 # ##########################################################################
 
