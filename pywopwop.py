@@ -18,7 +18,7 @@ from constants_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     geometry_time_dict, centered_dict, loading_data_dict, ref_frame_dict, \
     float_dict, iblank_dict
 
-from readers_and_writers import read_XYZblock, read_IBLANKblock, read_int, \
+from readers_and_writers import read_block, read_IBLANKblock, read_int, \
     read_float, write_binary, write_string, read_string
 
 from zones import Zone, StructuredZone, StructuredConstantGeometry, \
@@ -452,22 +452,22 @@ class PWWPatch:
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # read XYZ coords and next index
                 self.zones[nz].geometry.XYZ_coord, field_start = \
-                    self._read_XYZblock(bytes_data, field_start, 3,
-                                        self.zones[nz].iMax, self.zones[nz].jMax)
+                    read_block(bytes_data, field_start, 3,
+                               self.zones[nz].iMax, self.zones[nz].jMax)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # read normal vector coords and next index
                 self.zones[nz].geometry.normal_coord, field_start = \
-                    self._read_XYZblock(bytes_data, field_start, 3,
-                                        self.zones[nz].iMax, self.zones[nz].jMax)
+                    read_block(bytes_data, field_start, 3,
+                               self.zones[nz].iMax, self.zones[nz].jMax)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # if file contains IBLANK (int) data, read that
                 if self.has_iblank == True:
                     self.zones[nz].geometry.iblank, field_start = \
-                        self._read_IBLANKblock(bytes_data, field_start,
-                                               self.zones[nz].iMax,
-                                               self.zones[nz].jMax)
+                        read_IBLANKblock(bytes_data, field_start,
+                                         self.zones[nz].iMax,
+                                         self.zones[nz].jMax)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 
@@ -759,9 +759,9 @@ class PWWPatch:
 
                         # read pressure data and next index
                         self.zones[nz].loading.pressures, field_start = \
-                            self._read_XYZblock(bytes_data, field_start, 1,
-                                                self.zones[nz].iMax,
-                                                self.zones[nz].jMax)
+                            read_block(bytes_data, field_start, 1,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # if data is loading vectors
@@ -779,9 +779,9 @@ class PWWPatch:
 
                         # read pressure data and next index
                         self.zones[nz].loading.loading_vectors, field_start = \
-                            self._read_XYZblock(bytes_data, field_start, 3,
-                                                self.zones[nz].iMax,
-                                                self.zones[nz].jMax)
+                            read_block(bytes_data, field_start, 3,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 elif self.data_type == 'flow_params':

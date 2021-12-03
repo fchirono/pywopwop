@@ -18,13 +18,17 @@ import struct
 from constants_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
 
 
-# **********************************************************************
-def read_XYZblock(bytes_data, start_index, num_dims, iMax, jMax):
+# %% #######################################################################
+# PSU-WOPWOP Plot3D-like block readers
+# ##########################################################################
+
+def read_block(bytes_data, start_index, num_dims, iMax, jMax):
     """
-    Reads a block of XYZ coordinates in PLOT3D format from a binary file.
+    Reads a block of data in PLOT3D-like format from a binary file.
 
     The block of data is a (num_dims, iMax, jMax)-shaped array of float32
-    values.
+    values. It can be a block of 3D coordinates (x,y,z) if 'num_dims=3', 2D
+    coordinates (x,y) if 'num_dims=2', or one-dimensional
 
     Parameters
     ----------
@@ -46,7 +50,7 @@ def read_XYZblock(bytes_data, start_index, num_dims, iMax, jMax):
 
     Returns
     -------
-    XYZ_data : (num_dims, iMax, jMax) array_like
+    block_data : (num_dims, iMax, jMax) array_like
         Numpy array containing the block data using float32 numbers.
 
     next_index : int
@@ -55,7 +59,7 @@ def read_XYZblock(bytes_data, start_index, num_dims, iMax, jMax):
 
     Notes
     -----
-    The data in the file is assumed to be organized as:
+    The data in the file is assumed to be organized in Fortran order:
 
     #####################################################################
     -Dim 0 (i.e X):
@@ -77,7 +81,7 @@ def read_XYZblock(bytes_data, start_index, num_dims, iMax, jMax):
 
     # read surface pressures - i.e. (iMax, jMax)-shaped
     if num_dims == 1:
-        XYZ_data = np.zeros((iMax, jMax), dtype=np.float32)
+        block_data = np.zeros((iMax, jMax), dtype=np.float32)
 
         for j in range(jMax):
             for i in range(iMax):
@@ -86,11 +90,11 @@ def read_XYZblock(bytes_data, start_index, num_dims, iMax, jMax):
                 current_index = (start_index
                                  + ((j*iMax + i)*VALUE_LENGTH))
 
-                XYZ_data[i, j] = read_float(bytes_data, current_index)
+                block_data[i, j] = read_float(bytes_data, current_index)
 
     # read XYZ or XY - i.e. (num_dims, iMax, jMax)-shaped
     else:
-        XYZ_data = np.zeros((num_dims, iMax, jMax), dtype=np.float32)
+        block_data = np.zeros((num_dims, iMax, jMax), dtype=np.float32)
 
         for n in range(num_dims):
             for j in range(jMax):
@@ -101,15 +105,14 @@ def read_XYZblock(bytes_data, start_index, num_dims, iMax, jMax):
                                      + ((n*iMax*jMax + j*iMax + i)
                                         * VALUE_LENGTH))
 
-                    XYZ_data[n, i, j] = read_float(bytes_data, current_index)
+                    block_data[n, i, j] = read_float(bytes_data, current_index)
 
     # increase start index by ('value_length' bytes * num_dims coords * iMax * jMax)
     next_index = start_index + VALUE_LENGTH*(num_dims*iMax*jMax)
 
-    return XYZ_data, next_index
+    return block_data, next_index
 
 
-# **********************************************************************
 def read_IBLANKblock(bytes_data, start_index, iMax, jMax):
     """
     Reads a block of IBLANK data in PLOT3D format from a binary file.
