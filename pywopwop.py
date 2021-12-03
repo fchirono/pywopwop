@@ -13,7 +13,7 @@ Author:
 
 import numpy as np
 
-from constants_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
+from consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, loading_time_dict, \
     geometry_time_dict, centered_dict, loading_data_dict, ref_frame_dict, \
     float_dict, iblank_dict

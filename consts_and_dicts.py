@@ -4,7 +4,7 @@ pywopwop - https://github.com/fchirono/pywopwop
     Collection of convenience routines to parse and create PSU-WOPWOP input
     files version 1.0.
 
-    --> PSU-WOPWOP Constants and Dictionaries
+    --> PSU-WOPWOP constants and dictionaries
 
 Author:
     Fabio Casagrande Hirono
