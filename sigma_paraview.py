@@ -56,13 +56,99 @@ def extract_var_names(nam_filename):
     return var_names
 
 
+def read_geom_file(filename_geom, output_path):
+    """
+    Reads a multiple-timestep Sigma geometry (.x) file output from PSU-WOPWOP,
+    and returns multiple single-timestep function (.x) files for opening in
+    Paraview.
+
+    """
+    
+    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # read function (.fn) file
+    
+    with open(filename_geom, 'rb') as f:
+        geom_data = f.read()
+    
+    
+    # create lists of iMax, jMax, kMax, nVars for each block
+    iMax_list = []
+    jMax_list = []
+    kMax_list = []
+    
+    # read number of blocks (i.e. independent meshes) in file
+    Nblocks = read_int(geom_data, 0)
+    
+    # read header
+    for n in range(Nblocks):
+        
+        iMax_list.append(read_int(geom_data, 12*n + 4))
+        jMax_list.append(read_int(geom_data, 12*n + 8))
+        kMax_list.append(read_int(geom_data, 12*n + 12))     # 'time' var
+    
+    start_index = 12*n + 16
+
+        
+    blocks = []
+    
+    # for each block...
+    for ib in range(Nblocks):
+            
+        # create list of time steps for current variable
+        timesteps = []
+        
+        # for each time step...
+        for it in range(kMax_list[ib]):
+            
+            # read and append geometry data from current time step
+            block, start_index = read_block(geom_data, start_index, 3,
+                                            iMax_list[ib], jMax_list[ib])
+            timesteps.append(block)
+
+        # append current timestep list to block list
+        blocks.append(timesteps)
+        
+    
+    # access data as: blocks[ib][it][i, j]
+    # - ib: block index
+    # - it : time index
+    
+        
+    # Create new "sigma_{:03d}.x" files containing geometry data per time step
+    
+    for nt in range(len(timesteps)):
+        
+        with open(output_path + 'sigma_{:03d}.x'.format(nt), 'wb') as file:
+            
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # write file header
+            write_binary(file, Nblocks)
+            
+            for ib in range(Nblocks):
+                write_binary(file, iMax_list[ib])
+                write_binary(file, jMax_list[ib])
+                write_binary(file, kMax_list[ib])
+                #write_binary(file, nVars_list[ib])
+            
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # write geometry data
+            
+            # for each block in current time step...
+            for ib in range(Nblocks):
+                
+                write_block(file, blocks[ib][nt])
+            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-     
+
+
 def read_fn_file(filename_function, filename_names, output_path):
     """
     Reads a multiple-timestep Sigma function (.fn) file output from PSU-WOPWOP,
     and returns multiple single-timestep function (.fn) files for opening in
     Paraview.
     
-    filename_list: list containing .x, .fn, .nam file names as strings.
+    filename_function: name of .fn file
+    filename_names: name of .nam file
+    output_path: path where to save the single-timestep files
     
     Output
     ------
