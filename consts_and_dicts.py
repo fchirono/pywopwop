@@ -85,3 +85,12 @@ float_dict = {'single' : 1,
 # whether 'iblank' values are included with the geometry grid or not
 iblank_dict = {True : 1,
                False: 0}
+
+# dict containing number of dims of sigma variables (e.g. 1 for scalar,
+# 3 for vectors)
+sigma_vars_dict = {'Source Time'    :1,
+                   'Observer Time'  :1,
+                   'Mach Number'    :1,
+                   'Loading Noise'  :1,
+                   'Thickness Noise':1}
+
