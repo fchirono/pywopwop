@@ -19,30 +19,9 @@ from readers_and_writers import read_block, write_block, read_int, write_binary
 from consts_and_dicts import sigma_vars_dict
 
 
-def extract_var_names(nam_filename):
-    """
-    Parses a 'sigma.nam' file containing the variable names, and outputs a
-    list of these names.
-    """
+def parse_filename_list(filename_list):
+    # separate and parse list of filenames
     
-    names = []
-    with open(nam_filename, 'r') as file:
-        for line in file:
-            names.append(line.strip())
-    
-    return names
-
-
-def read_fn_file(filename_list, output_path):
-    """
-    Reads a multiple-timestep Sigma function (.fn) file output from PSU-WOPWOP,
-    and returns multiple single-timestep function (.fn) files for opening in
-    Paraview.
-    
-    filename_list: list containing .x, .fn, .nam file names as strings.
-    """
-    
-    # separate and parse filenames list
     for name in filename_list:
         
         file_extension = name.split('.')[1]
@@ -59,6 +38,33 @@ def read_fn_file(filename_list, output_path):
     
         elif file_extension == 'nam':
             filename_names = name
+
+    return filename_geom, filename_function, filename_names
+
+
+def extract_var_names(nam_filename):
+    """
+    Parses a 'sigma.nam' file containing the variable names, and outputs a
+    list of these names.
+    """
+    
+    var_names = []
+    with open(nam_filename, 'r') as file:
+        for line in file:
+            var_names.append(line.strip())
+    
+    return var_names
+
+
+def read_fn_file(filename_function, filename_names, output_path):
+    """
+    Reads a multiple-timestep Sigma function (.fn) file output from PSU-WOPWOP,
+    and returns multiple single-timestep function (.fn) files for opening in
+    Paraview.
+    
+    filename_list: list containing .x, .fn, .nam file names as strings.
+    """
+    
             
             
     # extract variable names from .nam file
