@@ -163,3 +163,50 @@ def read_fn_file(filename_list, output_path):
                 for ivar in range(nVars_list[ib]):
                     write_block(file, blocks[ib][ivar][nt])
             # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-     
+
+
+def write_p3d_file(output_folder, output_filename, source_time, var_names):
+    """
+    Writes .p3d reader file for Paraview.
+    
+    Sigma files must be named sequentially: e.g. 'sigma_000.x' for geometry
+    data of first timestep, 'sigma_001.x' for geometry data of 2nd timestep, etc.
+    
+    output_folder: where to save .p3d file
+    output_filename: name of .p3d file (without .p3d extension)
+    source_time: 1D numpy array of source times (taken from 1st block -
+                                                 doesn't necessarily matches other blocks)
+    var_names: list of sigma variable names
+    """
+    
+    p3d_header = ['{',
+                  '\t"auto-detect-format" : true,',
+                  '\t"filenames" : [']
+    
+    with open(output_folder + output_filename + '.p3d', 'w') as file:
+    
+        # write p3d header
+        for line in p3d_header:
+            file.write(line+'\n')
+    
+        # write one line for each time step
+        for ti in range(source_time.shape[0]):
+            time_string = '\t\t{{"time" : {:.6f},'.format(source_time[ti])
+            time_string += ' "xyz" : "sigma_{:03d}.x",'.format(ti)
+            time_string += ' "function" : "sigma_{:03d}.fn"}},\n'.format(ti)
+            file.write(time_string)
+    
+        file.write('\t\t],\n')
+    
+        # write sigma variables names
+        function_string = '\t"function-names" : ['
+        
+        for i_name, function_name in enumerate(var_names):
+            function_string += '"{}"'.format(function_name)
+        
+            if i_name < len(var_names)-1:
+                function_string += ', '
+        
+        function_string += ']\n'
+        file.write(function_string)
+        file.write('}')
