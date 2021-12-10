@@ -19,27 +19,27 @@ from readers_and_writers import read_block, write_block, read_int, write_binary
 from consts_and_dicts import sigma_vars_dict
 
 
-def parse_filename_list(filename_list):
-    # separate and parse list of filenames
+# def parse_filename_list(filename_list):
+#     # separate and parse list of filenames
     
-    for name in filename_list:
+#     for name in filename_list:
         
-        file_extension = name.split('.')[1]
+#         file_extension = name.split('.')[1]
         
-        # verify file name extension
-        assert (file_extension in ['x', 'fn', 'nam']), \
-            'File extension of {} in "filename_list" not recognized!'.format(name)
+#         # verify file name extension
+#         assert (file_extension in ['x', 'fn', 'nam']), \
+#             'File extension of {} in "filename_list" not recognized!'.format(name)
         
-        if file_extension == 'x':
-            filename_geom = name
+#         if file_extension == 'x':
+#             filename_geom = name
         
-        elif file_extension == 'fn':
-            filename_function = name
+#         elif file_extension == 'fn':
+#             filename_function = name
     
-        elif file_extension == 'nam':
-            filename_names = name
+#         elif file_extension == 'nam':
+#             filename_names = name
 
-    return filename_geom, filename_function, filename_names
+#     return filename_geom, filename_function, filename_names
 
 
 def extract_var_names(nam_filename):
