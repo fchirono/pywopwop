@@ -70,7 +70,6 @@ def read_geom_file(filename_geom, output_path):
     with open(filename_geom, 'rb') as f:
         geom_data = f.read()
     
-    
     # create lists of iMax, jMax, kMax, nVars for each block
     iMax_list = []
     jMax_list = []
@@ -93,30 +92,45 @@ def read_geom_file(filename_geom, output_path):
     
     # for each block...
     for ib in range(Nblocks):
-            
-        # create list of time steps for current variable
-        timesteps = []
         
-        # for each time step...
+        
+        # create list of time steps for current variable
+        timesteps_x = []
+        timesteps_y = []
+        timesteps_z = []
+        
+        # read and append 'x' coordinates data from each time step
         for it in range(kMax_list[ib]):
-            
-            # read and append geometry data from current time step
-            block, start_index = read_block(geom_data, start_index, 3,
+            block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[ib], jMax_list[ib])
-            timesteps.append(block)
-
+            timesteps_x.append(block)
+        
+        # read and append 'y' coordinates data from each time step
+        for it in range(kMax_list[ib]):
+            block, start_index = read_block(geom_data, start_index, 1,
+                                            iMax_list[ib], jMax_list[ib])
+            timesteps_y.append(block)
+        
+        # read and append 'z' coordinates data from each time step
+        for it in range(kMax_list[ib]):
+            block, start_index = read_block(geom_data, start_index, 1,
+                                            iMax_list[ib], jMax_list[ib])
+            timesteps_z.append(block)
+        
+        timesteps = [timesteps_x, timesteps_y, timesteps_z]
+        
         # append current timestep list to block list
         blocks.append(timesteps)
         
     
-    # access data as: blocks[ib][it][i, j]
+    # access data as: blocks[ib][ix][it][i, j]
     # - ib: block index
+    # - ix: coordinate index (0:x, 1:y, 2:z)
     # - it : time index
     
         
     # Create new "sigma_{:03d}.x" files containing geometry data per time step
-    
-    for nt in range(len(timesteps)):
+    for nt in range(min(kMax_list)):
         
         with open(output_path + 'sigma_{:03d}.x'.format(nt), 'wb') as file:
             
@@ -127,16 +141,15 @@ def read_geom_file(filename_geom, output_path):
             for ib in range(Nblocks):
                 write_binary(file, iMax_list[ib])
                 write_binary(file, jMax_list[ib])
-                write_binary(file, kMax_list[ib])
-                #write_binary(file, nVars_list[ib])
+                write_binary(file, 1)
             
             # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
             # write geometry data
             
             # for each block in current time step...
             for ib in range(Nblocks):
-                
-                write_block(file, blocks[ib][nt])
+                for ix in range(3):
+                    write_block(file, blocks[ib][ix][nt])
             # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-     
 
 
