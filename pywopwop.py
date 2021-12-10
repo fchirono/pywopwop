@@ -26,7 +26,8 @@ from zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading
 
 from sigma_paraview import parse_filename_list, extract_var_names, \
-    read_fn_file
+    read_fn_file, write_p3d_file
+
 
 # %% #######################################################################
 # PSU-WOPWOP main class PWWPatch
