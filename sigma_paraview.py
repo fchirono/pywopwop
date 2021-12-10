@@ -169,9 +169,11 @@ def read_fn_file(filename_function, filename_names, output_path):
                 for ivar in range(nVars_list[ib]):
                     write_block(file, blocks[ib][ivar][nt])
             # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-     
+            
+    return sourcetime
 
 
-def write_p3d_file(output_folder, output_filename, source_time, var_names):
+def write_p3d_file(output_filename, output_path, source_time, var_names):
     """
     Writes .p3d reader file for Paraview.
     
