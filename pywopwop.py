@@ -25,6 +25,8 @@ from readers_and_writers import initial_check, read_block, write_block, \
 from zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading
 
+from sigma_paraview import parse_filename_list, extract_var_names, \
+    read_fn_file
 
 # %% #######################################################################
 # PSU-WOPWOP main class PWWPatch
