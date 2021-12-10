@@ -63,6 +63,10 @@ def read_fn_file(filename_function, filename_names, output_path):
     Paraview.
     
     filename_list: list containing .x, .fn, .nam file names as strings.
+    
+    Output
+    ------
+    sourcetime: 1D numpy array containing source times of 1st zone
     """
     
             
@@ -191,7 +195,7 @@ def write_p3d_file(output_filename, output_path, source_time, var_names):
                   '\t"auto-detect-format" : true,',
                   '\t"filenames" : [']
     
-    with open(output_folder + output_filename + '.p3d', 'w') as file:
+    with open(output_path + output_filename + '.p3d', 'w') as file:
     
         # write p3d header
         for line in p3d_header:
