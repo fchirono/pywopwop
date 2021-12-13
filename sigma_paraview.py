@@ -17,33 +17,15 @@ import numpy as np
 import pathlib
 
 from readers_and_writers import read_block, write_block, read_int, write_binary
-from consts_and_dicts import sigma_vars_dict
+# from consts_and_dicts import sigma_vars_dict
 
 
-# def parse_filename_list(filename_list):
-#     # separate and parse list of filenames
-    
-#     for name in filename_list:
-        
-#         file_extension = name.split('.')[1]
-        
-#         # verify file name extension
-#         assert (file_extension in ['x', 'fn', 'nam']), \
-#             'File extension of {} in "filename_list" not recognized!'.format(name)
-        
-#         if file_extension == 'x':
-#             filename_geom = name
-        
-#         elif file_extension == 'fn':
-#             filename_function = name
-    
-#         elif file_extension == 'nam':
-#             filename_names = name
-
-#     return filename_geom, filename_function, filename_names
+# %% #######################################################################
+# PSU-WOPWOP Sigma surface file converters
+# ##########################################################################
 
 
-def extract_var_names(nam_filename):
+def extract_var_names(filename_nam):
     """
     Parses a 'sigma.nam' file containing the variable names, and outputs a
     list of these names.
@@ -53,7 +35,7 @@ def extract_var_names(nam_filename):
     """
     
     var_names = []
-    with open(nam_filename, 'r') as file:
+    with open(filename_nam, 'r') as file:
         for line in file:
             var_name = line.strip()
             
@@ -66,8 +48,8 @@ def extract_var_names(nam_filename):
     return var_names
 
 
-def read_geometry_file(filename_geom, output_path='timesteps',
-                       geometry_suffix='sigma_'):
+def process_geometry_file(filename_geom, output_path='timesteps',
+                          geometry_suffix='sigma_'):
     """
     Reads a multiple-timestep Sigma geometry (.x) file output from PSU-WOPWOP,
     and writes multiple single-timestep function (.x) files for opening in
@@ -210,7 +192,7 @@ def read_geometry_file(filename_geom, output_path='timesteps',
     # **********************************************************************
 
 
-def read_fn_file(filename_function, filename_names, output_path='timesteps',
+def process_fn_file(filename_fn, filename_nam, output_path='timesteps',
                  function_suffix='sigma_'):
     """
     Reads a multiple-timestep Sigma function (.fn) file output from PSU-WOPWOP,
@@ -224,10 +206,10 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
     
     Parameters
     ----------
-    filename_function : str
+    filename_fn : str
         Name of '.fn' file.
     
-    filename_names: str
+    filename_nam: str
         Name of '.nam' file.
     
     output_path: str, optional
@@ -271,11 +253,11 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
     
     # **********************************************************************        
     # extract variable names from .nam file
-    var_names = extract_var_names(filename_names)
+    # var_names = extract_var_names(filename_names)
     
     # **********************************************************************
     # read function (.fn) file
-    with open(filename_function, 'rb') as f:
+    with open(filename_fn, 'rb') as f:
         function_data = f.read()
     
     # ********************** Read file header *****************************
@@ -311,9 +293,9 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
         # for each variable in current zone...
         for nvar in range(nVars_list[nz]):
             
-            # get number of dims of current variable (e.g. 1 for scalar data,
-            # 3 for vector data)
-            ndim_var = sigma_vars_dict[var_names[nvar]]
+            # # get number of dims of current variable (e.g. 1 for scalar data,
+            # # 3 for vector data)
+            # ndim_var = sigma_vars_dict[var_names[nvar]]
             
             # create list of time steps for current variable
             timesteps = []
@@ -322,8 +304,16 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
             for it in range(kMax_list[nz]):
                 
                 # read and append data from current time step
+                
+                # # read given number of dims (e.g. vectors are 3-dims)
+                # block, start_index = read_block(function_data, start_index,
+                #                                 ndim_var, iMax_list[nz], jMax_list[nz])
+                
+                # always read as 1-dim data (reads vector components as
+                # separate variables)
                 block, start_index = read_block(function_data, start_index,
-                                                ndim_var, iMax_list[nz], jMax_list[nz])
+                                                1, iMax_list[nz], jMax_list[nz])
+                
                 timesteps.append(block)
     
             # append current timestep list to variable list
@@ -407,7 +397,7 @@ def write_p3d_file(output_filename, output_path, sourcetime, var_names,
     
     Notes
     -----
-    Sigma files must be named as '[suffix][3-digit index].[x, fn]'. E.g.,
+    Sigma files must be named as '[suffix][3-digit index].{x, fn}'. E.g.,
     'sigma_000.x' for geometry data of first timestep, 'sigma_001.x' for
     geometry data of 2nd timestep, etc.
     """
