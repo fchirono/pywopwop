@@ -10,6 +10,17 @@ pywopwop - https://github.com/fchirono/pywopwop
 Author:
     Fabio Casagrande Hirono
     Dec 2021
+
+
+
+TODO: CORRECT TEMPORAL MISALIGNMENT OF MULTIPLE ZONES!
+    
+Currently, the n-th output file contains ***ALL ZONES'*** n-th time step of
+    data, but is timestamped using ***ZONE 1*** n-th source time.
+    
+    This can lead to temporal misalignment if different zones have
+    significantly different source times, leading to some zones appearing
+    spatially misaligned in Paraview. 
 """
 
 
@@ -308,13 +319,17 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
         zones.append(var_list)
     
     # ********************** Read source times *****************************
-    # extract vector of source times
+    
+    # extract vector of source times of first zone
     n_sourcetime = min(kMax_list)
     sourcetime = np.zeros(n_sourcetime)
     
     for it in range(n_sourcetime):
         sourcetime[it] = zones[0][0][it][0,0]
     
+    # TODO: source times are not identical across different zones. Zone data
+    # must be parsed and time-aligned by source time before creating output
+    # files
     
     # ********** Write multiple single-timestep function files ************
     
