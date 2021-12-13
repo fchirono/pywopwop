@@ -73,9 +73,25 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
         Path where function will write the multiple single-timestep geometry
         files. Default is a new folder called 'timesteps'.
 
+
+    Returns
+    -------
+    None
+
+    
+    Notes
+    -----
+    The geometry data is internally stored as a multidimensional list
+    
+        zones[nz][nx][nt][i, j]
+    
+    where:
+    - nz: zone index
+    - nx: coordinate index (0:x, 1:y, 2:z)
+    - nt : time index
     """
     
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # **********************************************************************
     # check if output path exists; if it doesn't, create it. Also creates
     # parent paths, if necessary
     
@@ -83,93 +99,99 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
     path.mkdir(parents=True, exist_ok=True)
     
     
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-    # read function (.fn) file
+    # **********************************************************************
+    # read multiple-timestep geometry (.x) file
     
     with open(filename_geom, 'rb') as f:
         geom_data = f.read()
+
+    # ********************** Read file header *****************************
     
     # create lists of iMax, jMax, kMax, nVars for each block
     iMax_list = []
     jMax_list = []
-    kMax_list = []
+    kMax_list = []          # kMax is used as 'time' variable
     
-    # read number of blocks (i.e. independent meshes) in file
-    Nblocks = read_int(geom_data, 0)
+    # read number of zones (i.e. independent meshes) in file
+    nZones = read_int(geom_data, 0)
     
-    # read header
-    for n in range(Nblocks):
-        
+    # read iMax, jMax, kMax for each zone
+    for n in range(nZones):    
         iMax_list.append(read_int(geom_data, 12*n + 4))
         jMax_list.append(read_int(geom_data, 12*n + 8))
-        kMax_list.append(read_int(geom_data, 12*n + 12))     # 'time' var
+        kMax_list.append(read_int(geom_data, 12*n + 12))
     
+    # end of header - set start index for beginning of geometry data
     start_index = 12*n + 16
-
-        
-    blocks = []
     
-    # for each block...
-    for ib in range(Nblocks):
-        
-        
-        # create list of time steps for current variable
+    # ********************* Read geometry data *************************
+    # create list of zones
+    zones = []
+    
+    # for each zone...
+    for nz in range(nZones):
+           
+        # create list of time steps for each coordinate
         timesteps_x = []
         timesteps_y = []
         timesteps_z = []
         
-        # read and append 'x' coordinates data from each time step
-        for it in range(kMax_list[ib]):
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # read and append 'x' coordinate data from each time step
+        for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
-                                            iMax_list[ib], jMax_list[ib])
+                                            iMax_list[nz], jMax_list[nz])
             timesteps_x.append(block)
         
-        # read and append 'y' coordinates data from each time step
-        for it in range(kMax_list[ib]):
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # read and append 'y' coordinate data from each time step
+        for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
-                                            iMax_list[ib], jMax_list[ib])
+                                            iMax_list[nz], jMax_list[nz])
             timesteps_y.append(block)
         
-        # read and append 'z' coordinates data from each time step
-        for it in range(kMax_list[ib]):
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # read and append 'z' coordinate data from each time step
+        for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
-                                            iMax_list[ib], jMax_list[ib])
+                                            iMax_list[nz], jMax_list[nz])
             timesteps_z.append(block)
         
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         timesteps = [timesteps_x, timesteps_y, timesteps_z]
         
         # append current timestep list to block list
-        blocks.append(timesteps)
-        
+        zones.append(timesteps)
+      
+
+    # ********** Write multiple single-timestep geometry files ************
     
-    # access data as: blocks[ib][ix][it][i, j]
-    # - ib: block index
-    # - ix: coordinate index (0:x, 1:y, 2:z)
-    # - it : time index
-    
-        
-    # Create new "sigma_{:03d}.x" files containing geometry data per time step
+    # for each timestep...
     for nt in range(min(kMax_list)):
         
+        # Create new "sigma_{:03d}.x" files containing geometry data
         with open(output_path + 'sigma_{:03d}.x'.format(nt), 'wb') as file:
             
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # --------------------------------------------------------------
             # write file header
-            write_binary(file, Nblocks)
             
-            for ib in range(Nblocks):
-                write_binary(file, iMax_list[ib])
-                write_binary(file, jMax_list[ib])
+            write_binary(file, nZones)
+            
+            for nz in range(nZones):
+                write_binary(file, iMax_list[nz])
+                write_binary(file, jMax_list[nz])
                 write_binary(file, 1)
             
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # --------------------------------------------------------------
             # write geometry data
             
             # for each block in current time step...
-            for ib in range(Nblocks):
-                for ix in range(3):
-                    write_block(file, blocks[ib][ix][nt])
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-     
+            for nz in range(nZones):
+                for nx in range(3):
+                    write_block(file, zones[nz][nx][nt])
+            # --------------------------------------------------------------
+    
+    # **********************************************************************
 
 
 def read_fn_file(filename_function, filename_names, output_path):
