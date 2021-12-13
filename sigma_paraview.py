@@ -65,11 +65,11 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
     
     Parameters
     ----------
-    filename_geom : string
+    filename_geom : str
         String containing the name of the geometry file - must include '.x'
         extension.
     
-    output_path : string
+    output_path : str
         Path where function will write the multiple single-timestep geometry
         files. Default is a new folder called 'timesteps'.
 
@@ -110,26 +110,26 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
     # create lists of iMax, jMax, kMax, nVars for each block
     iMax_list = []
     jMax_list = []
-    kMax_list = []          # kMax is used as 'time' variable
+    kMax_list = []          # 'k' is used as 'time' variable
     
     # read number of zones (i.e. independent meshes) in file
-    nZones = read_int(geom_data, 0)
+    Nzones = read_int(geom_data, 0)
     
     # read iMax, jMax, kMax for each zone
-    for n in range(nZones):    
-        iMax_list.append(read_int(geom_data, 12*n + 4))
-        jMax_list.append(read_int(geom_data, 12*n + 8))
-        kMax_list.append(read_int(geom_data, 12*n + 12))
+    for nz in range(Nzones):    
+        iMax_list.append(read_int(geom_data, 12*nz + 4))
+        jMax_list.append(read_int(geom_data, 12*nz + 8))
+        kMax_list.append(read_int(geom_data, 12*nz + 12))
     
     # end of header - set start index for beginning of geometry data
-    start_index = 12*n + 16
+    start_index = 12*nz + 16
     
     # ********************* Read geometry data *************************
     # create list of zones
     zones = []
     
     # for each zone...
-    for nz in range(nZones):
+    for nz in range(Nzones):
            
         # create list of time steps for each coordinate
         timesteps_x = []
@@ -175,9 +175,9 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
             # --------------------------------------------------------------
             # write file header
             
-            write_binary(file, nZones)
+            write_binary(file, Nzones)
             
-            for nz in range(nZones):
+            for nz in range(Nzones):
                 write_binary(file, iMax_list[nz])
                 write_binary(file, jMax_list[nz])
                 write_binary(file, 1)
@@ -186,7 +186,7 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
             # write geometry data
             
             # for each block in current time step...
-            for nz in range(nZones):
+            for nz in range(Nzones):
                 for nx in range(3):
                     write_block(file, zones[nz][nx][nt])
             # --------------------------------------------------------------
@@ -194,63 +194,97 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
     # **********************************************************************
 
 
-def read_fn_file(filename_function, filename_names, output_path):
+def read_fn_file(filename_function, filename_names, output_path='timesteps'):
     """
     Reads a multiple-timestep Sigma function (.fn) file output from PSU-WOPWOP,
     and returns multiple single-timestep function (.fn) files for opening in
     Paraview.
     
-    filename_function: name of .fn file
-    filename_names: name of .nam file
-    output_path: path where to save the single-timestep files
+    Parameters
+    ----------
+    filename_function : str
+        Name of '.fn' file.
     
-    Output
+    filename_names: str
+        Name of '.nam' file.
+    
+    output_path: str
+        Path where function will write the multiple single-timestep function
+        files. Default is a new folder called 'timesteps'.
+    
+    
+    Returns
     ------
-    sourcetime: 1D numpy array containing source times of 1st zone
+    sourcetime: (n_sourcetime,) array_like
+        1D numpy array containing source times of 1st zone.
+    
+    
+    Notes
+    -----
+    The return variable 'sourcetime' is used to tell Paraview what time (in
+    seconds) corresponds to each time step. However, as these come from the
+    first zone only, they might not correspond very accurately to the other
+    zones.
+    
+    The function data is internally stored as a multidimensional list
+    
+        zones[nz][nvar][nt][i, j]
+    
+    where:
+    - nz: zone index
+    - nvar: variable index
+    - nt : time index.
+    
     """
     
-            
-            
+    # **********************************************************************
+    # check if output path exists; if it doesn't, create it. Also creates
+    # parent paths, if necessary
+    
+    path = pathlib.Path(output_path)
+    path.mkdir(parents=True, exist_ok=True)
+    
+    # **********************************************************************        
     # extract variable names from .nam file
     var_names = extract_var_names(filename_names)
     
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # **********************************************************************
     # read function (.fn) file
-    
     with open(filename_function, 'rb') as f:
         function_data = f.read()
     
-    
-    # read number of blocks (i.e. independent meshes) in file
-    Nblocks = read_int(function_data, 0)
+    # ********************** Read file header *****************************
+    # read number of zones (i.e. independent meshes) in file
+    Nzones = read_int(function_data, 0)
     
     # create lists of iMax, jMax, kMax, nVars for each block
     iMax_list = []
     jMax_list = []
-    kMax_list = []
+    kMax_list = []          # 'k' is used as 'time' variable
     nVars_list = []
     
-    # read header
-    for n in range(Nblocks):
-        
-        iMax_list.append(read_int(function_data, 16*n + 4))
-        jMax_list.append(read_int(function_data, 16*n + 8))
-        kMax_list.append(read_int(function_data, 16*n + 12))     # 'time' var
-        nVars_list.append(read_int(function_data, 16*n + 16))
+    for nz in range(Nzones):
+        iMax_list.append(read_int(function_data, 16*nz + 4))
+        jMax_list.append(read_int(function_data, 16*nz + 8))
+        kMax_list.append(read_int(function_data, 16*nz + 12))
+        nVars_list.append(read_int(function_data, 16*nz + 16))
     
-    start_index = 16*n + 20
+    # end of header - set start index for beginning of function data
+    start_index = 16*nz + 20
 
-        
-    blocks = []
+    # ********************** Read function data *****************************
     
-    # for each block...
-    for ib in range(Nblocks):
+    # create list of zones
+    zones = []
     
-        # create list of variables for current block
+    # for each zone...
+    for nz in range(Nzones):
+    
+        # create list of variables for current zone
         var_list = []
         
-        # for each variable in current block...
-        for ivar in range(nVars_list[ib]):
+        # for each variable in current zone...
+        for ivar in range(nVars_list[nz]):
             
             # get number of dims of current variable (e.g. 1 for scalar data,
             # 3 for vector data)
@@ -260,60 +294,58 @@ def read_fn_file(filename_function, filename_names, output_path):
             timesteps = []
             
             # for each time step...
-            for it in range(kMax_list[ib]):
+            for it in range(kMax_list[nz]):
                 
                 # read and append data from current time step
                 block, start_index = read_block(function_data, start_index,
-                                                ndim_var, iMax_list[ib], jMax_list[ib])
+                                                ndim_var, iMax_list[nz], jMax_list[nz])
                 timesteps.append(block)
     
             # append current timestep list to variable list
             var_list.append(timesteps)
         
-        # append current variable list to block list
-        blocks.append(var_list)
+        # append current variable list to zone list
+        zones.append(var_list)
     
-
-    # access data as: blocks[ib][ivar][it][i, j]
-    # - ib: block index
-    # - ivar: variable index
-    # - it : time index
-    
+    # ********************** Read source times *****************************
     # extract vector of source times
     n_sourcetime = min(kMax_list)
     sourcetime = np.zeros(n_sourcetime)
     
     for it in range(n_sourcetime):
-        sourcetime[it] = blocks[0][0][it][0,0]
+        sourcetime[it] = zones[0][0][it][0,0]
     
     
-    # Create new "sigma_{:03d}.fn" files containing function data per time step
+    # ********** Write multiple single-timestep function files ************
     
+    # For each time step...
     for nt in range(n_sourcetime):
         
+        # Create new "sigma_{:03d}.fn" files containing function data    
         with open(output_path + 'sigma_{:03d}.fn'.format(nt), 'wb') as file:
             
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # --------------------------------------------------------------
             # write file header
-            write_binary(file, Nblocks)
+            write_binary(file, Nzones)
             
-            for ib in range(Nblocks):
-                write_binary(file, iMax_list[ib])
-                write_binary(file, jMax_list[ib])
+            for nz in range(Nzones):
+                write_binary(file, iMax_list[nz])
+                write_binary(file, jMax_list[nz])
                 write_binary(file, 1)
-                write_binary(file, nVars_list[ib])
+                write_binary(file, nVars_list[nz])
             
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+            # --------------------------------------------------------------
             # write data
             
             # for each block in current time step...
-            for ib in range(Nblocks):
+            for nz in range(Nzones):
             
                 # for each variable in current block...
-                for ivar in range(nVars_list[ib]):
-                    write_block(file, blocks[ib][ivar][nt])
-            # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-     
-            
+                for nvar in range(nVars_list[nz]):
+                    write_block(file, zones[nz][nvar][nt])
+            # --------------------------------------------------------------
+    
+    
     return sourcetime
 
 
