@@ -57,11 +57,16 @@ def extract_var_names(nam_filename):
     return var_names
 
 
-def read_geometry_file(filename_geom, output_path='timesteps'):
+def read_geometry_file(filename_geom, output_path='timesteps',
+                       output_suffix='sigma_'):
     """
     Reads a multiple-timestep Sigma geometry (.x) file output from PSU-WOPWOP,
     and writes multiple single-timestep function (.x) files for opening in
     Paraview.
+    
+    Sigma single-timestep geometry files are enumerated sequentially as
+    '[output_suffix][3-digit index].x' - e.g. 'sigma_000.x', 'sigma_001.x',
+    etc.
     
     Parameters
     ----------
@@ -69,10 +74,13 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
         String containing the name of the geometry file - must include '.x'
         extension.
     
-    output_path : str
+    output_path : str, optional
         Path where function will write the multiple single-timestep geometry
         files. Default is a new folder called 'timesteps'.
 
+    output_suffix : str, optional
+        Suffix to output filename. All output file names will consist of the
+        given suffix plus a three-digit index.
 
     Returns
     -------
@@ -80,7 +88,7 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
 
     
     Notes
-    -----
+    ----
     The geometry data is internally stored as a multidimensional list
     
         zones[nz][nx][nt][i, j]
@@ -169,8 +177,7 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
     # for each timestep...
     for nt in range(min(kMax_list)):
         
-        # Create new "sigma_{:03d}.x" files containing geometry data
-        with open(output_path + 'sigma_{:03d}.x'.format(nt), 'wb') as file:
+        with open(output_path + output_suffix + '{:03d}.x'.format(nt), 'wb') as file:
             
             # --------------------------------------------------------------
             # write file header
@@ -194,11 +201,17 @@ def read_geometry_file(filename_geom, output_path='timesteps'):
     # **********************************************************************
 
 
-def read_fn_file(filename_function, filename_names, output_path='timesteps'):
+def read_fn_file(filename_function, filename_names, output_path='timesteps',
+                 output_suffix='sigma_'):
     """
     Reads a multiple-timestep Sigma function (.fn) file output from PSU-WOPWOP,
     and returns multiple single-timestep function (.fn) files for opening in
     Paraview.
+    
+    Sigma single-timestep function files are enumerated sequentially as
+    '[output_suffix][3-digit index].fn' - e.g. 'sigma_000.fn', 'sigma_001.fn',
+    etc.
+    
     
     Parameters
     ----------
@@ -208,10 +221,13 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps'):
     filename_names: str
         Name of '.nam' file.
     
-    output_path: str
+    output_path: str, optional
         Path where function will write the multiple single-timestep function
         files. Default is a new folder called 'timesteps'.
     
+    output_suffix : str, optional
+        Suffix to output filename. All output file names will consist of the
+        given suffix plus a three-digit index.
     
     Returns
     ------
@@ -349,18 +365,34 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps'):
     return sourcetime
 
 
-def write_p3d_file(output_filename, output_path, source_time, var_names):
+def write_p3d_file(output_filename, output_path, sourcetime, var_names):
     """
     Writes .p3d reader file for Paraview.
     
+    Parameters
+    ----------
+    output_filename : str
+        Name of .p3d file (without .p3d extension).
+    
+    output_folder : str 
+        Path where function will write the .p3d file.
+    
+    sourcetime: (n_sourcetime,) array_like
+        1D numpy array containing source times of 1st zone, obtained from
+        'read_fn_file'.
+        
+    var_names: list of str
+        List of sigma variable names, in order.
+    
+    
+    Returns
+    -------
+    None
+    
+    Notes
+    -----
     Sigma files must be named sequentially: e.g. 'sigma_000.x' for geometry
     data of first timestep, 'sigma_001.x' for geometry data of 2nd timestep, etc.
-    
-    output_folder: where to save .p3d file
-    output_filename: name of .p3d file (without .p3d extension)
-    source_time: 1D numpy array of source times (taken from 1st block -
-                                                 doesn't necessarily matches other blocks)
-    var_names: list of sigma variable names
     """
     
     p3d_header = ['{',
