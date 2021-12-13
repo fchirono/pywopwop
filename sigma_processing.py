@@ -140,37 +140,37 @@ def process_sigma_geom_file(filename_geom, output_path='timesteps',
     # for each zone...
     for nz in range(Nzones):
            
-        # create list of time steps for each coordinate
-        timesteps_x = []
-        timesteps_y = []
-        timesteps_z = []
+        # create list of timeseries for each coordinate
+        timeseries_x = []
+        timeseries_y = []
+        timeseries_z = []
         
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # read and append 'x' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
-            timesteps_x.append(block)
+            timeseries_x.append(block)
         
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # read and append 'y' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
-            timesteps_y.append(block)
+            timeseries_y.append(block)
         
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # read and append 'z' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
-            timesteps_z.append(block)
+            timeseries_z.append(block)
         
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        timesteps = [timesteps_x, timesteps_y, timesteps_z]
+        timeseries = [timeseries_x, timeseries_y, timeseries_z]
         
         # append current timestep list to block list
-        zones.append(timesteps)
+        zones.append(timeseries)
       
 
     # ********** Write multiple single-timestep geometry files ************
@@ -322,8 +322,8 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
     
     # extract vector of source times of first zone
     n_sourcetime = min(kMax_list)
-    sourcetime = np.zeros(n_sourcetime)
     
+    sourcetime = np.zeros(n_sourcetime)
     for it in range(n_sourcetime):
         sourcetime[it] = zones[0][0][it][0,0]
     
