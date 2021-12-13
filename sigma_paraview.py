@@ -47,8 +47,8 @@ def extract_sigma_var_names(filename_nam):
     return var_names
 
 
-def process_geometry_file(filename_geom, output_path='timesteps',
-                          geometry_suffix='sigma_'):
+def process_sigma_geom_file(filename_geom, output_path='timesteps',
+                            geometry_suffix='sigma_'):
     """
     Reads a multiple-timestep Sigma geometry (.x) file output from PSU-WOPWOP,
     and writes multiple single-timestep function (.x) files for opening in
@@ -191,8 +191,8 @@ def process_geometry_file(filename_geom, output_path='timesteps',
     # **********************************************************************
 
 
-def process_fn_file(filename_fn, filename_nam, output_path='timesteps',
-                 function_suffix='sigma_'):
+def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
+                          function_suffix='sigma_'):
     """
     Reads a multiple-timestep Sigma function (.fn) file output from PSU-WOPWOP,
     and returns multiple single-timestep function (.fn) files for opening in
