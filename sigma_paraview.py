@@ -14,6 +14,7 @@ Author:
 
 
 import numpy as np
+import pathlib
 
 from readers_and_writers import read_block, write_block, read_int, write_binary
 from consts_and_dicts import sigma_vars_dict
@@ -56,13 +57,31 @@ def extract_var_names(nam_filename):
     return var_names
 
 
-def read_geom_file(filename_geom, output_path):
+def read_geometry_file(filename_geom, output_path='timesteps'):
     """
     Reads a multiple-timestep Sigma geometry (.x) file output from PSU-WOPWOP,
-    and returns multiple single-timestep function (.x) files for opening in
+    and writes multiple single-timestep function (.x) files for opening in
     Paraview.
+    
+    Parameters
+    ----------
+    filename_geom : string
+        String containing the name of the geometry file - must include '.x'
+        extension.
+    
+    output_path : string
+        Path where function will write the multiple single-timestep geometry
+        files. Default is a new folder called 'timesteps'.
 
     """
+    
+    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # check if output path exists; if it doesn't, create it. Also creates
+    # parent paths, if necessary
+    
+    path = pathlib.Path(output_path)
+    path.mkdir(parents=True, exist_ok=True)
+    
     
     # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
     # read function (.fn) file
