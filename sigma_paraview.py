@@ -17,7 +17,6 @@ import numpy as np
 import pathlib
 
 from readers_and_writers import read_block, write_block, read_int, write_binary
-# from consts_and_dicts import sigma_vars_dict
 
 
 # %% #######################################################################
@@ -25,7 +24,7 @@ from readers_and_writers import read_block, write_block, read_int, write_binary
 # ##########################################################################
 
 
-def extract_var_names(filename_nam):
+def extract_sigma_var_names(filename_nam):
     """
     Parses a 'sigma.nam' file containing the variable names, and outputs a
     list of these names.
@@ -251,10 +250,6 @@ def process_fn_file(filename_fn, filename_nam, output_path='timesteps',
     path = pathlib.Path(output_path)
     path.mkdir(parents=True, exist_ok=True)
     
-    # **********************************************************************        
-    # extract variable names from .nam file
-    # var_names = extract_var_names(filename_names)
-    
     # **********************************************************************
     # read function (.fn) file
     with open(filename_fn, 'rb') as f:
@@ -293,10 +288,6 @@ def process_fn_file(filename_fn, filename_nam, output_path='timesteps',
         # for each variable in current zone...
         for nvar in range(nVars_list[nz]):
             
-            # # get number of dims of current variable (e.g. 1 for scalar data,
-            # # 3 for vector data)
-            # ndim_var = sigma_vars_dict[var_names[nvar]]
-            
             # create list of time steps for current variable
             timesteps = []
             
@@ -304,16 +295,10 @@ def process_fn_file(filename_fn, filename_nam, output_path='timesteps',
             for it in range(kMax_list[nz]):
                 
                 # read and append data from current time step
-                
-                # # read given number of dims (e.g. vectors are 3-dims)
-                # block, start_index = read_block(function_data, start_index,
-                #                                 ndim_var, iMax_list[nz], jMax_list[nz])
-                
-                # always read as 1-dim data (reads vector components as
-                # separate variables)
+                #  ---> Data is always read as 1-dim; vector components are
+                #       read as separate variables
                 block, start_index = read_block(function_data, start_index,
                                                 1, iMax_list[nz], jMax_list[nz])
-                
                 timesteps.append(block)
     
             # append current timestep list to variable list
