@@ -58,14 +58,14 @@ def extract_var_names(nam_filename):
 
 
 def read_geometry_file(filename_geom, output_path='timesteps',
-                       output_suffix='sigma_'):
+                       geometry_suffix='sigma_'):
     """
     Reads a multiple-timestep Sigma geometry (.x) file output from PSU-WOPWOP,
     and writes multiple single-timestep function (.x) files for opening in
     Paraview.
     
     Sigma single-timestep geometry files are enumerated sequentially as
-    '[output_suffix][3-digit index].x' - e.g. 'sigma_000.x', 'sigma_001.x',
+    '[geometry_suffix][3-digit index].x' - e.g. 'sigma_000.x', 'sigma_001.x',
     etc.
     
     Parameters
@@ -78,9 +78,9 @@ def read_geometry_file(filename_geom, output_path='timesteps',
         Path where function will write the multiple single-timestep geometry
         files. Default is a new folder called 'timesteps'.
 
-    output_suffix : str, optional
+    geometry_suffix : str, optional
         Suffix to output filename. All output file names will consist of the
-        given suffix plus a three-digit index.
+        given suffix plus a three-digit index. Default is 'sigma_'.
 
     Returns
     -------
@@ -177,7 +177,7 @@ def read_geometry_file(filename_geom, output_path='timesteps',
     # for each timestep...
     for nt in range(min(kMax_list)):
         
-        with open(output_path + output_suffix + '{:03d}.x'.format(nt), 'wb') as file:
+        with open(output_path + geometry_suffix + '{:03d}.x'.format(nt), 'wb') as file:
             
             # --------------------------------------------------------------
             # write file header
@@ -202,15 +202,15 @@ def read_geometry_file(filename_geom, output_path='timesteps',
 
 
 def read_fn_file(filename_function, filename_names, output_path='timesteps',
-                 output_suffix='sigma_'):
+                 function_suffix='sigma_'):
     """
     Reads a multiple-timestep Sigma function (.fn) file output from PSU-WOPWOP,
     and returns multiple single-timestep function (.fn) files for opening in
     Paraview.
     
     Sigma single-timestep function files are enumerated sequentially as
-    '[output_suffix][3-digit index].fn' - e.g. 'sigma_000.fn', 'sigma_001.fn',
-    etc.
+    '[function_suffix][3-digit index].fn' - e.g. 'sigma_000.fn',
+    'sigma_001.fn', etc.
     
     
     Parameters
@@ -225,9 +225,9 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
         Path where function will write the multiple single-timestep function
         files. Default is a new folder called 'timesteps'.
     
-    output_suffix : str, optional
+    function_suffix : str, optional
         Suffix to output filename. All output file names will consist of the
-        given suffix plus a three-digit index.
+        given suffix plus a three-digit index. Default is 'sigma_'.
     
     Returns
     ------
@@ -238,9 +238,9 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
     Notes
     -----
     The return variable 'sourcetime' is used to tell Paraview what time (in
-    seconds) corresponds to each time step. However, as these come from the
-    first zone only, they might not correspond very accurately to the other
-    zones.
+    seconds) corresponds to each time step. However, these values are taken
+    from the first zone only, and thus might not correspond very accurately to
+    the other zones.
     
     The function data is internally stored as a multidimensional list
     
@@ -300,11 +300,11 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
         var_list = []
         
         # for each variable in current zone...
-        for ivar in range(nVars_list[nz]):
+        for nvar in range(nVars_list[nz]):
             
             # get number of dims of current variable (e.g. 1 for scalar data,
             # 3 for vector data)
-            ndim_var = sigma_vars_dict[var_names[ivar]]
+            ndim_var = sigma_vars_dict[var_names[nvar]]
             
             # create list of time steps for current variable
             timesteps = []
@@ -338,7 +338,7 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
     for nt in range(n_sourcetime):
         
         # Create new "sigma_{:03d}.fn" files containing function data    
-        with open(output_path + 'sigma_{:03d}.fn'.format(nt), 'wb') as file:
+        with open(output_path + function_suffix + '{:03d}.fn'.format(nt), 'wb') as file:
             
             # --------------------------------------------------------------
             # write file header
@@ -365,7 +365,8 @@ def read_fn_file(filename_function, filename_names, output_path='timesteps',
     return sourcetime
 
 
-def write_p3d_file(output_filename, output_path, sourcetime, var_names):
+def write_p3d_file(output_filename, output_path, sourcetime, var_names,
+                   geometry_suffix='sigma_', function_suffix='sigma_'):
     """
     Writes .p3d reader file for Paraview.
     
@@ -384,6 +385,12 @@ def write_p3d_file(output_filename, output_path, sourcetime, var_names):
     var_names: list of str
         List of sigma variable names, in order.
     
+    geometry_suffix : str
+        Suffix to single-timestep geometry filenames. Default is 'sigma_'.
+        
+    function_suffix : str, optional
+        Suffix to single-timestep function filenames. Default is 'sigma_'.
+    
     
     Returns
     -------
@@ -391,8 +398,9 @@ def write_p3d_file(output_filename, output_path, sourcetime, var_names):
     
     Notes
     -----
-    Sigma files must be named sequentially: e.g. 'sigma_000.x' for geometry
-    data of first timestep, 'sigma_001.x' for geometry data of 2nd timestep, etc.
+    Sigma files must be named as '[suffix][3-digit index].[x, fn]'. E.g.,
+    'sigma_000.x' for geometry data of first timestep, 'sigma_001.x' for
+    geometry data of 2nd timestep, etc.
     """
     
     p3d_header = ['{',
@@ -406,10 +414,10 @@ def write_p3d_file(output_filename, output_path, sourcetime, var_names):
             file.write(line+'\n')
     
         # write one line for each time step
-        for ti in range(source_time.shape[0]):
-            time_string = '\t\t{{"time" : {:.6f},'.format(source_time[ti])
-            time_string += ' "xyz" : "sigma_{:03d}.x",'.format(ti)
-            time_string += ' "function" : "sigma_{:03d}.fn"}},\n'.format(ti)
+        for nt in range(sourcetime.shape[0]):
+            time_string = '\t\t{{"time" : {:.6f},'.format(sourcetime[nt])
+            time_string += ' "xyz" : "' + geometry_suffix + '{:03d}.x",'.format(nt)
+            time_string += ' "function" : "' + function_suffix + '{:03d}.fn"}},\n'.format(nt)
             file.write(time_string)
     
         file.write('\t\t],\n')
