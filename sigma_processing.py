@@ -11,16 +11,6 @@ Author:
     Fabio Casagrande Hirono
     Dec 2021
 
-
-
-TODO: CORRECT TEMPORAL MISALIGNMENT OF MULTIPLE ZONES!
-    
-Currently, the n-th output file contains ***ALL ZONES'*** n-th time step of
-    data, but is timestamped using ***ZONE 1*** n-th source time.
-    
-    This can lead to temporal misalignment if different zones have
-    significantly different source times, leading to some zones appearing
-    spatially misaligned in Paraview. 
 """
 
 
@@ -465,17 +455,17 @@ def write_p3d_file(output_filename, output_path, sourcetime, var_names,
 # ##########################################################################
 
 def process_sigma_files(filename_geom, filename_fn, filename_nam,
-                        output_path='timesteps', geometry_suffix='sigma_',
-                        function_suffix='sigma_', p3d_filename=''):
+                        output_path='timesteps/', geometry_suffix='sigma_',
+                        function_suffix='sigma_',
+                        p3d_filename='read_sigmasurfaces'):
     
     # extract names of Sigma variables from .nam file
     var_names = extract_sigma_var_names(filename_nam)
-
     
     # read Sigma geometry file (multiple-timestep)
     zones_geom, geo_list = read_sigma_geom_file(filename_geom)
     
-    # read Sigma function file
+    # read Sigma function file (multiple-timestep)
     zones_fn, fn_list = read_sigma_fn_file(filename_fn)
     
     # process sigma source times
@@ -485,11 +475,11 @@ def process_sigma_files(filename_geom, filename_fn, filename_nam,
     
     # write sigma geometry files (single-timestep)
     write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
-                           output_path='timesteps', geometry_suffix='sigma_')
+                           output_path, geometry_suffix)
     
     # write Sigma function files (single-timestep)
     write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt, 
-                         output_path='timesteps', function_suffix='sigma_')
+                         output_path, function_suffix)
     
     # write .p3d Paraview reader
     write_p3d_file(p3d_filename, output_path, sourcetime, var_names,
@@ -777,7 +767,7 @@ def process_sigma_sourcetimes(zones_fn, fn_list):
     return sourcetime_final, start_nt
 
 
-def write_sigma_fn_files(zones_fn, sourcetime, start_nt, fn_list,
+def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
                          output_path='timesteps', function_suffix='sigma_'):
     """
     fn_list : [Nzones, iMax_list, jMax_list, kMax_list, nVars_list]
