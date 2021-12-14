@@ -17,8 +17,11 @@ For example, for three velocity components 'Vx', 'Vy', 'Vz':
     - Add a new filter via 'Filters' - 'Alphabetical' - 'Python Calculator';
     
     - In Python Calculator, set the 'Expression' to 'make_vector(Vx, Vy, Vz)'
-    and the 'Array Name' to e.g. 'Velocity'. You can now choose to color the
-    visualization by, e.g., vector magnitude in the 'Coloring' section.
+    and the 'Array Name' to e.g. 'Velocity'. Click 'Apply'.
+    
+You should now have a new variable called 'Velocity' available for selection.
+You can now choose to color the visualization by, e.g., vector magnitude in the
+'Coloring' section.
 
 
 To visualize the vectors as arrows:
@@ -26,16 +29,16 @@ To visualize the vectors as arrows:
     
     - In 'Glyph Source' - 'Glyph Type', select 'Arrow';
     
-    - In 'Orientation' - 'Orientation Array', select your vector - e.g. 'V';
-    
-    - In 'Scale' - 'Scale Array', select 'No scale array'. A manual 'Scale
-    Factor' can be adjusted here for a better visualization;
-    
-    - For efficiency, you probably only need to visualize every few points. In
-    'Masking' - 'Glyph Mode', select 'Every Nth point' and in 'Stride' select
-    a number between, e.g., 2 and 20;
-    
-    - Pick an informative coloring scheme in 'Coloring' - e.g., vector magnitude.
+    - In 'Orientation' - 'Orientation Array', select your vector - e.g. 'V'.
+
+
+For a clearer visualization, you might need to manually adjust 'Scale' -
+'Scale Factor'. Try playing with 'Scale' - 'Scale Array', and choose an
+informative coloring scheme in 'Coloring' - e.g., vector magnitude.
+
+For efficiency, you probably only need to visualize every few points. In
+'Masking' - 'Glyph Mode', select 'Every Nth point' and in 'Stride' select
+a number between, e.g., 2 and 20.
     
 
 Author:
