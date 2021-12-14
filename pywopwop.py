@@ -26,7 +26,7 @@ from zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading
 
 from sigma_processing import extract_sigma_var_names, process_sigma_fn_file, \
-    process_sigma_geom_file, write_p3d_file
+    process_sigma_geom_file, write_p3d_file, process_sigma_files
 
 
 # %% #######################################################################
