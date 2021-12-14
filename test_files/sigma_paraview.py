@@ -73,16 +73,20 @@ path_output = path_to_sigma + '/timesteps/'
 
 # %% #######################################################################
 
-# extract names of Sigma variables from .nam file
-var_names = PWW.extract_sigma_var_names(filename_nam)
+# # extract names of Sigma variables from .nam file
+# var_names = PWW.extract_sigma_var_names(filename_nam)
 
-# process geometry (.x) file
-PWW.process_sigma_geom_file(filename_geom, path_output)
+# # process geometry (.x) file
+# PWW.process_sigma_geom_file(filename_geom, path_output)
 
-# process function files, and obtain a vector of source times for zone 1
-source_time = PWW.process_sigma_fn_file(filename_fn, filename_nam, path_output)
+# # process function files, and obtain a vector of source times for zone 1
+# source_time = PWW.process_sigma_fn_file(filename_fn, filename_nam, path_output)
 
-# write Paraview .p3d reader file
-p3d_filename = 'read_sigmasurfaces_case1'
-PWW.write_p3d_file(p3d_filename, path_output, source_time, var_names)
+# # write Paraview .p3d reader file
+# p3d_filename = 'read_sigmasurfaces_case1'
+# PWW.write_p3d_file(p3d_filename, path_output, source_time, var_names)
 
+# %%
+
+PWW.process_sigma_files(filename_geom, filename_fn, filename_nam,
+                        path_output)
