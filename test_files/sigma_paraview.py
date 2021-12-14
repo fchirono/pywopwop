@@ -54,13 +54,17 @@ import pywopwop as PWW
 # %% #######################################################################
 # define subfolder to analyse - run from within 'PSU-WOPWOP_v3.4.4' folder
 
+# path where sigma files (.x, .nam, .fn) are located
 path_to_sigma = './case1/'
 
+# file names
 filename_nam = path_to_sigma + '/sigma.nam'
 filename_geom = path_to_sigma + '/sigma.x'
 filename_fn = path_to_sigma + '/sigma.fn'
 
-# path for file output
+# path for file output - here we create a new folder called 'timesteps' to
+# store the newly created single-timestep (.x, .fn) and Paraview reader (.p3d)
+# files
 path_output = path_to_sigma + '/timesteps/'
 
 
@@ -69,10 +73,10 @@ path_output = path_to_sigma + '/timesteps/'
 # extract names of Sigma variables from .nam file
 var_names = PWW.extract_sigma_var_names(filename_nam)
 
-# parse geometry (.x) file
+# process geometry (.x) file
 PWW.process_sigma_geom_file(filename_geom, path_output)
 
-# parse function files, and obtain a vector of source times
+# process function files, and obtain a vector of source times for zone 1
 source_time = PWW.process_sigma_fn_file(filename_fn, filename_nam, path_output)
 
 # write Paraview .p3d reader file
