@@ -319,22 +319,43 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
         zones.append(var_list)
     
     # ********************** Read source times *****************************
+    # The source times of each zone are not identical; hence, determine what
+    # source time ranges overlap with all other zones, and process only these
     
-    # extract vector of source times of first zone
+    # ------------------------ old code --------------------------------
+    # # extract vector of source times of first zone
+    # n_sourcetime = min(kMax_list)
+    #
+    # sourcetime = np.zeros(n_sourcetime)
+    # for it in range(n_sourcetime):
+    #     sourcetime[it] = zones[0][0][it][0,0]
+    #
+    # --------------------------------------------------------------------
+    
+    # create array of source times vs zones
     n_sourcetime = min(kMax_list)
+    sourcetime = np.zeros((Nzones, n_sourcetime))
+    for nz in range(Nzones):
+        for nt in range(n_sourcetime):
+            sourcetime[nz, nt] = zones[nz][0][nt][0,0]
     
-    sourcetime = np.zeros(n_sourcetime)
-    for it in range(n_sourcetime):
-        sourcetime[it] = zones[0][0][it][0,0]
+    # calculate dt for source time (identical for all zones)
+    dt = np.diff(sourcetime[0,:])[0]
     
-    # TODO: source times are not identical across different zones. Zone data
-    # must be parsed and time-aligned by source time before creating output
-    # files
+    # find time shift per zone (vs zone 1), in number of 'source time' samples
+    shift = np.round((sourcetime[:, 0] - sourcetime[0,0])/dt).astype(int)
+    
+    # calculate start and end indices for zones' source time
+    start_nt = np.max(shift) - shift
+    end_nt = n_sourcetime - shift
+    
+    # create vector of source times for zone 1 that overlap with all others
+    sourcetime_final = sourcetime[0, start_nt[0]:end_nt[0]]
     
     # ********** Write multiple single-timestep function files ************
     
     # For each time step...
-    for nt in range(n_sourcetime):
+    for nt in range(sourcetime_final.shape[0]):
         
         # Create new "sigma_{:03d}.fn" files containing function data    
         with open(output_path + function_suffix + '{:03d}.fn'.format(nt), 'wb') as file:
@@ -357,11 +378,12 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
             
                 # for each variable in current block...
                 for nvar in range(nVars_list[nz]):
-                    write_block(file, zones[nz][nvar][nt])
+                    # write data within overlapping source time range
+                    write_block(file, zones[nz][nvar][nt + start_nt[nz]])
             # --------------------------------------------------------------
     
     
-    return sourcetime
+    return sourcetime_final
 
 
 def write_p3d_file(output_filename, output_path, sourcetime, var_names,
