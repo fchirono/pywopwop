@@ -225,12 +225,10 @@ class PWWPatch:
         elif self.geometry_time_type == 'periodic':
             # TODO: implement structured periodic geometry
             raise NotImplementedError("Can't add Periodic Geometry data to StructuredZone - not implemented yet!")
-            #zone.add_StructuredPeriodicGeometry(XYZ_coord, normal_coord)
 
         elif self.geometry_time_type == 'aperiodic':
             # TODO: implement structured aperiodic geometry
             raise NotImplementedError("Can't add Aperiodic Geometry data to StructuredZone - not implemented yet!")
-            # zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # adds loading data, if there is any
@@ -258,14 +256,12 @@ class PWWPatch:
 
                 # TODO: implement structured periodic loading
                 raise NotImplementedError("Can't add Structured Periodic Loading data to StructuredZone - not implemented yet!")
-                #zone.add_StructuredPeriodicLoading(loading_data, self.loading_data_type)
 
             # ----------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
 
                 # TODO: implement structured aperiodic loading
                 raise NotImplementedError("Can't add Structured Aperiodic Loading data to StructuredZone - not implemented yet!")
-                #zone.add_StructuredAperiodicLoading(loading_data, self.loading_data_type)
 
             # ----------------------------------------------------------------
             # set zone loading data flag
@@ -502,27 +498,11 @@ class PWWPatch:
                 # for each zone
                 for nz in range(self.n_zones):
 
-                    # write XYZ coords
                     write_block(f, self.zones[nz].geometry.XYZ_coord)
-                    # for n in range(3):
-                    #     # write order is Fortran (column-major)
-                    #     for j in range(self.zones[nz].jMax):
-                    #         for i in range(self.zones[nz].iMax):
-                    #             write_binary(f, self.zones[nz].geometry.XYZ_coord[n, i, j])
-
-                    # write normal vector coords
                     write_block(f, self.zones[nz].geometry.normal_coord)
-                    # for n in range(3):
-                    #     for j in range(self.zones[nz].jMax):
-                    #         for i in range(self.zones[nz].iMax):
-                    #             write_binary(f, self.zones[nz].geometry.normal_coord[n, i, j])
 
-                    # write IBLANK data
                     if self.has_iblank == True:
                         write_block(f, self.zones[nz].geometry.iblank)
-                        # for j in range(self.zones[nz].jMax):
-                        #     for i in range(self.zones[nz].iMax):
-                        #         write_binary(f, self.zones[nz].geometry.iblank[i, j])
 
             # -----------------------------------------------------------
             else:
@@ -650,8 +630,6 @@ class PWWPatch:
                         # set loading data flag
                         zone.has_loading_data = True
 
-                        #self.zones.append(zone)
-
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:
                     # TODO: implement non-constant loading
@@ -730,6 +708,7 @@ class PWWPatch:
                 # TODO: implement non-structured headers
                 raise NotImplementedError("Can't write non-structured loading data header - not implemented yet!")
 
+            # ------------------------------------------------------------
 
     # ***********************************************************************
     def _read_loading_data(self, filename):
@@ -828,37 +807,20 @@ class PWWPatch:
                 if self.loading_time_type == 'constant':
 
                     # ......................................................
-                    # if data is surface pressure
                     if self.loading_data_type == 'surf_pressure':
 
-                        # for each zone
+                        # for each zone...
                         for nz in self.zones_with_loading_data:
-
-                            # remove negative sign
                             nz = abs(nz)
-
-                            # write pressure data in Fortran (column-major) order
                             write_block(f, self.zones[nz].loading.pressures)
-                            # for j in range(self.zones[nz].jMax):
-                            #     for i in range(self.zones[nz].iMax):
-                            #         write_binary(f, self.zones[nz].loading.pressures[i, j])
 
                     # ......................................................
-                    # if data is surface loading vectors
                     elif self.loading_data_type == 'surf_loading_vec':
 
-                        # for each zone
+                        # for each zone...
                         for nz in self.zones_with_loading_data:
-
-                            # remove negative sign
                             nz = abs(nz)
-
-                            # write loading vectors in Fortran (column-major) order
                             write_block(f, self.zones[nz].loading.loading_vectors)
-                            # for n in range(3):
-                            #     for j in range(self.zones[nz].jMax):
-                            #         for i in range(self.zones[nz].iMax):
-                            #             write_binary(f, self.zones[nz].loading.loading_vectors[n, i, j])
 
                     # ......................................................
                     elif self.loading_data_type == 'flow_params':
@@ -892,7 +854,7 @@ class PWWPatch:
         self._update_n_zones()
 
         self.loading_format_string = []
-        self.loading_format_string.append(2)               # indicate functional data file
+        self.loading_format_string.append(2)    # indicate functional data file
         self.loading_format_string.append(self.n_zones)
         self.loading_format_string.append(structured_dict[self.is_structured])
         self.loading_format_string.append(loading_time_dict[self.loading_time_type])
@@ -900,7 +862,9 @@ class PWWPatch:
         self.loading_format_string.append(loading_data_dict[self.loading_data_type])
         self.loading_format_string.append(ref_frame_dict[self.loading_ref_frame])
         self.loading_format_string.append(float_dict[self.float_type])
-        self.loading_format_string.append(RESERVED_DIGIT)   # reserved digit '0' inserted twice
+
+        # reserved digit '0' inserted twice
+        self.loading_format_string.append(RESERVED_DIGIT)
         self.loading_format_string.append(RESERVED_DIGIT)
 
 
