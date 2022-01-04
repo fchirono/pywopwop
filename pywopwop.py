@@ -224,12 +224,12 @@ class PWWPatch:
 
         elif self.geometry_time_type == 'periodic':
             # TODO: implement structured periodic geometry
-            print('Structured periodic geometry not implemented yet!')
+            raise NotImplementedError("Can't add Periodic Geometry data to StructuredZone - not implemented yet!")
             #zone.add_StructuredPeriodicGeometry(XYZ_coord, normal_coord)
 
         elif self.geometry_time_type == 'aperiodic':
             # TODO: implement structured aperiodic geometry
-            print('Structured aperiodic geometry not implemented yet!')
+            raise NotImplementedError("Can't add Aperiodic Geometry data to StructuredZone - not implemented yet!")
             # zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
@@ -257,14 +257,14 @@ class PWWPatch:
             elif self.loading_time_type == 'periodic':
 
                 # TODO: implement structured periodic loading
-                print('Structured periodic loading not implemented yet!')
+                raise NotImplementedError("Can't add Structured Periodic Loading data to StructuredZone - not implemented yet!")
                 #zone.add_StructuredPeriodicLoading(loading_data, self.loading_data_type)
 
             # ----------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
 
                 # TODO: implement structured aperiodic loading
-                print('Structured aperiodic loading not implemented yet!')
+                raise NotImplementedError("Can't add Structured Aperiodic Loading data to StructuredZone - not implemented yet!")
                 #zone.add_StructuredAperiodicLoading(loading_data, self.loading_data_type)
 
             # ----------------------------------------------------------------
@@ -353,11 +353,11 @@ class PWWPatch:
 
             else:
                 # TODO: implement non-constant geometries
-                print('Reading non-constant geometry zone info not implemented yet!')
+                raise NotImplementedError("Can't read non-constant geometry zone info - not implemented yet!")
 
         else:
             # TODO: implement non-structured headers
-            print('Reading non-structured geometry zone info not implemented yet!')
+            raise NotImplementedError("Can't read non-structured geometry zone info - not implemented yet!")
 
         assert (self.n_zones == len(self.zones)), \
             "Number of zones in format string doesn't match file data!"
@@ -412,12 +412,12 @@ class PWWPatch:
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:
                     # TODO: implement non-constant geometries
-                    print('Writing non-constant geometry zone info not implemented yet!')
+                    raise NotImplementedError("Can't write non-constant geometry zone info - not implemented yet!")
 
             # --------------------------------------------------------------
             else:
                 # TODO: implement non-structured headers
-                print('Writing non-structured geometry zone info not implemented yet!')
+                raise NotImplementedError("Can't write non-structured geometry zone info - not implemented yet!")
 
 
     # **********************************************************************
@@ -482,7 +482,7 @@ class PWWPatch:
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         else:
             # TODO: read non-constant geometry data
-            print('Reading non-constant geometry data not implemented yet!')
+            raise NotImplementedError("Can't read non-constant geometry data - not implemented yet!")
 
 
     # ************************************************************************
@@ -527,7 +527,7 @@ class PWWPatch:
             # -----------------------------------------------------------
             else:
                 # TODO: write non-constant geometry data
-                print('Writing non-constant geometry data not implemented yet!')
+                raise NotImplementedError("Can't write non-constant geometry data - not implemented yet!")
             # -----------------------------------------------------------
 
 
@@ -655,17 +655,18 @@ class PWWPatch:
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:
                     # TODO: implement non-constant loading
-                    print('Reading non-constant functional zone info not implemented yet!')
+                    raise NotImplementedError("Can't read non-constant loading data - not implemented yet!")
 
             # ------------------------------------------------------------------
             else:
                 # TODO: implement non-structured loading
-                print('Reading non-structured functional zone info not implemented yet!')
+                raise NotImplementedError("Can't read non-structured loading data - not implemented yet!")
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # TODO: implement header reader for version 1.1
         elif self.version_number2 == '1':
-            print('Reading functional data file v1.1 header not implemented yet!')
+            raise NotImplementedError("Can't read loading data file v1.1 header - not implemented yet!")
+
 
 
     # ***********************************************************************
@@ -722,12 +723,12 @@ class PWWPatch:
 
                 else:
                     # TODO: implement non-constant functional data header
-                    print('Writing non-constant functional data header not implemented yet!')
+                    raise NotImplementedError("Can't write non-constant loading data header - not implemented yet!")
 
             # ------------------------------------------------------------
             else:
                 # TODO: implement non-structured headers
-                print('Writing non-structured functional data header not implemented yet!')
+                raise NotImplementedError("Can't write non-structured loading data header - not implemented yet!")
 
 
     # ***********************************************************************
@@ -800,12 +801,12 @@ class PWWPatch:
             # --------------------------------------------------------------
             else:
                 # TODO: read non-constant functional data
-                print('Reading non-constant functional data not implemented yet!')
+                raise NotImplementedError("Can't read non-constant loading data - not implemented yet!")
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         else:
             # TODO: read non-structured functional data
-            print('Reading non-structured functional data not implemented yet!')
+            raise NotImplementedError("Can't read non-structured loading data - not implemented yet!")
 
 
     # ***********************************************************************
@@ -862,17 +863,17 @@ class PWWPatch:
                     # ......................................................
                     elif self.loading_data_type == 'flow_params':
                         # TODO: write flow params data
-                        print('Writing flow parameters not implemented yet!')
+                        raise NotImplementedError("Can't write flow_params loading data - not implemented yet!")
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:
                     # TODO: write non-constant loading data
-                    print('Writing non-constant loading data not implemented yet!')
+                    raise NotImplementedError("Can't write non-constant loading data - not implemented yet!")
 
             # -----------------------------------------------------------
             else:
                 # TODO: write non-structured loading data
-                print('Writing non-structured loading data not implemented yet!')
+                raise NotImplementedError("Can't write non-structured loading data - not implemented yet!")
 
 
     # **********************************************************************
