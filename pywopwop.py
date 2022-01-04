@@ -795,17 +795,17 @@ class PWWPatch:
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 elif self.data_type == 'flow_params':
-                    print('Reading flow parameters not implemented yet!')
-
+                    # TODO: read flow_params loading data
+                    raise NotImplementedError("Can't read flow_params loading data - not implemented yet!")
 
             # --------------------------------------------------------------
             else:
-                # TODO: read non-constant functional data
+                # TODO: read non-constant loading data
                 raise NotImplementedError("Can't read non-constant loading data - not implemented yet!")
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         else:
-            # TODO: read non-structured functional data
+            # TODO: read non-structured loading data
             raise NotImplementedError("Can't read non-structured loading data - not implemented yet!")
 
 
