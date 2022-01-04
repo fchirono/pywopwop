@@ -100,12 +100,12 @@ class StructuredZone(Zone):
 
     def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord):
         # TODO: implement Structured Periodic Geometry
-        print("Structured Periodic Geometry data not implemented yet!")
+        raise NotImplementedError("Structured Periodic Geometry data not implemented yet!")
 
 
     def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord):
         # TODO: implement Structured Aperiodic Geometry
-        print("Structured Aperiodic Geometry data not implemented yet!")
+        raise NotImplementedError("Structured Aperiodic Geometry data not implemented yet!")
 
 
     # **********************************************************************
@@ -146,13 +146,13 @@ class StructuredZone(Zone):
     # **********************************************************************
     def add_StructuredPeriodicLoading(self, loading_data, loading_data_type):
         # TODO: implement Structured Periodic Loading
-        print("Structured Periodic Loading data not implemented yet!")
+        raise NotImplementedError("Structured Periodic Loading data not implemented yet!")
 
 
     # **********************************************************************
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
         # TODO: implement Structured Aperiodic Loading
-        print("Structured Aperiodic Loading data not implemented yet!")
+        raise NotImplementedError("Structured Aperiodic Loading data not implemented yet!")
 
 
 class StructuredConstantGeometry():
@@ -216,7 +216,7 @@ class StructuredConstantLoading():
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         elif loading_data_type == 'flow_params':
             # TODO: implement structured constant loading using flow params!
-            print('Structured constant loading using flow params not implemented yet!')
+            raise NotImplementedError('Structured Constant loading using flow params not implemented yet!')
 
 
 
