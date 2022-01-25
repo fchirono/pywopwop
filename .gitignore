@@ -3,3 +3,4 @@ __pycache__
 *.odg
 *.odg#
 pywopwop[OLD].py
+.spyproject*
