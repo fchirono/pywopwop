@@ -361,8 +361,11 @@ def process_sigma_files(filename_geom, filename_fn, filename_nam,
                         function_suffix='sigma_',
                         p3d_filename='read_sigmasurfaces'):
 
+    print("Begin processing Sigma files...")
+
     # extract names of Sigma variables from .nam file
     var_names = extract_sigma_var_names(filename_nam)
+    print("Extracted sigma var names...")
 
     # read Sigma geometry file (multiple-timestep)
     zones_geom, geo_list = read_sigma_geom_file(filename_geom)
@@ -408,6 +411,8 @@ def read_sigma_geom_file(filename_geom):
     # **********************************************************************
     # read multiple-timestep geometry (.x) file
 
+    print('\nReading geometry file "' + filename_geom + '.x" ...')
+
     with open(filename_geom, 'rb') as f:
         geom_data = f.read()
 
@@ -421,6 +426,8 @@ def read_sigma_geom_file(filename_geom):
 
     # read number of zones (i.e. independent meshes) in file
     Nzones = read_int(geom_data, 0)
+
+    print('\tNzones = {}'.format(Nzones))
 
     # read iMax, jMax, kMax for each zone
     for nz in range(Nzones):
@@ -442,6 +449,7 @@ def read_sigma_geom_file(filename_geom):
 
     # for each zone...
     for nz in range(Nzones):
+        print('\t\tReading zone {}...'.format(nz))
 
         # create list of timeseries for each coordinate
         timeseries_x = []
@@ -475,6 +483,7 @@ def read_sigma_geom_file(filename_geom):
         # append current timestep list to block list
         zones_geom.append(timeseries)
 
+    print('\tFinished reading geometry file!')
     return zones_geom, geo_list
 
 
@@ -540,6 +549,9 @@ def write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
     # **********************************************************************
     # parse input list for parameters
 
+    print("\nWriting geometry files...")
+    print("\tN_timesteps = {}".format(N_timesteps))
+
     Nzones, iMax_list, jMax_list, kMax_list = geo_list
 
     # **********************************************************************
@@ -547,6 +559,7 @@ def write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
 
     # for each timestep...
     for nt in range(N_timesteps):
+        print("\t\tNt = {}".format(nt))
 
         with open(output_path + geometry_suffix + '{:03d}.x'.format(nt), 'wb') as file:
 
@@ -569,6 +582,7 @@ def write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
                     write_block(file, zones_geom[nz][nx][nt + start_nt[nz]])
             # --------------------------------------------------------------
 
+    print("\tFinished writing geometry files!")
     # **********************************************************************
 
 
@@ -578,12 +592,18 @@ def read_sigma_fn_file(filename_fn):
 
     # **********************************************************************
     # read function (.fn) file
+
+
+    print('\nReading functional file "' + filename_fn + '.fn" ...')
+
     with open(filename_fn, 'rb') as f:
         function_data = f.read()
 
     # ********************** Read file header *****************************
     # read number of zones (i.e. independent meshes) in file
     Nzones = read_int(function_data, 0)
+
+    print('\tNzones = {}'.format(Nzones))
 
     # create lists of iMax, jMax, kMax, nVars for each block
     iMax_list = []
@@ -611,6 +631,8 @@ def read_sigma_fn_file(filename_fn):
     # for each zone...
     for nz in range(Nzones):
 
+        print('\t\tReading zone {}...'.format(nz))
+
         # create list of variables for current zone
         var_list = []
 
@@ -636,6 +658,7 @@ def read_sigma_fn_file(filename_fn):
         # append current variable list to zone list
         zones_fn.append(var_list)
 
+    print("\tFinished reading functional file!")
     return zones_fn, fn_list
 
 
@@ -675,13 +698,17 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
     fn_list : [Nzones, iMax_list, jMax_list, kMax_list, nVars_list]
     """
 
+    print("\nWriting functional files...")
     # parse dimensions list
     Nzones, iMax_list, jMax_list, kMax_list, nVars_list = fn_list
+
+    print("\tN_timesteps = {}".format(sourcetime.shape[0]))
 
     # ********** Write multiple single-timestep function files ************
 
     # For each time step...
     for nt in range(sourcetime.shape[0]):
+        print("\t\tnt = {}".format(nt))
 
         # Create new "sigma_{:03d}.fn" files containing function data
         with open(output_path + function_suffix + '{:03d}.fn'.format(nt), 'wb') as file:
@@ -707,7 +734,7 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
                     # write data within overlapping source time range
                     write_block(file, zones_fn[nz][nvar][nt + start_nt[nz]])
             # --------------------------------------------------------------
-
+    print("\tFinished writing functional files!")
 
 # %% #######################################################################
 # PSU-WOPWOP Sigma surface auxiliary functions
