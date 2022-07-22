@@ -411,7 +411,7 @@ def read_sigma_geom_file(filename_geom):
     # **********************************************************************
     # read multiple-timestep geometry (.x) file
 
-    print('\nReading geometry file "' + filename_geom + '.x" ...')
+    print('\nReading geometry file "' + filename_geom + '" ...')
 
     with open(filename_geom, 'rb') as f:
         geom_data = f.read()
@@ -594,7 +594,7 @@ def read_sigma_fn_file(filename_fn):
     # read function (.fn) file
 
 
-    print('\nReading functional file "' + filename_fn + '.fn" ...')
+    print('\nReading functional file "' + filename_fn + '" ...')
 
     with open(filename_fn, 'rb') as f:
         function_data = f.read()
