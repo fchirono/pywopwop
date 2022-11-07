@@ -18,8 +18,8 @@ import struct
 from consts_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
 
 
-# %% #######################################################################
-# PSU-WOPWOP initial file check for 'magic number' and endianness
+# ##########################################################################
+# %% PSU-WOPWOP initial file check for 'magic number' and endianness
 # ##########################################################################
 
 def initial_check(filename):
@@ -51,8 +51,8 @@ def initial_check(filename):
     return endianness_flag
 
 
-# %% #######################################################################
-# PSU-WOPWOP Plot3D-like block readers and writers
+# ##########################################################################
+# %% PSU-WOPWOP Plot3D-like block readers and writers
 # ##########################################################################
 
 def read_block(bytes_data, start_index, num_dims, iMax, jMax):
@@ -244,8 +244,8 @@ def read_IBLANKblock(bytes_data, start_index, iMax, jMax):
     return IBLANK_data, next_index
 
 
-# %% #######################################################################
-# PSU-WOPWOP string reader / writer
+# ##########################################################################
+# %% PSU-WOPWOP string reader / writer
 # ##########################################################################
 
 def write_string(file, string, max_length):
@@ -276,8 +276,8 @@ def read_string(obj_name, start_index, len_string):
     return mystring
 
 
-# %% #######################################################################
-# PSU-WOPWOP int and float reader / writer
+# ##########################################################################
+# %% PSU-WOPWOP int and float reader / writer
 # ##########################################################################
 
 def read_int(obj_name, start_index, n_bytes=VALUE_LENGTH,

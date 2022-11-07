@@ -29,8 +29,8 @@ from sigma_processing import extract_sigma_var_names, process_sigma_fn_file, \
     process_sigma_geom_file, write_p3d_file, process_sigma_files
 
 
-# %% #######################################################################
-# PSU-WOPWOP main class PWWPatch
+# ##########################################################################
+# %%PSU-WOPWOP main class PWWPatch
 # ##########################################################################
 
 class PWWPatch:
@@ -950,8 +950,8 @@ class PWWPatch:
         self.geometry_format_string.append(RESERVED_DIGIT)
 
 
-# %% #######################################################################
-# Functions to compare two PWWPatch instances for identical content
+# ##########################################################################
+# %% Functions to compare two PWWPatch instances for identical content
 # ##########################################################################
 
 def _list_compare_attrs(obj1, obj2, attrs_to_ignore=[], level=0):

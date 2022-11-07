@@ -17,8 +17,8 @@ import numpy as np
 from consts_and_dicts import VALUE_LENGTH
 
 
-# %% #######################################################################
-# PSU-WOPWOP parent class Zone
+# ##########################################################################
+# %% PSU-WOPWOP parent class Zone
 # ##########################################################################
 
 class Zone:
@@ -69,9 +69,8 @@ class Zone:
     def set_name(self, string):
         self._set_string(string, 'name', 32)
 
-
-# %% #######################################################################
-# PSU-WOPWOP classes for structured data
+# ##########################################################################
+# %% PSU-WOPWOP classes for structured data
 # ##########################################################################
 
 class StructuredZone(Zone):
