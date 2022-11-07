@@ -375,8 +375,13 @@ class PWWPatch:
                     zone = StructuredZone()
 
                     zone.number = len(self.zones)
-                    zone.geometry_name = read_string(bytes_data, 1100 + nz*zone.header_length, 32)
+
+                    # reads geometry zone name
+                    name = read_string(bytes_data, 1100 + nz*zone.header_length, 32)
+                    zone.set_name(name)
+                    zone.geometry_name = name
                     zone.loading_name = ''
+
                     zone.iMax = read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
                     zone.jMax = read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
 
