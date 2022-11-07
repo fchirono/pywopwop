@@ -240,8 +240,12 @@ class PWWPatch:
         zone.iMax, zone.jMax = XYZ_coord.shape[1:]
 
         # cap 'name' length to 32 bytes
-        zone.geometry_name = name[:32]
-        zone.loading_name = name[:32]
+        #zone.geometry_name = name[:32]
+        #zone.loading_name = name[:32]
+        zone.set_name(name)
+        zone._set_string(name, 'geometry_name', 32)
+        zone._set_string(name, 'loading_name', 32)
+
 
         # zone number will always be the current length of 'zones'
         zone.number = len(self.zones)
