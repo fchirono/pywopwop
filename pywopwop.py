@@ -194,10 +194,11 @@ class PWWPatch:
 
         If 'loading time_type' is 'constant', the loading information is:
 
-            loading_data : (iMax, jMax) or (3, iMax, jMax) array_like
-                Array of constant loading data to be added. Its shape is (iMax,
-                jMax) for pressure data, and (3, iMax, jMax) for loading vector
-                data.
+            loading_data : (iMax, jMax) or (3, iMax, jMax) or (5, iMax, jMax) array_like
+                Array of constant loading data to be added. Its shape is
+                (iMax, jMax) for pressure data, (3, iMax, jMax) for loading
+                vector data, and (5, iMax, jMax) for flow parameters
+                (rho, rho*u, rho*v, rho*w, p').
 
         """
 
@@ -247,7 +248,9 @@ class PWWPatch:
                         "'loading_data' does not match expected shape for 'surf_loading_vec' (3, iMax, jMax)!"
 
                 elif self.loading_data_type == 'flow_params':
-                    print("Can't check loading data shape for flow parameter data - not implemented yet!")
+                    #print("Can't check loading data shape for flow parameter data - not implemented yet!")
+                    assert loading_data.shape == (5, zone.iMax, zone.jMax), \
+                        "'loading_data' does not match expected shape for 'flow_params' (5, iMax, jMax)!"
 
                 zone.add_StructuredConstantLoading(loading_data, self.loading_data_type)
 
@@ -605,7 +608,7 @@ class PWWPatch:
         if self.version_number_minor == 0:
 
             # --------------------------------------------------------------
-            # structured, constant loading
+            # structured loading
             if self.is_structured == True:
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
@@ -775,7 +778,24 @@ class PWWPatch:
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 elif self.data_type == 'flow_params':
                     # TODO: read flow_params loading data
-                    raise NotImplementedError("Can't read flow_params loading data - not implemented yet!")
+                    #raise NotImplementedError("Can't read flow_params loading data - not implemented yet!")
+
+                    # for each zone containing data:
+                    for nz in self.zones_with_loading_data:
+
+                        # create empty numpy arrays for flow params
+                        # (rho, rho*u, rho*v, rho*w, p')
+                        flow_params = np.zeros((5, self.zones[nz].iMax,
+                                                self.zones[nz].jMax),
+                                               dtype=np.float32)
+
+                        self.zones[nz].add_StructuredConstantLoading(flow_params, 'flow_params')
+
+                        # read pressure data and next index
+                        self.zones[nz].loading.flow_params, field_start = \
+                            read_block(bytes_data, field_start, 5,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
 
             # --------------------------------------------------------------
             else:
@@ -825,7 +845,12 @@ class PWWPatch:
                     # ......................................................
                     elif self.loading_data_type == 'flow_params':
                         # TODO: write flow params data
-                        raise NotImplementedError("Can't write flow_params loading data - not implemented yet!")
+                        #raise NotImplementedError("Can't write flow_params loading data - not implemented yet!")
+
+                        # for each zone...
+                        for nz in self.zones_with_loading_data:
+                            nz = abs(nz)
+                            write_block(f, self.zones[nz].loading.flow_params)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 else:

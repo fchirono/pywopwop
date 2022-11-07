@@ -117,7 +117,8 @@ class StructuredZone(Zone):
         ----------
         loading_data : (iMax, jMax) or (3, iMax, jMax) array_like
             The array of data to be added. Its shape is (iMax, jMax) for
-            pressure data, and (3, iMax, jMax) for loading vector data.
+            pressure data, (3, iMax, jMax) for loading vector data, and
+            (5, iMax, jMax) for flow parameters (rho, rho*u, rho*v, rho*w, p').
 
         loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
             A string describing the type of loading data.
@@ -138,7 +139,9 @@ class StructuredZone(Zone):
                 "'loading_data' does not match expected shape for 'surf_loading_vec' (3, iMax, jMax)!"
 
         elif loading_data_type == 'flow_params':
-            print("Cannot add 'flow_params' data to StructuredZone - not implemented yet!")
+            assert loading_data.shape == (5, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for 'flow_params' (5, iMax, jMax)!"
+            # print("Cannot add 'flow_params' data to StructuredZone - not implemented yet!")
 
         self.loading = StructuredConstantLoading(loading_data, loading_data_type)
 
@@ -215,7 +218,9 @@ class StructuredConstantLoading():
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         elif loading_data_type == 'flow_params':
-            # TODO: implement structured constant loading using flow params!
-            raise NotImplementedError("Can't add Structured Constant loading using flow params - not implemented yet!")
+            #raise NotImplementedError("Can't add Structured Constant loading using flow params - not implemented yet!")
+
+            # copy input data
+            self.flow_params = np.copy(loading_data)
 
 
