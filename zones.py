@@ -49,6 +49,27 @@ class Zone:
         return str1+str2+str3+str4+str5
 
 
+    def _set_string(self, string, attr_name, length):
+        """
+        Writes input string to given attribute name, enforcing ASCII
+        compatibility and string length.
+        """
+
+        # check string is ASCII compatible
+        ascii_error = 'String is not ASCII compatible!'
+        assert string[:length].isascii(), ascii_error
+
+        # check string has maximum length, pad with spaces otherwise
+        if len(string) < length:
+            string += (length-len(string))*' '
+
+        setattr(self, attr_name, string[:length])
+
+
+    def set_name(self, string):
+        self._set_string(string, 'name', 32)
+
+
 # %% #######################################################################
 # PSU-WOPWOP classes for structured data
 # ##########################################################################
