@@ -948,3 +948,77 @@ class PWWPatch:
         self.geometry_format_string.append(float_dict[self.float_type])
         self.geometry_format_string.append(iblank_dict[self.has_iblank])
         self.geometry_format_string.append(RESERVED_DIGIT)
+
+
+# %% #######################################################################
+# Functions to compare two PWWPatch instances for identical content
+# ##########################################################################
+
+def _list_compare_attrs(obj1, obj2, attrs_to_ignore=[], level=0):
+    """
+    Lists and compares attributes from two objects, check them for identical
+    content
+    """
+
+    is_equal = True
+
+    # list all attributes in obj
+    list_attrs = list(obj1.__dict__.keys())
+    # remove attrs in 'attrs_to_ignore'
+    for attr in attrs_to_ignore:
+        list_attrs.remove(attr)
+
+    for attr in list_attrs:
+        attr1 = getattr(obj1, attr)
+        attr2 = getattr(obj2, attr)
+
+        if type(attr1) is np.ndarray:
+            if not np.array_equal(attr1, attr2):
+                print(level*'\t' + '{} : different'.format(attr))
+                is_equal = False
+        else:
+            if attr1 != attr2:
+                print(level*'\t' + '{} : different'.format(attr))
+                is_equal = False
+
+    return is_equal
+
+
+def compare_pwwpatches(pwwpatch1, pwwpatch2):
+    """
+    Compares the contents of two PWWPatches, informs whether contents are
+    identical or not.
+    """
+
+    is_equal = True
+
+    # iterate and compare over both patches
+    is_equal = _list_compare_attrs(pwwpatch1, pwwpatch2, ['zones',], 0)
+
+    # if no differences were detected so far, check zones' contents as well
+    if is_equal:
+        print("Patches' attributes equal so far; comparing zones now...\t")
+
+        for z in range(pwwpatch1.n_zones):
+            print('Zone {}:'.format(z))
+            zones_are_equal = _list_compare_attrs(pwwpatch1.zones[z],
+                                                  pwwpatch2.zones[z],
+                                                  ['geometry', 'loading'], 1)
+
+            # compare geometry and loading contents
+            geom_are_equal = _list_compare_attrs(pwwpatch1.zones[z].geometry,
+                                                 pwwpatch2.zones[z].geometry,
+                                                 [], 2)
+
+            loading_is_equal = _list_compare_attrs(pwwpatch1.zones[z].loading,
+                                                   pwwpatch2.zones[z].loading,
+                                                   [], 2)
+
+    is_equal = is_equal & zones_are_equal & geom_are_equal & loading_is_equal
+
+    if is_equal:
+        print('File contents are identical!')
+    else:
+        print('File contents are NOT identical!')
+
+    return
