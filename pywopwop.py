@@ -374,6 +374,7 @@ class PWWPatch:
                     # instantiate zone and read info from file
                     zone = StructuredZone()
 
+                    zone.number = len(self.zones)
                     zone.geometry_name = read_string(bytes_data, 1100 + nz*zone.header_length, 32)
                     zone.loading_name = ''
                     zone.iMax = read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
