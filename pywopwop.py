@@ -776,7 +776,7 @@ class PWWPatch:
                                        self.zones[nz].jMax)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-                elif self.data_type == 'flow_params':
+                elif self.loading_data_type == 'flow_params':
                     # TODO: read flow_params loading data
                     #raise NotImplementedError("Can't read flow_params loading data - not implemented yet!")
 
