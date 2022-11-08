@@ -158,24 +158,24 @@ class PWWPatch:
     # **********************************************************************
     # file readers
     def read_geometry_file(self, geometry_filename):
-        _read_geometry_header(geometry_filename)
-        _read_geometry_data(geometry_filename)
+        _read_geometry_header(self, geometry_filename)
+        _read_geometry_data(self, geometry_filename)
 
 
     def read_loading_file(self, loading_filename):
-        _read_loading_header(loading_filename)
-        _read_loading_data(loading_filename)
+        _read_loading_header(self, loading_filename)
+        _read_loading_data(self, loading_filename)
 
 
     # file writers
     def write_geometry_file(self, geometry_filename):
-        _write_geometry_header(geometry_filename)
-        _write_geometry_data(geometry_filename)
+        _write_geometry_header(self, geometry_filename)
+        _write_geometry_data(self, geometry_filename)
 
 
     def write_loading_file(self, loading_filename):
-        _write_loading_header(loading_filename)
-        _write_loading_data(loading_filename)
+        _write_loading_header(self, loading_filename)
+        _write_loading_data(self, loading_filename)
 
 
     # **********************************************************************
