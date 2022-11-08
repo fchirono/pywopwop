@@ -91,7 +91,7 @@ class StructuredZone(Zone):
         self.geometry_info_str = str_iMax + str_jMax
 
         # if zone has time information, display that too
-        if self.Nt:
+        if hasattr(self, 'Nt'):
             str_Nt = '\n\t--> Nt:                 ' + str(self.Nt)
             self.geometry_info_str += str_Nt
 
@@ -121,14 +121,35 @@ class StructuredZone(Zone):
         self._update_geometry_info_str()
 
 
+    # **********************************************************************
     def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord):
         # TODO: implement Structured Periodic Geometry
         raise NotImplementedError("Can't add Structured Periodic Geometry data - not implemented yet!")
 
 
+    # **********************************************************************
     def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord):
-        # TODO: implement Structured Aperiodic Geometry
-        raise NotImplementedError("Can't add Structured Aperiodic Geometry data - not implemented yet!")
+        """
+        Adds structured, aperiodic geometry data to current structured zone.
+
+        Parameters
+        ----------
+        XYZ_coord : (Nt, 3, iMax, jMax) array_like
+            Array of mesh point coordinates to be added per timestep.
+
+        normal_coord : (Nt, 3, iMax, jMax) array_like
+            Array of normal vector coordinates to be added per timestep.
+
+        Returns
+        -------
+        None.
+        """
+
+        # updates iMax, jMax
+        self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
+
+        self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord)
+        self._update_geometry_info_str()
 
 
     # **********************************************************************
@@ -204,6 +225,13 @@ class StructuredConstantGeometry():
     """
 
     def __init__(self, XYZ_coord, normal_coord):
+
+        assert XYZ_coord.ndim == 3, \
+            "'XYZ_coord' dimensions do not match for Structured Constant Geometry data!"
+
+        assert normal_coord.ndim == 3, \
+            "'normal_coord' dimensions do not match for Structured Constant Geometry data!"
+
         self.XYZ_coord = np.copy(XYZ_coord)
         self.normal_coord = np.copy(normal_coord)
 
@@ -221,18 +249,22 @@ class StructuredAperiodicGeometry():
     normal_coord : (Nt, 3, iMax, jMax) array_like
         Array of normal vector coordinates to be added at each timestep.
 
-    Nt : int
-        Number of timesteps in data.
-
     Returns
     -------
     None.
     """
 
     def __init__(self, XYZ_coord, normal_coord, Nt):
+
+        assert XYZ_coord.ndim == 4, \
+            "'XYZ_coord' dimensions do not match for Structured Aperiodic Geometry data!"
+
+        assert normal_coord.ndim == 4, \
+            "'normal_coord' dimensions do not match for Structured Aperiodic Geometry data!"
+
+
         self.XYZ_coord = np.copy(XYZ_coord)
         self.normal_coord = np.copy(normal_coord)
-        self.Nt = np.copy(Nt)
 
         # vector to store time values for each timestep
         self.t = np.zeros(Nt, dtype=np.float32)

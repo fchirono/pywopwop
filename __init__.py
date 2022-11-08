@@ -180,7 +180,8 @@ class PWWPatch:
 
     # **********************************************************************
     def add_StructuredZone(self, name, XYZ_coord, normal_coord,
-                           calc_thickness_noise=True, loading_data=None):
+                           calc_thickness_noise=True, loading_data=None,
+                           time_steps=None):
         """
         Adds a new structured zone to PWWPatch instance. Expected argument
         array shapes and types will depend on attributes of current PWWPatch
@@ -213,6 +214,12 @@ class PWWPatch:
             'loading_time_type' and 'loading_data_type' attributes of the
             parent PWWPatch instance; see Notes below. Default is None.
 
+        time_steps : (Nt,)-shaped array_like, optional
+            Array containing the time steps for periodic or aperiodic data.
+            If aperiodic, the values must be a time in seconds. If periodic,
+            the values can be a time in seconds, or an angle in degrees, or
+            another convenient measure.
+
         Returns
         -------
         None.
@@ -232,6 +239,14 @@ class PWWPatch:
             normal_coord : (3, iMax, jMax) array_like
                 Array of normal vector coordinates to be added.
 
+        If  'geometry_time_type' is 'aperiodic', the geometry arrays are:
+
+            XYZ_coord : (Nt, 3, iMax, jMax) array_like
+                Array of mesh point coordinates to be added per timestep.
+
+            normal_coord : (Nt, 3, iMax, jMax) array_like
+                Array of normal vector coordinates to be added per timestep.
+
 
         If 'loading time_type' is 'constant', the loading information is:
 
@@ -250,15 +265,23 @@ class PWWPatch:
         # instantiate new zone
         zone = StructuredZone()
 
-        zone.iMax, zone.jMax = XYZ_coord.shape[1:]
+        # # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # # read mesh dimensions - already done when reading
+        # if self.geometry_time_type == 'constant':
+        #     zone.iMax, zone.jMax = XYZ_coord.shape[1:]
 
-        # cap 'name' length to 32 bytes
-        #zone.geometry_name = name[:32]
-        #zone.loading_name = name[:32]
+        # elif self.geometry_time_type == 'aperiodic':
+        #     zone.Nt, _, zone.iMax, zone.jMax = XYZ_coord.shape
+
+        #     # assert 'Nt' in geometry array is the same as in 'time_vec'
+        #     assert (zone.Nt == time_steps.shape[0]), \
+        #         "Current zone does not contain the same number of time steps as time vector!"
+
+        # # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+
         zone._set_string(name, 'name', 32)
         zone._set_string(name, 'geometry_name', 32)
         zone._set_string(name, 'loading_name', 32)
-
 
         # zone number will always be the current length of 'zones'
         zone.number = len(self.zones)
@@ -273,8 +296,7 @@ class PWWPatch:
             raise NotImplementedError("Can't add Periodic Geometry data to StructuredZone - not implemented yet!")
 
         elif self.geometry_time_type == 'aperiodic':
-            # TODO: implement structured aperiodic geometry
-            raise NotImplementedError("Can't add Aperiodic Geometry data to StructuredZone - not implemented yet!")
+            zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # adds loading data, if there is any

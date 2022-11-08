@@ -126,11 +126,11 @@ def _read_geometry_header(self, geometry_filename):
                 zone._update_geometry_info_str()
                 self.zones.append(zone)
 
-            # iterate over all zones, assert all have identical 'Nt'
-            Nt = self.zones[0].Nt
+            # Store 'Nt' in PWWPatch, check all zones have identical 'Nt'
+            self.Nt = self.zones[0].Nt
             for z in range(self.n_zones):
-                assert zone.Nt == Nt, \
-                    'Zone {} has {} timesteps, while Zone 0 has {}!'.format(z, zone.Nt, Nt)
+                assert zone.Nt == self.Nt, \
+                    'Zone {} has {} timesteps, while Zone 0 has {}!'.format(z, zone.Nt, self.Nt)
 
         # ---------------------------------------------------------------------
         else:
@@ -210,31 +210,28 @@ def _read_geometry_data(self, geometry_filename):
         # start index for reading coordinates and normal vectors data
         field_start = 1100 + self.n_zones*self.zones[0].header_length
 
-        # read number of timesteps from first zone
-        Nt = self.zones[0].Nt
-
         # for each zone
         for nz in range(self.n_zones):
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             # create empty numpy arrays for XYZ coordinates and normal
             # coordinates (and IBLANK data, if included)
-            XYZ_coord = np.zeros((Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
+            XYZ_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
                                  dtype=np.float32)
 
-            normal_coord = np.zeros((Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
+            normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
                                     dtype=np.float32)
 
-            self.zones[nz].geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord, Nt)
+            self.zones[nz].geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord, self.Nt)
 
             if self.has_iblank == True:
                 self.zones[nz].geometry.iblank = \
-                    np.zeros((Nt, self.zones[nz].iMax, self.zones[nz].jMax),
+                    np.zeros((self.Nt, self.zones[nz].iMax, self.zones[nz].jMax),
                              dtype=np.int32)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             # for each timestep...
-            for nt in range(Nt):
+            for nt in range(self.Nt):
 
                 # ........................................................
                 # read current time value and next index
@@ -320,9 +317,26 @@ def _write_geometry_header(self, geometry_filename):
                     write_binary(f, self.zones[nz].jMax)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            elif self.geometry_time_type == 'aperiodic':
+
+                # for each zone...
+                for nz in range(self.n_zones):
+
+                    # write name (32-byte string)
+                    write_string(f, self.zones[nz].geometry_name, 32)
+
+                    # write number of timesteps
+                    write_binary(f, self.Nt)
+
+                    # write iMax and jMax (4 byte ints)
+                    write_binary(f, self.zones[nz].iMax)
+                    write_binary(f, self.zones[nz].jMax)
+
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             else:
-                # TODO: implement non-constant geometries
-                raise NotImplementedError("Can't write non-constant geometry zone info - not implemented yet!")
+                # TODO: implement non-constant non-aperiodic geometries
+                raise NotImplementedError("Can't write geometry headers that are not constant nor aperiodic - not implemented yet!")
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 
         # --------------------------------------------------------------
         else:
@@ -342,23 +356,49 @@ def _write_geometry_data(self, geometry_filename):
     # open file in append mode - no need to adjust index
     with open(geometry_filename, 'ab') as f:
 
-        # -----------------------------------------------------------
-        # constant geometry
-        if self.geometry_time_type == 'constant':
+        # --------------------------------------------------------------
+        # If file is structured
+        if self.is_structured == True:
 
-            # for each zone
-            for nz in range(self.n_zones):
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # constant geometry
+            if self.geometry_time_type == 'constant':
 
-                write_block(f, self.zones[nz].geometry.XYZ_coord)
-                write_block(f, self.zones[nz].geometry.normal_coord)
+                # for each zone
+                for nz in range(self.n_zones):
 
-                if self.has_iblank == True:
-                    write_block(f, self.zones[nz].geometry.iblank)
+                    write_block(f, self.zones[nz].geometry.XYZ_coord)
+                    write_block(f, self.zones[nz].geometry.normal_coord)
 
-        # -----------------------------------------------------------
+                    if self.has_iblank == True:
+                        write_block(f, self.zones[nz].geometry.iblank)
+
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # aperiodic geometry
+            elif self.geometry_time_type == 'aperiodic':
+
+                # for each timestep...
+                for nt in range(self.Nt):
+
+                    # for each zone
+                    for nz in range(self.n_zones):
+
+                        # write current time step and geometry data
+                        write_binary(f, self.zones[nz].t[nt])
+                        write_block(f, self.zones[nz].geometry.XYZ_coord)
+                        write_block(f, self.zones[nz].geometry.normal_coord)
+
+                        if self.has_iblank == True:
+                            write_block(f, self.zones[nz].geometry.iblank)
+
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            else:
+                # TODO: implement non-constant non-aperiodic geometries
+                raise NotImplementedError("Can't write geometry data that is not constant nor aperiodic - not implemented yet!")
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+        # --------------------------------------------------------------
         else:
-            # TODO: write non-constant geometry data
-            raise NotImplementedError("Can't write non-constant geometry data - not implemented yet!")
-        # -----------------------------------------------------------
-
-
+            # TODO: implement non-structured headers
+            raise NotImplementedError("Can't write non-structured geometry data - not implemented yet!")
+        # ---------------------------------------------------------------------
