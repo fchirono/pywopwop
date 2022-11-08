@@ -234,6 +234,9 @@ class StructuredAperiodicGeometry():
         self.normal_coord = np.copy(normal_coord)
         self.Nt = np.copy(Nt)
 
+        # vector to store time values for each timestep
+        self.t = np.zeros(Nt, dtype=np.float32)
+
 
 # ##########################################################################
 # %% PSU-WOPWOP classes for structured loading
