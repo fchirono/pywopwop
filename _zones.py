@@ -67,7 +67,7 @@ class Zone:
 
 
 # ##########################################################################
-# %% PSU-WOPWOP classes for structured data
+# %% PSU-WOPWOP classes for structured zone
 # ##########################################################################
 
 class StructuredZone(Zone):
@@ -87,7 +87,13 @@ class StructuredZone(Zone):
     def _update_geometry_info_str(self):
         str_iMax = '\n\t--> iMax:               ' + str(self.iMax)
         str_jMax = '\n\t--> jMax:               ' + str(self.jMax)
+
         self.geometry_info_str = str_iMax + str_jMax
+
+        # if zone has time information, display that too
+        if self.Nt:
+            str_Nt = '\n\t--> Nt:                 ' + str(self.Nt)
+            self.geometry_info_str += str_Nt
 
 
     # **********************************************************************
@@ -175,6 +181,10 @@ class StructuredZone(Zone):
         raise NotImplementedError("Can't add Structured Aperiodic Loading data - not implemented yet!")
 
 
+# ##########################################################################
+# %% PSU-WOPWOP classes for structured geometries
+# ##########################################################################
+
 class StructuredConstantGeometry():
     """
     Class to store structured, constant geometry data - contains no time
@@ -197,6 +207,37 @@ class StructuredConstantGeometry():
         self.XYZ_coord = np.copy(XYZ_coord)
         self.normal_coord = np.copy(normal_coord)
 
+
+class StructuredAperiodicGeometry():
+    """
+    Class to store structured, aperiodic geometry data, containing the number
+    of timesteps.
+
+    Parameters
+    ----------
+    XYZ_coord : (Nt, 3, iMax, jMax) array_like
+        Array of mesh point coordinates to be added at each timestep.
+
+    normal_coord : (Nt, 3, iMax, jMax) array_like
+        Array of normal vector coordinates to be added at each timestep.
+
+    Nt : int
+        Number of timesteps in data.
+
+    Returns
+    -------
+    None.
+    """
+
+    def __init__(self, XYZ_coord, normal_coord, Nt):
+        self.XYZ_coord = np.copy(XYZ_coord)
+        self.normal_coord = np.copy(normal_coord)
+        self.Nt = np.copy(Nt)
+
+
+# ##########################################################################
+# %% PSU-WOPWOP classes for structured loading
+# ##########################################################################
 
 class StructuredConstantLoading():
     """
