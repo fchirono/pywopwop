@@ -155,11 +155,38 @@ def _read_loading_header(self, loading_filename):
                     zone.has_loading_data = True
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-            else:
-                # TODO: implement non-constant loading
-                raise NotImplementedError("Can't read non-constant loading data - not implemented yet!")
+            elif self.loading_time_type == 'aperiodic':
 
-        # ------------------------------------------------------------------
+                for i, nz in enumerate(self.zones_with_loading_data):
+
+                    # remove sign from zone index
+                    nz = abs(nz)
+
+                    # get handle to existing zone in list
+                    zone = self.zones[nz]
+
+                    # read loading zone name
+                    name = read_string(bytes_data, zone_info_start + i*zone.header_length, 32)
+                    zone._set_string(name, 'loading_name', 32)
+
+                    # read number of time steps
+                    self.Nt = read_int(bytes_data, zone_info_start + 32 + i*zone.header_length)
+
+                    # assert iMax and jMax match
+                    iMax_fromfile = read_int(bytes_data, zone_info_start + 36 + i*zone.header_length)
+                    jMax_fromfile = read_int(bytes_data, zone_info_start + 40 + i*zone.header_length)
+                    assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
+                        "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
+
+                    # set loading data flag
+                    zone.has_loading_data = True
+
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            else:
+                # TODO: implement non-constant non-aperiodic loading
+                raise NotImplementedError("Can't read loading data that is not constant nor aperiodic - not implemented yet!")
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
         else:
             # TODO: implement non-structured loading
             raise NotImplementedError("Can't read non-structured loading data - not implemented yet!")
