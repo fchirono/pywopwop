@@ -33,7 +33,8 @@ class Zone:
         self.calc_thickness_noise = True
         self.has_loading_data = False
 
-        self.header_length = 32             # 'name' string has 32 bytes
+        self.geometry_header_length = 32    # 'name' string has 32 bytes
+        self.loading_header_length = 32
 
         self.geometry = None
         self.loading = None
@@ -79,7 +80,8 @@ class StructuredZone(Zone):
         super().__init__()
         self.iMax = 0
         self.jMax = 0
-        self.header_length += 2*VALUE_LENGTH
+        self.geometry_header_length += 2*VALUE_LENGTH
+        self.loading_header_length += 2*VALUE_LENGTH
 
         self._update_geometry_info_str()
 
@@ -147,6 +149,9 @@ class StructuredZone(Zone):
 
         # updates iMax, jMax
         self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
+
+        # geometry header must contain 'Nt' as well
+        self.geometry_header_length += VALUE_LENGTH
 
         self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord)
         self._update_geometry_info_str()

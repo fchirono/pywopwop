@@ -142,12 +142,15 @@ def _read_loading_header(self, loading_filename):
                     zone = self.zones[nz]
 
                     # read loading zone name
-                    name = read_string(bytes_data, zone_info_start + i*zone.header_length, 32)
+                    name = read_string(bytes_data,
+                                       zone_info_start + i*zone.loading_header_length, 32)
                     zone._set_string(name, 'loading_name', 32)
 
                     # assert iMax and jMax match
-                    iMax_fromfile = read_int(bytes_data, zone_info_start + 32 + i*zone.header_length)
-                    jMax_fromfile = read_int(bytes_data, zone_info_start + 36 + i*zone.header_length)
+                    iMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 32 + i*zone.loading_header_length)
+                    jMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 36 + i*zone.loading_header_length)
                     assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
                         "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
 
@@ -166,15 +169,19 @@ def _read_loading_header(self, loading_filename):
                     zone = self.zones[nz]
 
                     # read loading zone name
-                    name = read_string(bytes_data, zone_info_start + i*zone.header_length, 32)
+                    name = read_string(bytes_data,
+                                       zone_info_start + i*zone.loading_header_length, 32)
                     zone._set_string(name, 'loading_name', 32)
 
                     # read number of time steps
-                    self.Nt = read_int(bytes_data, zone_info_start + 32 + i*zone.header_length)
+                    self.Nt = read_int(bytes_data,
+                                       zone_info_start + 32 + i*zone.loading_header_length)
 
                     # assert iMax and jMax match
-                    iMax_fromfile = read_int(bytes_data, zone_info_start + 36 + i*zone.header_length)
-                    jMax_fromfile = read_int(bytes_data, zone_info_start + 40 + i*zone.header_length)
+                    iMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 36 + i*zone.loading_header_length)
+                    jMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 40 + i*zone.loading_header_length)
                     assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
                         "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
 
@@ -218,7 +225,7 @@ def _read_loading_data(self, loading_filename):
             # end of format string + zone specification + header
             field_start = (1076
                            + (1 + self.n_zones_with_loading_data)*4
-                           + self.n_zones_with_loading_data*self.zones[0].header_length)
+                           + self.n_zones_with_loading_data*self.zones[0].loading_header_length)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             # if data is surface pressure

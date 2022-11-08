@@ -93,13 +93,16 @@ def _read_geometry_header(self, geometry_filename):
                 zone.number = len(self.zones)
 
                 # reads geometry zone name (32 bytes)
-                name = read_string(bytes_data, 1100 + nz*zone.header_length, 32)
+                name = read_string(bytes_data,
+                                   1100 + nz*zone.geometry_header_length, 32)
                 zone._set_string(name, 'name', 32)
                 zone._set_string(name, 'geometry_name', 32)
 
                 # reads structured dimensions
-                zone.iMax = read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
-                zone.jMax = read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
+                zone.iMax = read_int(bytes_data,
+                                     1100 + 32 + nz*zone.geometry_header_length)
+                zone.jMax = read_int(bytes_data,
+                                     1100 + 36 + nz*zone.geometry_header_length)
 
                 zone._update_geometry_info_str()
                 self.zones.append(zone)
@@ -114,14 +117,18 @@ def _read_geometry_header(self, geometry_filename):
                 zone.number = len(self.zones)
 
                 # reads geometry zone name (32 bytes)
-                name = read_string(bytes_data, 1100 + nz*zone.header_length, 32)
+                name = read_string(bytes_data,
+                                   1100 + nz*zone.geometry_header_length, 32)
                 zone._set_string(name, 'name', 32)
                 zone._set_string(name, 'geometry_name', 32)
 
                 # reads number of timesteps and structured dimensions
-                zone.Nt = read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
-                zone.iMax = read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
-                zone.jMax = read_int(bytes_data, 1100 + 40 + nz*zone.header_length)
+                zone.Nt = read_int(bytes_data,
+                                   1100 + 32 + nz*zone.geometry_header_length)
+                zone.iMax = read_int(bytes_data,
+                                     1100 + 36 + nz*zone.geometry_header_length)
+                zone.jMax = read_int(bytes_data,
+                                     1100 + 40 + nz*zone.geometry_header_length)
 
                 zone._update_geometry_info_str()
                 self.zones.append(zone)
@@ -161,7 +168,7 @@ def _read_geometry_data(self, geometry_filename):
     if self.geometry_time_type == 'constant':
 
         # start index for reading coordinates and normal vectors data
-        field_start = 1100 + self.n_zones*self.zones[0].header_length
+        field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
 
         # for each zone
         for nz in range(self.n_zones):
@@ -208,7 +215,7 @@ def _read_geometry_data(self, geometry_filename):
     elif self.geometry_time_type == 'aperiodic':
 
         # start index for reading coordinates and normal vectors data
-        field_start = 1100 + self.n_zones*self.zones[0].header_length
+        field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
 
         # for each zone
         for nz in range(self.n_zones):
