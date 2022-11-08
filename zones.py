@@ -132,7 +132,7 @@ class StructuredZone(Zone):
 
         Parameters
         ----------
-        loading_data : (iMax, jMax) or (3, iMax, jMax) array_like
+        loading_data : (iMax, jMax) or (3, iMax, jMax) or (5, iMax, jMax) array_like
             The array of data to be added. Its shape is (iMax, jMax) for
             pressure data, (3, iMax, jMax) for loading vector data, and
             (5, iMax, jMax) for flow parameters (rho, rho*u, rho*v, rho*w, p').
@@ -200,13 +200,15 @@ class StructuredConstantGeometry():
 
 class StructuredConstantLoading():
     """
-    Class to store structured, constant pressure or loading vector data.
+    Class to store structured, constant pressure, loading vector, or flow
+    parameter data.
 
     Parameters
     ----------
-    loading_data : (iMax, jMax) or (3, iMax, jMax) array_like
+    loading_data : (iMax, jMax) or (3, iMax, jMax) or (5, iMax, jMax) array_like
         The array of data to be added. Its shape is (iMax, jMax) for
-        pressure data, and (3, iMax, jMax) for loading vector data.
+        pressure data, (3, iMax, jMax) for loading vector data, and
+        (5, iMax, jMax) for flow parameters (rho, rho*u, rho*v, rho*w, p').
 
     loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
         A string describing the type of loading data.
@@ -240,4 +242,49 @@ class StructuredConstantLoading():
             # copy input data
             self.flow_params = np.copy(loading_data)
 
+
+class StructuredAperiodicLoading():
+    """
+    Class to store structured, aperiodic pressure or loading vector data.
+
+    Parameters
+    ----------
+    loading_data : (iMax, jMax) or (3, iMax, jMax) or (5, iMax, jMax) array_like
+        The array of data to be added. Its shape is (iMax, jMax) for
+        pressure data, (3, iMax, jMax) for loading vector data, and
+        (5, iMax, jMax) for flow parameters (rho, rho*u, rho*v, rho*w, p').
+
+    loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
+        A string describing the type of loading data.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    #TODO: ***** add time information! ******
+
+    def __init__(self, loading_data, loading_data_type):
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # if data is (iMax, jMax)-shaped array of surface pressures
+        if loading_data_type == 'surf_pressure':
+
+            # copy input data
+            self.pressures = np.copy(loading_data)
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # if data is (3, iMax, jMax)-shaped array of surface loading vectors
+        elif loading_data_type == 'surf_loading_vec':
+
+            # copy input data
+            self.loading_vectors = np.copy(loading_data)
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        elif loading_data_type == 'flow_params':
+            #raise NotImplementedError("Can't add Structured Constant loading using flow params - not implemented yet!")
+
+            # copy input data
+            self.flow_params = np.copy(loading_data)
 
