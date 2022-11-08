@@ -242,7 +242,7 @@ class PWWPatch:
         # cap 'name' length to 32 bytes
         #zone.geometry_name = name[:32]
         #zone.loading_name = name[:32]
-        zone.set_name(name)
+        zone._set_string(name, 'name', 32)
         zone._set_string(name, 'geometry_name', 32)
         zone._set_string(name, 'loading_name', 32)
 

@@ -66,9 +66,6 @@ class Zone:
         setattr(self, attr_name, string[:length])
 
 
-    def set_name(self, string):
-        self._set_string(string, 'name', 32)
-
 # ##########################################################################
 # %% PSU-WOPWOP classes for structured data
 # ##########################################################################
