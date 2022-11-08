@@ -103,9 +103,14 @@ def _read_geometry_header(self, geometry_filename):
                 zone._update_geometry_info_str()
                 self.zones.append(zone)
 
+
+        elif self.geometry_time_type == 'aperiodic':
+            #TODO: add aperiodic data reading!
+            pass
+
         else:
             # TODO: implement non-constant geometries
-            raise NotImplementedError("Can't read non-constant geometry zone info - not implemented yet!")
+            raise NotImplementedError("Can't read geometries that are not constant nor aperiodic - not implemented yet!")
 
     else:
         # TODO: implement non-structured headers
