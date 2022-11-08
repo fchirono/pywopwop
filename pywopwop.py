@@ -376,11 +376,11 @@ class PWWPatch:
 
                     zone.number = len(self.zones)
 
-                    # reads geometry zone name
+                    # reads geometry zone name (32 bytes)
                     name = read_string(bytes_data, 1100 + nz*zone.header_length, 32)
-                    zone.set_name(name)
-                    zone.geometry_name = name
-                    zone.loading_name = ''
+                    zone._set_string(name, 'name', 32)
+                    zone._set_string(name, 'geometry_name', 32)
+                    #zone.loading_name = ''
 
                     zone.iMax = read_int(bytes_data, 1100 + 32 + nz*zone.header_length)
                     zone.jMax = read_int(bytes_data, 1100 + 36 + nz*zone.header_length)
@@ -660,11 +660,13 @@ class PWWPatch:
                         # get handle to existing zone in list
                         zone = self.zones[nz]
 
-                        # read loading zone name, assert iMax and jMax match
-                        zone.loading_name = read_string(bytes_data, zone_info_start + i*zone.header_length, 32)
+                        # read loading zone name
+                        name = read_string(bytes_data, zone_info_start + i*zone.header_length, 32)
+                        zone._set_string(name, 'loading_name', 32)
+
+                        # assert iMax and jMax match
                         iMax_fromfile = read_int(bytes_data, zone_info_start + 32 + i*zone.header_length)
                         jMax_fromfile = read_int(bytes_data, zone_info_start + 36 + i*zone.header_length)
-
                         assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
                             "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
 
