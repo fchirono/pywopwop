@@ -17,16 +17,16 @@ Author:
 
 import numpy as np
 
-from _consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
+from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, \
     loading_time_dict, geometry_time_dict, centered_dict, loading_data_dict, \
     ref_frame_dict, float_dict, iblank_dict
 
-from _binary_readers_writers import initial_check, read_block, write_block, \
+from ._binary_readers_writers import initial_check, read_block, write_block, \
     read_IBLANKblock, read_int, read_float, write_binary, write_string, \
     read_string
 
-from _zones import Zone, StructuredZone, StructuredConstantGeometry, \
+from ._zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading, StructuredAperiodicLoading
 
 

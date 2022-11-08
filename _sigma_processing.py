@@ -17,7 +17,8 @@ Author:
 import numpy as np
 import pathlib
 
-from readers_and_writers import read_block, write_block, read_int, write_binary
+from ._binary_readers_writers import read_block, write_block, read_int, \
+    write_binary
 
 
 # %% #######################################################################

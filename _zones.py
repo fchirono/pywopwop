@@ -14,7 +14,7 @@ Author:
 
 import numpy as np
 
-from consts_and_dicts import VALUE_LENGTH
+from ._consts_and_dicts import VALUE_LENGTH
 
 
 # ##########################################################################
