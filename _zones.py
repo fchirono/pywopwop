@@ -181,16 +181,15 @@ class StructuredZone(Zone):
         # check 'loading_data_type' arg vs. loading data array shape
         if loading_data_type == 'surf_pressure':
             assert loading_data.shape == (self.iMax, self.jMax), \
-                "'loading_data' does not match expected shape for 'surf_pressure' (iMax, jMax)!"
+                "'loading_data' does not match expected shape for constant 'surf_pressure' (iMax, jMax)!"
 
         elif loading_data_type == 'surf_loading_vec':
             assert loading_data.shape == (3, self.iMax, self.jMax), \
-                "'loading_data' does not match expected shape for 'surf_loading_vec' (3, iMax, jMax)!"
+                "'loading_data' does not match expected shape for constant 'surf_loading_vec' (3, iMax, jMax)!"
 
         elif loading_data_type == 'flow_params':
             assert loading_data.shape == (5, self.iMax, self.jMax), \
-                "'loading_data' does not match expected shape for 'flow_params' (5, iMax, jMax)!"
-            # print("Cannot add 'flow_params' data to StructuredZone - not implemented yet!")
+                "'loading_data' does not match expected shape for constant 'flow_params' (5, iMax, jMax)!"
 
         self.loading = StructuredConstantLoading(loading_data, loading_data_type)
 
