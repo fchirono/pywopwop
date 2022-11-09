@@ -130,7 +130,8 @@ class StructuredZone(Zone):
 
 
     # **********************************************************************
-    def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord):
+    def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord,
+                                        time_steps):
         """
         Adds structured, aperiodic geometry data to current structured zone.
 
@@ -141,6 +142,9 @@ class StructuredZone(Zone):
 
         normal_coord : (Nt, 3, iMax, jMax) array_like
             Array of normal vector coordinates to be added per timestep.
+
+        time_steps : (Nt,)-shaped array_like
+            Array of time values for each timestep.
 
         Returns
         -------
@@ -153,7 +157,8 @@ class StructuredZone(Zone):
         # increase geometry_header_length (must contain 'Nt' as well)
         self.geometry_header_length += VALUE_LENGTH
 
-        self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord)
+        self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord,
+                                                    time_steps)
         self._update_geometry_info_str()
 
 
@@ -201,7 +206,8 @@ class StructuredZone(Zone):
 
 
     # **********************************************************************
-    def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
+    def add_StructuredAperiodicLoading(self, loading_data, loading_data_type,
+                                       time_steps):
 
         # check 'loading_data_type' arg vs. loading data array shape
         if loading_data_type == 'surf_pressure':
@@ -216,10 +222,14 @@ class StructuredZone(Zone):
             assert loading_data.shape == (self.Nt, 5, self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
 
+        assert (time_steps.shape[0] == self.Nt),\
+            "Length of 'time_steps' does not match 'Nt' in this zone instance!"
+
         # increase loading_header_length (must contain 'Nt' as well)
         self.loading_header_length += VALUE_LENGTH
 
-        self.loading = StructuredAperiodicLoading(loading_data, loading_data_type)
+        self.loading = StructuredAperiodicLoading(loading_data, loading_data_type,
+                                                  time_steps)
 
 
 
@@ -270,12 +280,15 @@ class StructuredAperiodicGeometry():
     normal_coord : (Nt, 3, iMax, jMax) array_like
         Array of normal vector coordinates to be added at each timestep.
 
+    time_steps : (Nt,)-shaped array_like
+        Array of time values for each timestep.
+
     Returns
     -------
     None.
     """
 
-    def __init__(self, XYZ_coord, normal_coord, Nt):
+    def __init__(self, XYZ_coord, normal_coord, time_steps):
 
         assert XYZ_coord.ndim == 4, \
             "'XYZ_coord' dimensions do not match for Structured Aperiodic Geometry data!"
@@ -283,12 +296,15 @@ class StructuredAperiodicGeometry():
         assert normal_coord.ndim == 4, \
             "'normal_coord' dimensions do not match for Structured Aperiodic Geometry data!"
 
+        assert ((time_steps.shape[0] == XYZ_coord.shape[0])
+                and (time_steps.shape[0] == normal_coord.shape[0]) ), \
+            "Input data dimensions do not match number of steps in 'time_steps'!"
 
         self.XYZ_coord = np.copy(XYZ_coord)
         self.normal_coord = np.copy(normal_coord)
 
         # vector to store time values for each timestep
-        self.t = np.zeros(Nt, dtype=np.float32)
+        self.time_steps = time_steps
 
 
 # ##########################################################################
@@ -373,7 +389,7 @@ class StructuredAperiodicLoading():
 
     """
 
-    def __init__(self, loading_data, loading_data_type):
+    def __init__(self, loading_data, loading_data_type, time_steps):
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # if data is (Nt, iMax, jMax)-shaped array of surface pressures
@@ -385,6 +401,7 @@ class StructuredAperiodicLoading():
 
             # copy input data
             self.pressures = np.copy(loading_data)
+            self.time_steps = np.copy(time_steps)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # if data is (Nt, 3, iMax, jMax)-shaped array of surface loading vectors
@@ -396,6 +413,8 @@ class StructuredAperiodicLoading():
 
             # copy input data
             self.loading_vectors = np.copy(loading_data)
+            self.time_steps = np.copy(time_steps)
+
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # if data is (Nt, 5, iMax, jMax)-shaped array of flow parameters
@@ -407,4 +426,5 @@ class StructuredAperiodicLoading():
 
             # copy input data
             self.flow_params = np.copy(loading_data)
+            self.time_steps = np.copy(time_steps)
 

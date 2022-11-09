@@ -218,7 +218,7 @@ class PWWPatch:
             Array containing the time steps for periodic or aperiodic data.
             If aperiodic, the values must be a time in seconds. If periodic,
             the values can be a time in seconds, or an angle in degrees, or
-            another convenient measure.
+            another convenient measure. Default is None.
 
         Returns
         -------
@@ -296,7 +296,8 @@ class PWWPatch:
             raise NotImplementedError("Can't add Periodic Geometry data to StructuredZone - not implemented yet!")
 
         elif self.geometry_time_type == 'aperiodic':
-            zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
+            zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord,
+                                                 time_steps)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # adds loading data, if there is any
@@ -319,7 +320,8 @@ class PWWPatch:
                     assert loading_data.shape == (5, zone.iMax, zone.jMax), \
                         "'loading_data' does not match expected shape for 'flow_params' (5, iMax, jMax)!"
 
-                zone.add_StructuredConstantLoading(loading_data, self.loading_data_type)
+                zone.add_StructuredConstantLoading(loading_data,
+                                                   self.loading_data_type)
 
             # ----------------------------------------------------------------
             elif self.loading_time_type == 'periodic':
@@ -344,7 +346,9 @@ class PWWPatch:
                     assert loading_data.shape == (zone.Nt, 5, zone.iMax, zone.jMax), \
                         "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
 
-                zone.add_StructuredAperiodicLoading(loading_data, self.loading_data_type)
+                zone.add_StructuredAperiodicLoading(loading_data,
+                                                    self.loading_data_type,
+                                                    time_steps)
 
             # ----------------------------------------------------------------
             # set zone loading data flag
