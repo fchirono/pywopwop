@@ -306,6 +306,10 @@ class StructuredConstantLoading():
         # if data is (iMax, jMax)-shaped array of surface pressures
         if loading_data_type == 'surf_pressure':
 
+            # assert data ndims
+            assert loading_data.ndim == 2,\
+                "'loading_data' dimensions do not match structured constant surface pressure!"
+
             # copy input data
             self.pressures = np.copy(loading_data)
 
@@ -313,12 +317,20 @@ class StructuredConstantLoading():
         # if data is (3, iMax, jMax)-shaped array of surface loading vectors
         elif loading_data_type == 'surf_loading_vec':
 
+            # assert data ndims
+            assert loading_data.ndim == 3,\
+                "'loading_data' dimensions do not match structured constant surface loading vectors!"
+
             # copy input data
             self.loading_vectors = np.copy(loading_data)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # if data is (Nt, 5, iMax, jMax)-shaped array of flow parameters
         elif loading_data_type == 'flow_params':
+
+            # assert data ndims
+            assert loading_data.ndim == 4,\
+                "'loading_data' dimensions do not match structured constant flow parameters!"
 
             # copy input data
             self.flow_params = np.copy(loading_data)
