@@ -266,7 +266,7 @@ class PWWPatch:
         zone = StructuredZone()
 
         # # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # # read mesh dimensions - already done when reading
+        # # read mesh dimensions - already done when adding Structured_XX_Zone
         # if self.geometry_time_type == 'constant':
         #     zone.iMax, zone.jMax = XYZ_coord.shape[1:]
 
@@ -475,4 +475,27 @@ def compare_pwwpatches(pwwpatch1, pwwpatch2):
         print('File contents are NOT identical!')
 
     return
+
+# ##########################################################################
+# %% Auxiliary functions
+# ##########################################################################
+
+def get_time_from_xdmf(xdmf_filenames):
+    """
+    Reads a list of XDMF files and get the time instants corresponding to each
+    file/timestep. XDMF file structure is assumed known.
+    """
+
+    import xml.etree.ElementTree as ET
+
+    N_filenames = len(xdmf_filenames)
+
+    t = np.zeros(N_filenames)
+
+    for i, filename in enumerate(xdmf_filenames):
+        tree = ET.parse(filename)
+        root = tree.getroot()
+        t[i] = (root[0][0][0]).get('Value')
+
+    return t
 
