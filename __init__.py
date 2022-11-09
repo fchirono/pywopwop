@@ -330,8 +330,21 @@ class PWWPatch:
             # ----------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
 
-                # TODO: implement structured aperiodic loading
-                raise NotImplementedError("Can't add Structured Aperiodic Loading data to StructuredZone - not implemented yet!")
+                # check instance loading data type string vs. loading data array shape
+                if self.loading_data_type == 'surf_pressure':
+                    assert loading_data.shape == (zone.Nt, zone.iMax, zone.jMax), \
+                        "'loading_data' does not match expected shape for aperiodic 'surf_pressure' (Nt, iMax, jMax)!"
+
+                elif self.loading_data_type == 'surf_loading_vec':
+                    assert loading_data.shape == (zone.Nt, 3, zone.iMax, zone.jMax), \
+                        "'loading_data' does not match expected shape for aperiodic 'surf_loading_vec' (Nt, 3, iMax, jMax)!"
+
+                elif self.loading_data_type == 'flow_params':
+                    #print("Can't check loading data shape for flow parameter data - not implemented yet!")
+                    assert loading_data.shape == (zone.Nt, 5, zone.iMax, zone.jMax), \
+                        "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
+
+                zone.add_StructuredAperiodicLoading(loading_data, self.loading_data_type)
 
             # ----------------------------------------------------------------
             # set zone loading data flag
