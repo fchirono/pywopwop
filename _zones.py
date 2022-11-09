@@ -81,6 +81,9 @@ class StructuredZone(Zone):
         self.iMax = 0
         self.jMax = 0
 
+        self.geometry_name = ''
+        self.loading_name = ''
+
         self.geometry_header_length += 2*VALUE_LENGTH
         self.loading_header_length += 2*VALUE_LENGTH
 
