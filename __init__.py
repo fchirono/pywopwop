@@ -296,8 +296,7 @@ class PWWPatch:
             raise NotImplementedError("Can't add Periodic Geometry data to StructuredZone - not implemented yet!")
 
         elif self.geometry_time_type == 'aperiodic':
-            zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord,
-                                                 time_steps)
+            zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # adds loading data, if there is any

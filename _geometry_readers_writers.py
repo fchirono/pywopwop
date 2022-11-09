@@ -136,7 +136,7 @@ def _read_geometry_header(self, geometry_filename):
             # Store 'Nt' in PWWPatch, check all zones have identical 'Nt'
             self.Nt = self.zones[0].Nt
             for z in range(self.n_zones):
-                assert zone.Nt == self.Nt, \
+                assert self.zones[z].Nt == self.Nt, \
                     'Zone {} has {} timesteps, while Zone 0 has {}!'.format(z, zone.Nt, self.Nt)
 
         # ---------------------------------------------------------------------
@@ -229,6 +229,8 @@ def _read_geometry_data(self, geometry_filename):
             normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
                                     dtype=np.float32)
 
+            time_steps =np.zeros((self.Nt,), dtype=np.float32)
+
             self.zones[nz].geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord, self.Nt)
 
             if self.has_iblank == True:
@@ -242,7 +244,7 @@ def _read_geometry_data(self, geometry_filename):
 
                 # ........................................................
                 # read current time value and next index
-                self.zones[nz].geometry.t[nt], field_start = \
+                self.zones[nz].geometry.time_steps[nt], field_start = \
                     read_float(bytes_data, field_start)
 
                 # ........................................................
@@ -265,6 +267,13 @@ def _read_geometry_data(self, geometry_filename):
                                          self.zones[nz].iMax,
                                          self.zones[nz].jMax)
 
+            # copy time steps from geometry data to PWWPatch instance
+            self.time_steps = np.copy(self.zones[nz].geometry.time_steps)
+
+            # asserts time_steps are identical across zones
+            for z in range(self.n_zones):
+                assert zone.Nt == self.Nt, \
+                    'Zone {} has {} timesteps, while Zone 0 has {}!'.format(z, zone.Nt, self.Nt)
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 
     # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
@@ -374,9 +383,9 @@ def _write_geometry_data(self, geometry_filename):
                 # for each zone
                 for nz in range(self.n_zones):
 
+                    # write geometry data (and iBlank data, if any)
                     write_block(f, self.zones[nz].geometry.XYZ_coord)
                     write_block(f, self.zones[nz].geometry.normal_coord)
-
                     if self.has_iblank == True:
                         write_block(f, self.zones[nz].geometry.iblank)
 
