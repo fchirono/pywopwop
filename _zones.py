@@ -150,7 +150,7 @@ class StructuredZone(Zone):
         # updates iMax, jMax
         self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
 
-        # geometry header must contain 'Nt' as well
+        # increase geometry_header_length (must contain 'Nt' as well)
         self.geometry_header_length += VALUE_LENGTH
 
         self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord)
@@ -317,14 +317,55 @@ class StructuredConstantLoading():
             self.loading_vectors = np.copy(loading_data)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # if data is (Nt, 5, iMax, jMax)-shaped array of flow parameters
         elif loading_data_type == 'flow_params':
-            #raise NotImplementedError("Can't add Structured Constant loading using flow params - not implemented yet!")
 
             # copy input data
             self.flow_params = np.copy(loading_data)
 
 
 class StructuredAperiodicLoading():
-    # TODO
-    pass
+    """
+    Class to store structured, aperiodic pressure, loading vector, or flow
+    parameter data.
+
+    Parameters
+    ----------
+    loading_data : (Nt, iMax, jMax) or (Nt, 3, iMax, jMax) or (Nt, 5, iMax, jMax) array_like
+        The array of data to be added. Its shape is (Nt, iMax, jMax) for
+        pressure data, (Nt, 3, iMax, jMax) for loading vector data, and
+        (Nt, 5, iMax, jMax) for flow parameters (rho, rho*u, rho*v, rho*w, p').
+
+    loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
+        A string describing the type of loading data.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    def __init__(self, loading_data, loading_data_type):
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # if data is (Nt, iMax, jMax)-shaped array of surface pressures
+        if loading_data_type == 'surf_pressure':
+
+            # copy input data
+            self.pressures = np.copy(loading_data)
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # if data is (Nt, 3, iMax, jMax)-shaped array of surface loading vectors
+        elif loading_data_type == 'surf_loading_vec':
+
+            # copy input data
+            self.loading_vectors = np.copy(loading_data)
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # if data is (Nt, 5, iMax, jMax)-shaped array of flow parameters
+        elif loading_data_type == 'flow_params':
+
+
+            # copy input data
+            self.flow_params = np.copy(loading_data)
 
