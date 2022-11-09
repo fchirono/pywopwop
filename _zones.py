@@ -203,8 +203,22 @@ class StructuredZone(Zone):
 
     # **********************************************************************
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
-        # TODO: implement Structured Aperiodic Loading
-        raise NotImplementedError("Can't add Structured Aperiodic Loading data - not implemented yet!")
+
+        # check 'loading_data_type' arg vs. loading data array shape
+        if loading_data_type == 'surf_pressure':
+            assert loading_data.shape == (self.Nt, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for aperiodic 'surf_pressure' (Nt, iMax, jMax)!"
+
+        elif loading_data_type == 'surf_loading_vec':
+            assert loading_data.shape == (self.Nt, 3, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for aperiodic 'surf_loading_vec' (Nt, 3, iMax, jMax)!"
+
+        elif loading_data_type == 'flow_params':
+            assert loading_data.shape == (self.Nt, 5, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
+
+        self.loading = StructuredAperiodicLoading(loading_data, loading_data_type)
+
 
 
 # ##########################################################################
