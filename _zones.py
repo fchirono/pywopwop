@@ -81,6 +81,8 @@ class StructuredZone(Zone):
         self.iMax = 0
         self.jMax = 0
 
+        self.Nt = None
+
         self.geometry_name = ''
         self.loading_name = ''
 
@@ -151,7 +153,7 @@ class StructuredZone(Zone):
         None.
         """
 
-        # updates iMax, jMax
+        # updates Nt, iMax, jMax
         self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
 
         # increase geometry_header_length (must contain 'Nt' as well)
@@ -207,9 +209,19 @@ class StructuredZone(Zone):
     # **********************************************************************
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
 
+
+        # check if 'Nt' attr already exists
+        if hasattr(self, 'Nt'):
+            # check for match
+            assert loading_data.shape[0] == self.Nt, \
+                "Number of timesteps in 'loading_data' does not match existing 'Nt'!"
+        else:
+            # store 'Nt' in StructuredZone
+            self.Nt = loading_data.shape[0]
+
         # check 'loading_data_type' arg vs. loading data array shape
         if loading_data_type == 'surf_pressure':
-            assert loading_data.shape == (self.Nt, self.iMax, self.jMax), \
+            assert loading_data.shape[1:] == (self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for aperiodic 'surf_pressure' (Nt, iMax, jMax)!"
 
         elif loading_data_type == 'surf_loading_vec':
@@ -219,6 +231,8 @@ class StructuredZone(Zone):
         elif loading_data_type == 'flow_params':
             assert loading_data.shape == (self.Nt, 5, self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
+
+
 
         # increase loading_header_length (must contain 'Nt' as well)
         self.loading_header_length += VALUE_LENGTH

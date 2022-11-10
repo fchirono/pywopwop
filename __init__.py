@@ -180,8 +180,7 @@ class PWWPatch:
 
     # **********************************************************************
     def add_StructuredZone(self, name, XYZ_coord, normal_coord,
-                           calc_thickness_noise=True, loading_data=None,
-                           time_steps=None):
+                           calc_thickness_noise=True, loading_data=None):
         """
         Adds a new structured zone to PWWPatch instance. Expected argument
         array shapes and types will depend on attributes of current PWWPatch
@@ -213,12 +212,6 @@ class PWWPatch:
             Array containing loading data. Its expected shape will depend on
             'loading_time_type' and 'loading_data_type' attributes of the
             parent PWWPatch instance; see Notes below. Default is None.
-
-        time_steps : (Nt,)-shaped array_like, optional
-            Array containing the time steps for periodic or aperiodic data.
-            If aperiodic, the values must be a time in seconds. If periodic,
-            the values can be a time in seconds, or an angle in degrees, or
-            another convenient measure. Default is None.
 
         Returns
         -------
@@ -346,8 +339,7 @@ class PWWPatch:
                         "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
 
                 zone.add_StructuredAperiodicLoading(loading_data,
-                                                    self.loading_data_type,
-                                                    time_steps)
+                                                    self.loading_data_type)
 
             # ----------------------------------------------------------------
             # set zone loading data flag

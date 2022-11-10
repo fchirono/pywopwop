@@ -229,7 +229,7 @@ def _read_geometry_data(self, geometry_filename):
             normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
                                     dtype=np.float32)
 
-            time_steps =np.zeros((self.Nt,), dtype=np.float32)
+            self.time_steps =np.zeros((self.Nt,), dtype=np.float32)
 
             self.zones[nz].geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord, self.Nt)
 
@@ -244,8 +244,7 @@ def _read_geometry_data(self, geometry_filename):
 
                 # ........................................................
                 # read current time value and next index
-                self.zones[nz].geometry.time_steps[nt], field_start = \
-                    read_float(bytes_data, field_start)
+                self.time_steps[nt], field_start = read_float(bytes_data, field_start)
 
                 # ........................................................
                 # read XYZ coords and next index
@@ -266,9 +265,6 @@ def _read_geometry_data(self, geometry_filename):
                         read_IBLANKblock(bytes_data, field_start,
                                          self.zones[nz].iMax,
                                          self.zones[nz].jMax)
-
-            # copy time steps from geometry data to PWWPatch instance
-            self.time_steps = np.copy(self.zones[nz].geometry.time_steps)
 
             # asserts time_steps are identical across zones
             for z in range(self.n_zones):
