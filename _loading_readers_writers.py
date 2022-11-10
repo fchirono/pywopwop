@@ -451,6 +451,8 @@ def _write_loading_header(self, loading_filename):
         # write zone info
 
         if self.is_structured == True:
+
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             if self.loading_time_type == 'constant':
 
                 # for each zone containing data...
@@ -463,9 +465,13 @@ def _write_loading_header(self, loading_filename):
                     write_binary(f, self.zones[nz].iMax)
                     write_binary(f, self.zones[nz].jMax)
 
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            elif self.loading_time_type == 'aperiodic':
+                pass
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             else:
-                # TODO: implement non-constant functional data header
-                raise NotImplementedError("Can't write non-constant loading data header - not implemented yet!")
+                # TODO: implement non-constant, non-aperiodic functional data header
+                raise NotImplementedError("Can't write non-constant, non-aperiodic loading data header - not implemented yet!")
 
         # ------------------------------------------------------------
         else:
@@ -522,9 +528,13 @@ def _write_loading_data(self, loading_filename):
                         write_block(f, self.zones[nz].loading.flow_params)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            elif self.loading_time_type == 'aperiodic':
+                pass
+
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             else:
-                # TODO: write non-constant loading data
-                raise NotImplementedError("Can't write non-constant loading data - not implemented yet!")
+                # TODO: write non-constant, non-aperiodic loading data
+                raise NotImplementedError("Can't write non-constant, non-aperiodic loading data - not implemented yet!")
 
         # -----------------------------------------------------------
         else:
