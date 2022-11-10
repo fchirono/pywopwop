@@ -541,7 +541,37 @@ def _write_loading_data(self, loading_filename):
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             elif self.loading_time_type == 'aperiodic':
-                pass
+
+                # ......................................................
+                if self.loading_data_type == 'surf_pressure':
+
+                    # for each time step...
+                    for nt, time in enumerate(self.time_steps):
+                        # for each zone...
+                        for nz in self.zones_with_loading_data:
+                            nz = abs(nz)
+                            write_binary(file, time)
+                            write_block(file, self.zones[nz].loading.pressures[nt, :, :])
+
+                # ......................................................
+                elif self.loading_data_type == 'surf_loading_vec':
+
+                    # for each time step...
+                    for nt, time in enumerate(self.time_steps):
+                        # for each zone...
+                        for nz in self.zones_with_loading_data:
+                            nz = abs(nz)
+                            write_block(file, self.zones[nz].loading.loading_vectors[nt, :, :, :])
+
+                # ......................................................
+                elif self.loading_data_type == 'flow_params':
+
+                    # for each time step...
+                    for nt, time in enumerate(self.time_steps):
+                        # for each zone...
+                        for nz in self.zones_with_loading_data:
+                            nz = abs(nz)
+                            write_block(file, self.zones[nz].loading.flow_params[nt, :, :, :])
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             else:
