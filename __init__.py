@@ -249,6 +249,14 @@ class PWWPatch:
                 vector data, and (5, iMax, jMax) for flow parameters
                 (rho, rho*u, rho*v, rho*w, p').
 
+        If 'loading time_type' is 'aperiodic', the loading information is:
+
+            loading_data : (Nt, iMax, jMax) or (Nt, 3, iMax, jMax) or (Nt, 5, iMax, jMax) array_like
+                Array of aperiodic loading data to be added. Its shape is
+                (Nt, iMax, jMax) for pressure data, (Nt, 3, iMax, jMax) for
+                loading vector data, and (Nt, 5, iMax, jMax) for flow
+                parameters (rho, rho*u, rho*v, rho*w, p').
+
         """
 
         # check PWWPatch instance is indeed structured
@@ -257,26 +265,11 @@ class PWWPatch:
 
         # instantiate new zone
         zone = StructuredZone()
-
-        # # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # # read mesh dimensions - already done when adding Structured_XX_Zone
-        # if self.geometry_time_type == 'constant':
-        #     zone.iMax, zone.jMax = XYZ_coord.shape[1:]
-
-        # elif self.geometry_time_type == 'aperiodic':
-        #     zone.Nt, _, zone.iMax, zone.jMax = XYZ_coord.shape
-
-        #     # assert 'Nt' in geometry array is the same as in 'time_vec'
-        #     assert (zone.Nt == time_steps.shape[0]), \
-        #         "Current zone does not contain the same number of time steps as time vector!"
-
-        # # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-
         zone._set_string(name, 'name', 32)
         zone._set_string(name, 'geometry_name', 32)
         zone._set_string(name, 'loading_name', 32)
 
-        # zone number will always be the current length of 'zones'
+        # new zone number is the current length of 'zones' attribute
         zone.number = len(self.zones)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
@@ -297,47 +290,14 @@ class PWWPatch:
 
             # --------------------------------------------------------------
             if self.loading_time_type == 'constant':
-
-                # check instance loading data type string vs. loading data array shape
-                if self.loading_data_type == 'surf_pressure':
-                    assert loading_data.shape == (zone.iMax, zone.jMax), \
-                        "'loading_data' does not match expected shape for 'surf_pressure' (iMax, jMax)!"
-
-                elif self.loading_data_type == 'surf_loading_vec':
-                    assert loading_data.shape == (3, zone.iMax, zone.jMax), \
-                        "'loading_data' does not match expected shape for 'surf_loading_vec' (3, iMax, jMax)!"
-
-                elif self.loading_data_type == 'flow_params':
-                    #print("Can't check loading data shape for flow parameter data - not implemented yet!")
-                    assert loading_data.shape == (5, zone.iMax, zone.jMax), \
-                        "'loading_data' does not match expected shape for 'flow_params' (5, iMax, jMax)!"
-
                 zone.add_StructuredConstantLoading(loading_data,
                                                    self.loading_data_type)
 
-            # ----------------------------------------------------------------
             elif self.loading_time_type == 'periodic':
-
                 # TODO: implement structured periodic loading
                 raise NotImplementedError("Can't add Structured Periodic Loading data to StructuredZone - not implemented yet!")
 
-            # ----------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
-
-                # check instance loading data type string vs. loading data array shape
-                if self.loading_data_type == 'surf_pressure':
-                    assert loading_data.shape == (zone.Nt, zone.iMax, zone.jMax), \
-                        "'loading_data' does not match expected shape for aperiodic 'surf_pressure' (Nt, iMax, jMax)!"
-
-                elif self.loading_data_type == 'surf_loading_vec':
-                    assert loading_data.shape == (zone.Nt, 3, zone.iMax, zone.jMax), \
-                        "'loading_data' does not match expected shape for aperiodic 'surf_loading_vec' (Nt, 3, iMax, jMax)!"
-
-                elif self.loading_data_type == 'flow_params':
-                    #print("Can't check loading data shape for flow parameter data - not implemented yet!")
-                    assert loading_data.shape == (zone.Nt, 5, zone.iMax, zone.jMax), \
-                        "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
-
                 zone.add_StructuredAperiodicLoading(loading_data,
                                                     self.loading_data_type)
 

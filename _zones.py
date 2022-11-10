@@ -60,7 +60,7 @@ class Zone:
         ascii_error = 'String is not ASCII compatible!'
         assert string[:length].isascii(), ascii_error
 
-        # check string has maximum length, pad with spaces otherwise
+        # check string is below maximum length, pad with spaces if so
         if len(string) < length:
             string += (length-len(string))*' '
 
@@ -209,8 +209,8 @@ class StructuredZone(Zone):
     # **********************************************************************
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
 
-
-        # check if 'Nt' attr already exists
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # check if 'Nt' attr already exists (e.g. from aperiodic geometry)
         if hasattr(self, 'Nt'):
             # check for match
             assert loading_data.shape[0] == self.Nt, \
@@ -219,9 +219,10 @@ class StructuredZone(Zone):
             # store 'Nt' in StructuredZone
             self.Nt = loading_data.shape[0]
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # check 'loading_data_type' arg vs. loading data array shape
         if loading_data_type == 'surf_pressure':
-            assert loading_data.shape[1:] == (self.iMax, self.jMax), \
+            assert loading_data.shape == (self.Nt, self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for aperiodic 'surf_pressure' (Nt, iMax, jMax)!"
 
         elif loading_data_type == 'surf_loading_vec':
@@ -232,13 +233,12 @@ class StructuredZone(Zone):
             assert loading_data.shape == (self.Nt, 5, self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
 
-
-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # increase loading_header_length (must contain 'Nt' as well)
         self.loading_header_length += VALUE_LENGTH
 
         self.loading = StructuredAperiodicLoading(loading_data, loading_data_type)
-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
 
 
 # ##########################################################################
@@ -365,6 +365,8 @@ class StructuredConstantLoading():
             # copy input data
             self.flow_params = np.copy(loading_data)
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+
 
 class StructuredAperiodicLoading():
     """
@@ -423,3 +425,4 @@ class StructuredAperiodicLoading():
             # copy input data
             self.flow_params = np.copy(loading_data)
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
