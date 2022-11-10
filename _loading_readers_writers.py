@@ -69,7 +69,9 @@ def _read_loading_header(self, loading_filename):
     for n in range(10):
         self.loading_format_string.append(read_int(bytes_data, 1036 + 4*n))
 
+    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
     # Verify file type description
+
     # --> loading_format_string[0] is '2' to indicate functional data file
     assert (self.loading_format_string[0] == 2), \
         "Format string does not start with '2', not a PSU-WOPWOP functional file!"
@@ -175,15 +177,27 @@ def _read_loading_header(self, loading_filename):
                                        zone_info_start + i*zone.loading_header_length, 32)
                     zone._set_string(name, 'loading_name', 32)
 
-                    # read number of time steps
-                    self.Nt = read_int(bytes_data,
-                                       zone_info_start + 32 + i*zone.loading_header_length)
+                    # .........................................................
+                    # read number of timesteps
+                    loading_Nt = read_int(bytes_data,
+                                          zone_info_start + 32 + i*zone.loading_header_length)
 
+                    # check if 'Nt' attribute already exists (e.g. from aperiodic geometry)
+                    if hasattr(self, 'Nt'):
+                        # check for match
+                        assert loading_Nt == self.Nt, \
+                            "Number of timesteps in Zone {} loading data does not match existing PWWPatch instance 'Nt'!".format(nz)
+                    else:
+                        # store 'Nt' in PWWPatch
+                        self.Nt = loading_Nt
+
+                    # .........................................................
                     # assert iMax and jMax match
                     iMax_fromfile = read_int(bytes_data,
                                              zone_info_start + 36 + i*zone.loading_header_length)
                     jMax_fromfile = read_int(bytes_data,
                                              zone_info_start + 40 + i*zone.loading_header_length)
+
                     assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
                         "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
 
