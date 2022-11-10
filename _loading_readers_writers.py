@@ -284,8 +284,6 @@ def _read_loading_data(self, loading_filename):
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             elif self.loading_data_type == 'flow_params':
-                # TODO: read flow_params loading data
-                #raise NotImplementedError("Can't read flow_params loading data - not implemented yet!")
 
                 # for each zone containing data:
                 for nz in self.zones_with_loading_data:
@@ -304,10 +302,103 @@ def _read_loading_data(self, loading_filename):
                                    self.zones[nz].iMax,
                                    self.zones[nz].jMax)
 
+        # ----------------------------------------------------------------
+        elif self.loading_time_type == 'aperiodic':
+
+            # start index for reading functional data
+            # end of format string + zone specification + header
+            field_start = (1076
+                           + (1 + self.n_zones_with_loading_data)*VALUE_LENGTH
+                           + self.n_zones_with_loading_data*self.zones[0].loading_header_length)
+
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # if data is surface pressure
+            if self.loading_data_type == 'surf_pressure':
+
+                # for each zone with loading data
+                for nz in self.zones_with_loading_data:
+
+                    # create empty numpy arrays for pressure data
+                    pressures = np.zeros((self.Nt, self.zones[nz].iMax,
+                                          self.zones[nz].jMax),
+                                         dtype=np.float32)
+
+                    self.zones[nz].add_StructuredAperiodicLoading(pressures, 'surf_pressure')
+
+                    # .....................................................
+                    # for each timestep...
+                    for nt in range(self.Nt):
+
+                        # read current time value and next index
+                        self.time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read pressure data and next index
+                        self.zones[nz].loading.pressures[nt, :, :], field_start = \
+                            read_block(bytes_data, field_start, 1,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+                    # .....................................................
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # if data is loading vectors
+            elif self.loading_data_type == 'surf_loading_vec':
+
+                # for each zone containing data:
+                for nz in self.zones_with_loading_data:
+
+                    # create empty numpy arrays for pressure data
+                    loading_vectors = np.zeros((3, self.zones[nz].iMax,
+                                                self.zones[nz].jMax),
+                                               dtype=np.float32)
+
+                    self.zones[nz].add_StructuredAperiodicLoading(loading_vectors, 'surf_loading_vec')
+
+                    # .....................................................
+                    # for each timestep...
+                    for nt in range(self.Nt):
+
+                        # read current time value and next index
+                        self.time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read loading vectors data and next index
+                        self.zones[nz].loading.loading_vectors[nt, 3, :, :], field_start = \
+                            read_block(bytes_data, field_start, 3,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+                    # .....................................................
+
+            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            elif self.loading_data_type == 'flow_params':
+
+                # for each zone containing data:
+                for nz in self.zones_with_loading_data:
+
+                    # create empty numpy arrays for flow params
+                    # (rho, rho*u, rho*v, rho*w, p')
+                    flow_params = np.zeros((5, self.zones[nz].iMax,
+                                            self.zones[nz].jMax),
+                                           dtype=np.float32)
+
+                    self.zones[nz].add_StructuredAperiodicLoading(flow_params, 'flow_params')
+
+                    # .....................................................
+                    # for each timestep...
+                    for nt in range(self.Nt):
+
+                        # read current time value and next index
+                        self.time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read flow parameter data and next index
+                        self.zones[nz].loading.flow_params[nt, 5, :, :], field_start = \
+                            read_block(bytes_data, field_start, 5,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+                    # .....................................................
+
+
         # --------------------------------------------------------------
         else:
-            # TODO: read non-constant loading data
-            raise NotImplementedError("Can't read non-constant loading data - not implemented yet!")
+            # TODO: read non-constant, non-aperiodic loading data
+            raise NotImplementedError("Can't read non-constant or non-aperiodic loading data - not implemented yet!")
 
     # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
     else:

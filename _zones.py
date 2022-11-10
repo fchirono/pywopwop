@@ -33,7 +33,8 @@ class Zone:
         self.calc_thickness_noise = True
         self.has_loading_data = False
 
-        self.geometry_header_length = 32    # 'name' string has 32 bytes
+        # header lengths start with 'name' string (32 bytes) only
+        self.geometry_header_length = 32
         self.loading_header_length = 32
 
         self.geometry = None

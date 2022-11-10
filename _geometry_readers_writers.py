@@ -186,7 +186,7 @@ def _read_geometry_data(self, geometry_filename):
                 normal_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
                              dtype=np.float32)
 
-                self.zones[nz].geometry = StructuredConstantGeometry(XYZ_coord, normal_coord)
+                self.zones[nz].add_StructuredConstantGeometry(XYZ_coord, normal_coord)
 
                 if self.has_iblank == True:
                     self.zones[nz].geometry.iblank = \
@@ -235,7 +235,7 @@ def _read_geometry_data(self, geometry_filename):
 
                 self.time_steps =np.zeros((self.Nt,), dtype=np.float32)
 
-                self.zones[nz].geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord, self.Nt)
+                self.zones[nz].add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
 
                 if self.has_iblank == True:
                     self.zones[nz].geometry.iblank = \
