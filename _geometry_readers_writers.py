@@ -113,7 +113,6 @@ def _read_geometry_header(self, geometry_filename):
             for nz in range(self.n_zones):
                 # instantiate zone and read info from file
                 zone = StructuredZone()
-
                 zone.number = len(self.zones)
 
                 # reads geometry zone name (32 bytes)
@@ -137,7 +136,7 @@ def _read_geometry_header(self, geometry_filename):
             self.Nt = self.zones[0].Nt
             for z in range(self.n_zones):
                 assert self.zones[z].Nt == self.Nt, \
-                    'Zone {} has {} timesteps, while Zone 0 has {}!'.format(z, zone.Nt, self.Nt)
+                    "Error in file '{}': Zone {} has {} timesteps, while Zone 0 has {}!".format(geometry_filename, z, zone.Nt, self.Nt)
 
         # ---------------------------------------------------------------------
         else:
@@ -150,7 +149,7 @@ def _read_geometry_header(self, geometry_filename):
         raise NotImplementedError("Can't read non-structured geometry zone info - not implemented yet!")
 
     assert (self.n_zones == len(self.zones)), \
-        "Number of zones in format string doesn't match file data!"
+        "Error in file '{}'': Number of zones in format string doesn't match file data!".format(geometry_filename)
 
 
 # ##########################################################################
@@ -266,17 +265,12 @@ def _read_geometry_data(self, geometry_filename):
                                          self.zones[nz].iMax,
                                          self.zones[nz].jMax)
 
-            # asserts time_steps are identical across zones
-            for z in range(self.n_zones):
-                assert zone.Nt == self.Nt, \
-                    'Zone {} has {} timesteps, while Zone 0 has {}!'.format(z, zone.Nt, self.Nt)
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 
     # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
     else:
         # TODO: read non-constant and non-aperiodic geometry data
         raise NotImplementedError("Can't read geometry data that is not constant nor aperiodic - not implemented yet!")
-
 
 
 # ##########################################################################
