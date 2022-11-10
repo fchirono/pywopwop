@@ -82,8 +82,6 @@ class StructuredZone(Zone):
         self.iMax = 0
         self.jMax = 0
 
-        self.Nt = None
-
         self.geometry_name = ''
         self.loading_name = ''
 
@@ -211,7 +209,7 @@ class StructuredZone(Zone):
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # check if 'Nt' attr already exists (e.g. from aperiodic geometry)
+        # check if Zone already has attribute 'Nt' (e.g. from aperiodic geometry)
         if hasattr(self, 'Nt'):
             # check for match
             assert loading_data.shape[0] == self.Nt, \
