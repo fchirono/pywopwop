@@ -296,24 +296,24 @@ def _write_geometry_header(self, geometry_filename):
     self._build_geometry_format_string()
 
     # open or create new file
-    with open(geometry_filename, 'wb+') as f:
+    with open(geometry_filename, 'wb+') as file:
 
         # write 'magic number' 42 to first 4 bytes
-        write_binary(f, MAGICNUMBER)
+        write_binary(file,MAGICNUMBER)
 
         # write version number
-        write_binary(f, self.version_number_major)
-        write_binary(f, self.version_number_minor)
+        write_binary(file,self.version_number_major)
+        write_binary(file,self.version_number_minor)
 
         # write units string (32 chars)
-        write_string(f, self.units_string, 32)
+        write_string(file,self.units_string, 32)
 
         # write comments string (1024 bytes)
-        write_string(f, self.geometry_comment, 1024)
+        write_string(file,self.geometry_comment, 1024)
 
         # write format string (8 ints, 32 bytes)
         for n in range(8):
-            write_binary(f, self.geometry_format_string[n])
+            write_binary(file,self.geometry_format_string[n])
 
         # --------------------------------------------------------------
         # write zone info
@@ -326,11 +326,11 @@ def _write_geometry_header(self, geometry_filename):
                 for nz in range(self.n_zones):
 
                     # write name (32-byte string)
-                    write_string(f, self.zones[nz].geometry_name, 32)
+                    write_string(file,self.zones[nz].geometry_name, 32)
 
                     # write iMax and jMax (4 byte ints)
-                    write_binary(f, self.zones[nz].iMax)
-                    write_binary(f, self.zones[nz].jMax)
+                    write_binary(file,self.zones[nz].iMax)
+                    write_binary(file,self.zones[nz].jMax)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             elif self.geometry_time_type == 'aperiodic':
@@ -339,14 +339,14 @@ def _write_geometry_header(self, geometry_filename):
                 for nz in range(self.n_zones):
 
                     # write name (32-byte string)
-                    write_string(f, self.zones[nz].geometry_name, 32)
+                    write_string(file,self.zones[nz].geometry_name, 32)
 
                     # write number of timesteps
-                    write_binary(f, self.Nt)
+                    write_binary(file,self.Nt)
 
                     # write iMax and jMax (4 byte ints)
-                    write_binary(f, self.zones[nz].iMax)
-                    write_binary(f, self.zones[nz].jMax)
+                    write_binary(file,self.zones[nz].iMax)
+                    write_binary(file,self.zones[nz].jMax)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             else:
@@ -370,7 +370,7 @@ def _write_geometry_data(self, geometry_filename):
     """
 
     # open file in append mode - no need to adjust index
-    with open(geometry_filename, 'ab') as f:
+    with open(geometry_filename, 'ab') as file:
 
         # --------------------------------------------------------------
         # If file is structured
@@ -384,10 +384,10 @@ def _write_geometry_data(self, geometry_filename):
                 for nz in range(self.n_zones):
 
                     # write geometry data (and iBlank data, if any)
-                    write_block(f, self.zones[nz].geometry.XYZ_coord)
-                    write_block(f, self.zones[nz].geometry.normal_coord)
+                    write_block(file,self.zones[nz].geometry.XYZ_coord)
+                    write_block(file,self.zones[nz].geometry.normal_coord)
                     if self.has_iblank == True:
-                        write_block(f, self.zones[nz].geometry.iblank)
+                        write_block(file,self.zones[nz].geometry.iblank)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             # aperiodic geometry
@@ -400,12 +400,12 @@ def _write_geometry_data(self, geometry_filename):
                     for nz in range(self.n_zones):
 
                         # write current time step and geometry data
-                        write_binary(f, self.zones[nz].t[nt])
-                        write_block(f, self.zones[nz].geometry.XYZ_coord)
-                        write_block(f, self.zones[nz].geometry.normal_coord)
+                        write_binary(file,self.zones[nz].t[nt])
+                        write_block(file,self.zones[nz].geometry.XYZ_coord)
+                        write_block(file,self.zones[nz].geometry.normal_coord)
 
                         if self.has_iblank == True:
-                            write_block(f, self.zones[nz].geometry.iblank)
+                            write_block(file,self.zones[nz].geometry.iblank)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             else:

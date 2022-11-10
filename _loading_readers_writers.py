@@ -420,32 +420,32 @@ def _write_loading_header(self, loading_filename):
     # build format string with most recent format values
     self._build_loading_format_string()
 
-    with open(loading_filename, 'wb') as f:
+    with open(loading_filename, 'wb') as file:
 
         # write 'magic number' 42 to first 4 bytes
-        write_binary(f, MAGICNUMBER)
+        write_binary(file, MAGICNUMBER)
 
         # write version number
-        write_binary(f, self.version_number_major)
-        write_binary(f, self.version_number_minor)
+        write_binary(file, self.version_number_major)
+        write_binary(file, self.version_number_minor)
 
         # write comments string (1024 bytes)
-        write_string(f, self.loading_comment, 1024)
+        write_string(file, self.loading_comment, 1024)
 
         # write format string (10 ints, 40 bytes)
         for n in range(10):
-            write_binary(f, self.loading_format_string[n])
+            write_binary(file, self.loading_format_string[n])
 
         # --------------------------------------------------------------
         # write zone specification
 
         # write number of zones with data
-        write_binary(f, self.n_zones_with_loading_data)
+        write_binary(file, self.n_zones_with_loading_data)
 
         # write list of those zones - add one to create one-based
         # (PSU-WOPWOP) indices
         for z in self.zones_with_loading_data:
-            write_binary(f, (z + 1))
+            write_binary(file, (z + 1))
 
         # --------------------------------------------------------------
         # write zone info
@@ -459,11 +459,11 @@ def _write_loading_header(self, loading_filename):
                 for nz in self.zones_with_loading_data:
 
                     # write name (32-byte string)
-                    write_string(f, self.zones[nz].loading_name, 32)
+                    write_string(file, self.zones[nz].loading_name, 32)
 
                     # write iMax and jMax (4 byte ints)
-                    write_binary(f, self.zones[nz].iMax)
-                    write_binary(f, self.zones[nz].jMax)
+                    write_binary(file, self.zones[nz].iMax)
+                    write_binary(file, self.zones[nz].jMax)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             elif self.loading_time_type == 'aperiodic':
@@ -491,7 +491,7 @@ def _write_loading_data(self, loading_filename):
     """
 
     # open file in append mode - no need to adjust index
-    with open(loading_filename, 'ab') as f:
+    with open(loading_filename, 'ab') as file:
 
         # -----------------------------------------------------------
         # structured loading
@@ -507,7 +507,7 @@ def _write_loading_data(self, loading_filename):
                     # for each zone...
                     for nz in self.zones_with_loading_data:
                         nz = abs(nz)
-                        write_block(f, self.zones[nz].loading.pressures)
+                        write_block(file, self.zones[nz].loading.pressures)
 
                 # ......................................................
                 elif self.loading_data_type == 'surf_loading_vec':
@@ -515,7 +515,7 @@ def _write_loading_data(self, loading_filename):
                     # for each zone...
                     for nz in self.zones_with_loading_data:
                         nz = abs(nz)
-                        write_block(f, self.zones[nz].loading.loading_vectors)
+                        write_block(file, self.zones[nz].loading.loading_vectors)
 
                 # ......................................................
                 elif self.loading_data_type == 'flow_params':
@@ -525,7 +525,7 @@ def _write_loading_data(self, loading_filename):
                     # for each zone...
                     for nz in self.zones_with_loading_data:
                         nz = abs(nz)
-                        write_block(f, self.zones[nz].loading.flow_params)
+                        write_block(file, self.zones[nz].loading.flow_params)
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             elif self.loading_time_type == 'aperiodic':
