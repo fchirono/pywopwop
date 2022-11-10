@@ -346,7 +346,8 @@ def _read_loading_data(self, loading_filename):
                 for nz in self.zones_with_loading_data:
 
                     # create empty numpy arrays for pressure data
-                    loading_vectors = np.zeros((3, self.zones[nz].iMax,
+                    loading_vectors = np.zeros((self.Nt, 3,
+                                                self.zones[nz].iMax,
                                                 self.zones[nz].jMax),
                                                dtype=np.float32)
 
@@ -374,7 +375,8 @@ def _read_loading_data(self, loading_filename):
 
                     # create empty numpy arrays for flow params
                     # (rho, rho*u, rho*v, rho*w, p')
-                    flow_params = np.zeros((5, self.zones[nz].iMax,
+                    flow_params = np.zeros((self.Nt, 5,
+                                            self.zones[nz].iMax,
                                             self.zones[nz].jMax),
                                            dtype=np.float32)
 
@@ -393,7 +395,6 @@ def _read_loading_data(self, loading_filename):
                                        self.zones[nz].iMax,
                                        self.zones[nz].jMax)
                     # .....................................................
-
 
         # --------------------------------------------------------------
         else:
