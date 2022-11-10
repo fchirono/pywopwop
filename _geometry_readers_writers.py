@@ -162,115 +162,124 @@ def _read_geometry_data(self, geometry_filename):
     with open(geometry_filename, 'rb') as f:
         bytes_data = f.read()
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-    # constant geometry
-    if self.geometry_time_type == 'constant':
+    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+    # If file is structured
+    if self.is_structured == True:
 
-        # start index for reading coordinates and normal vectors data
-        field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
+        # ---------------------------------------------------------------------
+        # constant geometry
+        if self.geometry_time_type == 'constant':
 
-        # for each zone
-        for nz in range(self.n_zones):
+            # start index for reading coordinates and normal vectors data
+            field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-            # create empty numpy arrays for XYZ coordinates and normal
-            # coordinates (and IBLANK data, if included)
-            XYZ_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                 dtype=np.float32)
+            # for each zone
+            for nz in range(self.n_zones):
 
-            normal_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
-                         dtype=np.float32)
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                # create empty numpy arrays for XYZ coordinates and normal
+                # coordinates (and IBLANK data, if included)
+                XYZ_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                     dtype=np.float32)
 
-            self.zones[nz].geometry = StructuredConstantGeometry(XYZ_coord, normal_coord)
+                normal_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
+                             dtype=np.float32)
 
-            if self.has_iblank == True:
-                self.zones[nz].geometry.iblank = \
-                    np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
-                             dtype=np.int32)
+                self.zones[nz].geometry = StructuredConstantGeometry(XYZ_coord, normal_coord)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-            # read XYZ coords and next index
-            self.zones[nz].geometry.XYZ_coord, field_start = \
-                read_block(bytes_data, field_start, 3,
-                           self.zones[nz].iMax, self.zones[nz].jMax)
+                if self.has_iblank == True:
+                    self.zones[nz].geometry.iblank = \
+                        np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
+                                 dtype=np.int32)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-            # read normal vector coords and next index
-            self.zones[nz].geometry.normal_coord, field_start = \
-                read_block(bytes_data, field_start, 3,
-                           self.zones[nz].iMax, self.zones[nz].jMax)
-
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-            # if file contains IBLANK (int) data, read that
-            if self.has_iblank == True:
-                self.zones[nz].geometry.iblank, field_start = \
-                    read_IBLANKblock(bytes_data, field_start,
-                                     self.zones[nz].iMax,
-                                     self.zones[nz].jMax)
-
-
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-    # aperiodic geometry
-    elif self.geometry_time_type == 'aperiodic':
-
-        # start index for reading coordinates and normal vectors data
-        field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
-
-        # for each zone
-        for nz in range(self.n_zones):
-
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-            # create empty numpy arrays for XYZ coordinates and normal
-            # coordinates (and IBLANK data, if included)
-            XYZ_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                 dtype=np.float32)
-
-            normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                    dtype=np.float32)
-
-            self.time_steps =np.zeros((self.Nt,), dtype=np.float32)
-
-            self.zones[nz].geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord, self.Nt)
-
-            if self.has_iblank == True:
-                self.zones[nz].geometry.iblank = \
-                    np.zeros((self.Nt, self.zones[nz].iMax, self.zones[nz].jMax),
-                             dtype=np.int32)
-
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-            # for each timestep...
-            for nt in range(self.Nt):
-
-                # ........................................................
-                # read current time value and next index
-                self.time_steps[nt], field_start = read_float(bytes_data, field_start)
-
-                # ........................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # read XYZ coords and next index
-                self.zones[nz].geometry.XYZ_coord[nt, :, :, :], field_start = \
+                self.zones[nz].geometry.XYZ_coord, field_start = \
                     read_block(bytes_data, field_start, 3,
                                self.zones[nz].iMax, self.zones[nz].jMax)
 
-                # ........................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # read normal vector coords and next index
-                self.zones[nz].geometry.normal_coord[nt, :, :, :], field_start = \
+                self.zones[nz].geometry.normal_coord, field_start = \
                     read_block(bytes_data, field_start, 3,
                                self.zones[nz].iMax, self.zones[nz].jMax)
 
-                # ........................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
                 # if file contains IBLANK (int) data, read that
                 if self.has_iblank == True:
-                    self.zones[nz].geometry.iblank[nt, :, :, :], field_start = \
+                    self.zones[nz].geometry.iblank, field_start = \
                         read_IBLANKblock(bytes_data, field_start,
                                          self.zones[nz].iMax,
                                          self.zones[nz].jMax)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # aperiodic geometry
+        elif self.geometry_time_type == 'aperiodic':
+
+            # start index for reading coordinates and normal vectors data
+            field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
+
+            # for each zone
+            for nz in range(self.n_zones):
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                # create empty numpy arrays for XYZ coordinates and normal
+                # coordinates (and IBLANK data, if included)
+                XYZ_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                     dtype=np.float32)
+
+                normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                        dtype=np.float32)
+
+                self.time_steps =np.zeros((self.Nt,), dtype=np.float32)
+
+                self.zones[nz].geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord, self.Nt)
+
+                if self.has_iblank == True:
+                    self.zones[nz].geometry.iblank = \
+                        np.zeros((self.Nt, self.zones[nz].iMax, self.zones[nz].jMax),
+                                 dtype=np.int32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                # for each timestep...
+                for nt in range(self.Nt):
+
+                    # ........................................................
+                    # read current time value and next index
+                    self.time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                    # ........................................................
+                    # read XYZ coords and next index
+                    self.zones[nz].geometry.XYZ_coord[nt, :, :, :], field_start = \
+                        read_block(bytes_data, field_start, 3,
+                                   self.zones[nz].iMax, self.zones[nz].jMax)
+
+                    # ........................................................
+                    # read normal vector coords and next index
+                    self.zones[nz].geometry.normal_coord[nt, :, :, :], field_start = \
+                        read_block(bytes_data, field_start, 3,
+                                   self.zones[nz].iMax, self.zones[nz].jMax)
+
+                    # ........................................................
+                    # if file contains IBLANK (int) data, read that
+                    if self.has_iblank == True:
+                        self.zones[nz].geometry.iblank[nt, :, :, :], field_start = \
+                            read_IBLANKblock(bytes_data, field_start,
+                                             self.zones[nz].iMax,
+                                             self.zones[nz].jMax)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        else:
+            # TODO: read non-constant and non-aperiodic geometry data
+            raise NotImplementedError("Can't read geometry data that is not constant nor aperiodic - not implemented yet!")
+
+    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
     else:
-        # TODO: read non-constant and non-aperiodic geometry data
-        raise NotImplementedError("Can't read geometry data that is not constant nor aperiodic - not implemented yet!")
+        # TODO: implement non-structured data reader
+        raise NotImplementedError("Can't read non-structured geometry zone data - not implemented yet!")
 
 
 # ##########################################################################
