@@ -25,7 +25,8 @@ from ._binary_readers_writers import initial_check, read_block, write_block, \
     read_IBLANKblock, read_int, read_float, write_binary, write_string, \
     read_string
 
-from ._zones import Zone, StructuredZone, StructuredConstantGeometry, \
+from ._zones import Zone, StructuredZone, \
+    StructuredConstantGeometry, StructuredAperiodicGeometry, \
     StructuredConstantLoading, StructuredAperiodicLoading
 
 
@@ -56,7 +57,8 @@ def _read_loading_header(self, loading_filename):
         'File version is not v1.0!'
 
     # read comments string (1024 bytes, starting at index 12)
-    self.loading_comment = read_string(bytes_data, 12, 1024)
+    loading_comment = read_string(bytes_data, 12, 1024)
+    self.set_loading_comment(loading_comment)
 
 
     # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-

@@ -14,7 +14,6 @@ Author:
     Nov 2022
 """
 
-
 import numpy as np
 
 from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
@@ -59,10 +58,12 @@ def _read_geometry_header(self, geometry_filename):
         'File version is not v1.0!'
 
     # read units string (32 chars, starting at index 12)
-    self.units_string = read_string(bytes_data, 12, 32)
+    units_string = read_string(bytes_data, 12, 32)
+    self.set_units_string(units_string)
 
     # read comments string (1024 bytes, starting at index 44)
-    self.geometry_comment = read_string(bytes_data, 44, 1024)
+    geom_comment = read_string(bytes_data, 44, 1024)
+    self.set_geometry_comment(geom_comment)
 
     # read format string (8 ints, 32 bytes, starting at index 1068)
     self.geometry_format_string = []
