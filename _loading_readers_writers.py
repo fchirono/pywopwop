@@ -207,6 +207,11 @@ def _read_loading_header(self, loading_filename):
                     # set loading data flag
                     zone.has_loading_data = True
 
+                # check if 'time_steps' attribute already exists (e.g. from aperiodic geometry)
+                if not hasattr(self, 'time_steps'):
+                    # store 'Nt' in PWWPatch
+                    self.time_steps = np.zeros(self.Nt, dtype=np.float32)
+
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
             else:
                 # TODO: implement non-constant non-aperiodic loading
