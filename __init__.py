@@ -120,9 +120,10 @@ class PWWPatch:
 
 
     # **********************************************************************
-    def print_info(self, zones_info=True):
+    def print_info(self, zones_info=False):
         """
-        Prints a summary of the file info
+        Prints a summary of the file info. By default, it skips the zones'
+        info - if desired, set 'zones_info=True'.
         """
 
         print('\nPSU-WOPWOP version {}.{}'.format(self.version_number_major,
