@@ -404,9 +404,9 @@ def _write_geometry_data(self, geometry_filename):
                     for nz in range(self.n_zones):
 
                         # write current time step and geometry data
-                        write_binary(file,self.zones[nz].t[nt])
-                        write_block(file,self.zones[nz].geometry.XYZ_coord)
-                        write_block(file,self.zones[nz].geometry.normal_coord)
+                        write_binary(file, self.time_steps[nt])
+                        write_block(file, self.zones[nz].geometry.XYZ_coord)
+                        write_block(file, self.zones[nz].geometry.normal_coord)
 
                         if self.has_iblank == True:
                             write_block(file,self.zones[nz].geometry.iblank)
