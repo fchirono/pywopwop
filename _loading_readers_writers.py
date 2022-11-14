@@ -562,6 +562,7 @@ def _write_loading_data(self, loading_filename):
                         # for each zone...
                         for nz in self.zones_with_loading_data:
                             nz = abs(nz)
+                            write_binary(file, time)
                             write_block(file, self.zones[nz].loading.loading_vectors[nt, :, :, :])
 
                 # ......................................................
@@ -572,6 +573,8 @@ def _write_loading_data(self, loading_filename):
                         # for each zone...
                         for nz in self.zones_with_loading_data:
                             nz = abs(nz)
+                            # write time value and block of flow params
+                            write_binary(file, time)
                             write_block(file, self.zones[nz].loading.flow_params[nt, :, :, :])
 
             # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
