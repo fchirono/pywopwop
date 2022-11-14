@@ -120,7 +120,7 @@ class PWWPatch:
 
 
     # **********************************************************************
-    def print_info(self):
+    def print_info(self, zones_info=True):
         """
         Prints a summary of the file info
         """
@@ -150,6 +150,14 @@ class PWWPatch:
         print('\tNo. zones:                 ', len(self.zones))
         print('\tNo. zones w/ loading data: ', len(self.zones_with_loading_data))
 
+        if zones_info:
+            self.print_zones_info()
+
+
+    def print_zones_info(self):
+        """
+        Prints a summary of the zones' info
+        """
         for zone in self.zones:
             print(zone)
         print('\n\n')
@@ -300,6 +308,15 @@ class PWWPatch:
             elif self.loading_time_type == 'aperiodic':
                 zone.add_StructuredAperiodicLoading(loading_data,
                                                     self.loading_data_type)
+
+                # check if PWWPatch already has attribute 'Nt'
+                if hasattr(self, 'Nt'):
+                    # If yes, check for match with zone.Nt
+                    assert self.Nt == zone.Nt, \
+                        "Number of timesteps in aperiodic structured zone does not match existing 'Nt' in PWWPatch!"
+                else:
+                    # store 'Nt' in PWWPatch
+                    self.Nt = zone.Nt
 
             # ----------------------------------------------------------------
             # set zone loading data flag
