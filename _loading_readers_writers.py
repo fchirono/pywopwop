@@ -156,7 +156,7 @@ def _read_loading_header(self, loading_filename):
                     jMax_fromfile = read_int(bytes_data,
                                              zone_info_start + 36 + i*zone.loading_header_length)
                     assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
-                        "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
+                        "(iMax, jMax) in Zone {} from loading file don't match existing values in PWWPatch instance!".format(nz)
 
                     # set loading data flag
                     zone.has_loading_data = True
@@ -199,7 +199,7 @@ def _read_loading_header(self, loading_filename):
                                              zone_info_start + 40 + i*zone.loading_header_length)
 
                     assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
-                        "(iMax, jMax) from loading file don't match existing values in PWWPatch instance!"
+                        "(iMax, jMax) in Zone {} from loading file don't match existing values in PWWPatch instance!".format(nz)
 
                     # set loading data flag
                     zone.has_loading_data = True
@@ -531,8 +531,6 @@ def _write_loading_data(self, loading_filename):
 
                 # ......................................................
                 elif self.loading_data_type == 'flow_params':
-                    # TODO: write flow params data
-                    #raise NotImplementedError("Can't write flow_params loading data - not implemented yet!")
 
                     # for each zone...
                     for nz in self.zones_with_loading_data:
