@@ -8,14 +8,14 @@ pywopwop - https://github.com/fchirono/pywopwop
 
 Author:
     Fabio Casagrande Hirono
-    Dec 2021
+    Nov 2022
 """
 
 
 import numpy as np
 import struct
 
-from consts_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
+from ._consts_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
 
 
 # ##########################################################################
