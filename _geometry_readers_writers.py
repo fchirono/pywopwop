@@ -114,6 +114,10 @@ def _read_geometry_header(self, geometry_filename):
             for nz in range(self.n_zones):
                 # instantiate zone and read info from file
                 zone = StructuredZone()
+
+                # increase header length to account for 'Nt'
+                zone.geometry_header_length += VALUE_LENGTH
+
                 zone.number = len(self.zones)
 
                 # reads geometry zone name (32 bytes)
