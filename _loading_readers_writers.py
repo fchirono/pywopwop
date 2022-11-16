@@ -238,11 +238,12 @@ def _read_loading_data(self, loading_filename):
     with open(loading_filename, 'rb') as f:
         bytes_data = f.read()
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+
+    # *************************************************************************
     # structured loading
     if self.is_structured == True:
 
-        # ----------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         if self.loading_time_type == 'constant':
 
             # start index for reading functional data
@@ -251,7 +252,7 @@ def _read_loading_data(self, loading_filename):
                            + (1 + self.n_zones_with_loading_data)*4
                            + self.n_zones_with_loading_data*self.zones[0].loading_header_length)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # ----------------------------------------------------------------
             # if data is surface pressure
             if self.loading_data_type == 'surf_pressure':
 
@@ -270,7 +271,7 @@ def _read_loading_data(self, loading_filename):
                                    self.zones[nz].iMax,
                                    self.zones[nz].jMax)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # ----------------------------------------------------------------
             # if data is loading vectors
             elif self.loading_data_type == 'surf_loading_vec':
 
@@ -290,7 +291,7 @@ def _read_loading_data(self, loading_filename):
                                    self.zones[nz].iMax,
                                    self.zones[nz].jMax)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # ----------------------------------------------------------------
             elif self.loading_data_type == 'flow_params':
 
                 # for each zone containing data:
@@ -310,7 +311,7 @@ def _read_loading_data(self, loading_filename):
                                    self.zones[nz].iMax,
                                    self.zones[nz].jMax)
 
-        # ----------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         elif self.loading_time_type == 'aperiodic':
 
             # start index for reading functional data
@@ -319,34 +320,56 @@ def _read_loading_data(self, loading_filename):
                            + (1 + self.n_zones_with_loading_data)*VALUE_LENGTH
                            + self.n_zones_with_loading_data*self.zones[0].loading_header_length)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             # if data is surface pressure
             if self.loading_data_type == 'surf_pressure':
 
-                # for each zone with loading data
+                # for each zone with loading data, add empty numpy arrays for
+                # pressure data and time steps
                 for nz in self.zones_with_loading_data:
 
-                    # create empty numpy arrays for pressure data
                     pressures = np.zeros((self.Nt, self.zones[nz].iMax,
                                           self.zones[nz].jMax),
                                          dtype=np.float32)
 
                     self.zones[nz].add_StructuredAperiodicLoading(pressures, 'surf_pressure')
 
-                    # .....................................................
-                    # for each timestep...
-                    for nt in range(self.Nt):
+                    # .........................................................
+                    # check if 'time_steps' attribute already exists in current
+                    # Zone (e.g. from reading aperiodic geometry)
+                    if hasattr(self.zones[nz], 'time_steps'):
+
+                        # check if number of time steps matches between zone
+                        # and PWWPatch
+                        zone_Nt = self.zones[nz].time_steps.shape[0]
+                        assert (zone_Nt == self.Nt),\
+                            "Zone {} with {} time steps does not match PWWPatch with {} timesteps".format(nz, zone_Nt, self.Nt)
+
+                    # if 'time_steps' doesn't exist, initialize it
+                    else:
+                        self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
+                    # .........................................................
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
 
                         # read current time value and next index
-                        self.time_steps[nt], field_start = read_float(bytes_data, field_start)
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
 
                         # read pressure data and next index
                         self.zones[nz].loading.pressures[nt, :, :], field_start = \
                             read_block(bytes_data, field_start, 1,
                                        self.zones[nz].iMax,
                                        self.zones[nz].jMax)
-                    # .....................................................
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
             # if data is loading vectors
             elif self.loading_data_type == 'surf_loading_vec':
 
@@ -375,7 +398,7 @@ def _read_loading_data(self, loading_filename):
                                        self.zones[nz].jMax)
                     # .....................................................
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             elif self.loading_data_type == 'flow_params':
 
                 # for each zone containing data:
@@ -403,8 +426,8 @@ def _read_loading_data(self, loading_filename):
                                        self.zones[nz].iMax,
                                        self.zones[nz].jMax)
                     # .....................................................
-
-        # --------------------------------------------------------------
+            # -----------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: read non-constant, non-aperiodic loading data
             raise NotImplementedError("Can't read non-constant or non-aperiodic loading data - not implemented yet!")
