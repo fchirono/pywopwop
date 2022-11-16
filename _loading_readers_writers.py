@@ -369,7 +369,7 @@ def _read_loading_data(self, loading_filename):
                         self.time_steps[nt], field_start = read_float(bytes_data, field_start)
 
                         # read loading vectors data and next index
-                        self.zones[nz].loading.loading_vectors[nt, 3, :, :], field_start = \
+                        self.zones[nz].loading.loading_vectors[nt, :, :, :], field_start = \
                             read_block(bytes_data, field_start, 3,
                                        self.zones[nz].iMax,
                                        self.zones[nz].jMax)
@@ -398,7 +398,7 @@ def _read_loading_data(self, loading_filename):
                         self.time_steps[nt], field_start = read_float(bytes_data, field_start)
 
                         # read flow parameter data and next index
-                        self.zones[nz].loading.flow_params[nt, 5, :, :], field_start = \
+                        self.zones[nz].loading.flow_params[nt, :, :, :], field_start = \
                             read_block(bytes_data, field_start, 5,
                                        self.zones[nz].iMax,
                                        self.zones[nz].jMax)
