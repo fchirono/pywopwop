@@ -412,7 +412,7 @@ def _list_compare_attrs(obj1, obj2, attrs_to_ignore=[], level=0):
         attr2 = getattr(obj2, attr)
 
         if type(attr1) is np.ndarray:
-            if not np.array_equal(attr1, attr2):
+            if not np.allclose(attr1, attr2):
                 print(level*'\t' + '{} : different'.format(attr))
                 is_equal = False
         else:
