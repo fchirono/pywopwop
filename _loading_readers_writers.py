@@ -238,7 +238,6 @@ def _read_loading_data(self, loading_filename):
     with open(loading_filename, 'rb') as f:
         bytes_data = f.read()
 
-
     # *************************************************************************
     # structured loading
     if self.is_structured == True:
@@ -334,21 +333,11 @@ def _read_loading_data(self, loading_filename):
 
                     self.zones[nz].add_StructuredAperiodicLoading(pressures, 'surf_pressure')
 
-                    # .........................................................
-                    # check if 'time_steps' attribute already exists in current
-                    # Zone (e.g. from reading aperiodic geometry)
-                    if hasattr(self.zones[nz], 'time_steps'):
-
-                        # check if number of time steps matches between zone
-                        # and PWWPatch
-                        zone_Nt = self.zones[nz].time_steps.shape[0]
-                        assert (zone_Nt == self.Nt),\
-                            "Zone {} with {} time steps does not match PWWPatch with {} timesteps".format(nz, zone_Nt, self.Nt)
-
-                    # if 'time_steps' doesn't exist, initialize it
-                    else:
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic
+                    # geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
                         self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
-                    # .........................................................
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each timestep...
@@ -373,59 +362,83 @@ def _read_loading_data(self, loading_filename):
             # if data is loading vectors
             elif self.loading_data_type == 'surf_loading_vec':
 
-                # for each zone containing data:
+                # for each zone with loading data, add empty numpy arrays for
+                # loading vector data and time steps
                 for nz in self.zones_with_loading_data:
 
-                    # create empty numpy arrays for pressure data
                     loading_vectors = np.zeros((self.Nt, 3,
                                                 self.zones[nz].iMax,
                                                 self.zones[nz].jMax),
                                                dtype=np.float32)
 
-                    self.zones[nz].add_StructuredAperiodicLoading(loading_vectors, 'surf_loading_vec')
+                    self.zones[nz].add_StructuredAperiodicLoading(loading_vectors,
+                                                                  'surf_loading_vec')
 
-                    # .....................................................
-                    # for each timestep...
-                    for nt in range(self.Nt):
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic
+                    # geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
+                        self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
 
                         # read current time value and next index
-                        self.time_steps[nt], field_start = read_float(bytes_data, field_start)
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
 
-                        # read loading vectors data and next index
+                        # read loading vector data and next index
                         self.zones[nz].loading.loading_vectors[nt, :, :, :], field_start = \
                             read_block(bytes_data, field_start, 3,
                                        self.zones[nz].iMax,
                                        self.zones[nz].jMax)
-                    # .....................................................
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 
             # -----------------------------------------------------------------
             elif self.loading_data_type == 'flow_params':
 
-                # for each zone containing data:
+                # for each zone with loading data, add empty numpy arrays for
+                # flow parameter data and time steps
                 for nz in self.zones_with_loading_data:
 
-                    # create empty numpy arrays for flow params
-                    # (rho, rho*u, rho*v, rho*w, p')
                     flow_params = np.zeros((self.Nt, 5,
                                             self.zones[nz].iMax,
                                             self.zones[nz].jMax),
                                            dtype=np.float32)
 
-                    self.zones[nz].add_StructuredAperiodicLoading(flow_params, 'flow_params')
+                    self.zones[nz].add_StructuredAperiodicLoading(flow_params,
+                                                                  'flow_params')
 
-                    # .....................................................
-                    # for each timestep...
-                    for nt in range(self.Nt):
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic
+                    # geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
+                        self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
 
                         # read current time value and next index
-                        self.time_steps[nt], field_start = read_float(bytes_data, field_start)
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
 
                         # read flow parameter data and next index
                         self.zones[nz].loading.flow_params[nt, :, :, :], field_start = \
                             read_block(bytes_data, field_start, 5,
                                        self.zones[nz].iMax,
                                        self.zones[nz].jMax)
-                    # .....................................................
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
             # -----------------------------------------------------------------
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
