@@ -172,9 +172,6 @@ def _read_loading_header(self, loading_filename):
                     # get handle to existing zone in list
                     zone = self.zones[nz]
 
-                    # increase header length to account for 'Nt'
-                    zone.loading_header_length += VALUE_LENGTH
-
                     # read loading zone name
                     name = read_string(bytes_data,
                                        zone_info_start + i*zone.loading_header_length, 32)
