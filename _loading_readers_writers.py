@@ -440,6 +440,13 @@ def _read_loading_data(self, loading_filename):
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 
             # -----------------------------------------------------------------
+            # compare time_steps across all zones, ensure they are identical
+            self.time_steps = np.copy(self.zones[0].time_steps)
+            for nz in range(self.n_zones):
+                assert (self.zones[nz].time_steps == self.time_steps),\
+                    "Error reading file {}: Zone {} time steps do not match Zone 0 time steps!".format(loading_filename, nz)
+            # -----------------------------------------------------------------
+
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: read non-constant, non-aperiodic loading data
