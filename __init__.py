@@ -431,27 +431,27 @@ def compare_pwwpatches(pwwpatch1, pwwpatch2):
 
     is_equal = True
 
-    # iterate and compare over both patches
+    # iterate over and compare both patches, assert equality so far
     is_equal = _list_compare_attrs(pwwpatch1, pwwpatch2, ['zones',], 0)
+    assert is_equal, "PWWPatches are not identical!"
 
     # if no differences were detected so far, check zones' contents as well
-    if is_equal:
-        print("Patches' attributes equal so far; comparing zones now...\t")
+    print("Patches' attributes equal so far; comparing zones now...\t")
 
-        for z in range(pwwpatch1.n_zones):
-            print('Zone {}:'.format(z))
-            zones_are_equal = _list_compare_attrs(pwwpatch1.zones[z],
-                                                  pwwpatch2.zones[z],
-                                                  ['geometry', 'loading'], 1)
+    for z in range(pwwpatch1.n_zones):
+        print('Zone {}:'.format(z))
+        zones_are_equal = _list_compare_attrs(pwwpatch1.zones[z],
+                                              pwwpatch2.zones[z],
+                                              ['geometry', 'loading'], 1)
 
-            # compare geometry and loading contents
-            geom_are_equal = _list_compare_attrs(pwwpatch1.zones[z].geometry,
-                                                 pwwpatch2.zones[z].geometry,
-                                                 [], 2)
+        # compare geometry and loading contents
+        geom_are_equal = _list_compare_attrs(pwwpatch1.zones[z].geometry,
+                                             pwwpatch2.zones[z].geometry,
+                                             [], 2)
 
-            loading_is_equal = _list_compare_attrs(pwwpatch1.zones[z].loading,
-                                                   pwwpatch2.zones[z].loading,
-                                                   [], 2)
+        loading_is_equal = _list_compare_attrs(pwwpatch1.zones[z].loading,
+                                               pwwpatch2.zones[z].loading,
+                                               [], 2)
 
     is_equal = is_equal & zones_are_equal & geom_are_equal & loading_is_equal
 
