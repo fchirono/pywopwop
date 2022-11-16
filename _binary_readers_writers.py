@@ -123,7 +123,7 @@ def read_block(bytes_data, start_index, num_dims, iMax, jMax):
                 current_index = (start_index
                                  + ((j*iMax + i)*VALUE_LENGTH))
 
-                block_data[i, j] = read_float(bytes_data, current_index)
+                block_data[i, j], _ = read_float(bytes_data, current_index)
 
     # read XYZ or XY - i.e. (num_dims, iMax, jMax)-shaped
     else:
@@ -138,7 +138,7 @@ def read_block(bytes_data, start_index, num_dims, iMax, jMax):
                                      + ((n*iMax*jMax + j*iMax + i)
                                         * VALUE_LENGTH))
 
-                    block_data[n, i, j] = read_float(bytes_data, current_index)
+                    block_data[n, i, j], _ = read_float(bytes_data, current_index)
 
     # increase start index by ('value_length' bytes * num_dims coords * iMax * jMax)
     next_index = start_index + VALUE_LENGTH*(num_dims*iMax*jMax)
@@ -319,7 +319,8 @@ def read_int(obj_name, start_index, n_bytes=VALUE_LENGTH,
 def read_float(obj_name, start_index, n_bytes=VALUE_LENGTH,
                endianness_flag=ENDIANNESS):
     """
-    Reads one float value from an open file and returns the unpacked value.
+    Reads one float value from an open file, and returns the unpacked value and
+    the starting index of the next value.
 
     Parameters
     ----------
@@ -341,14 +342,23 @@ def read_float(obj_name, start_index, n_bytes=VALUE_LENGTH,
     out : float
         Float value unpacked from file data.
 
+    next_index : int
+        Starting index of the next value to be read, in bytes.
+
     """
 
     n_bytes_dict = {4:'f', 8:'d'}
 
     endianness_dict = {'little':'<', 'big':'>'}
 
-    return struct.unpack(endianness_dict[endianness_flag] + n_bytes_dict[n_bytes],
-                         obj_name[start_index:start_index + n_bytes])[0]
+    next_index = start_index + n_bytes
+
+    float_value = struct.unpack(endianness_dict[endianness_flag]
+                                + n_bytes_dict[n_bytes],
+                                obj_name[start_index : next_index])[0]
+
+
+    return float_value, next_index
 
 
 def write_binary(file, data, length=VALUE_LENGTH,
