@@ -18,8 +18,8 @@ import numpy as np
 
 from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, \
-    loading_time_dict, geometry_time_dict, centered_dict, loading_data_dict, \
-    ref_frame_dict, float_dict, iblank_dict
+    loading_time_dict, geometry_time_dict, structured_header_length, \
+    centered_dict, loading_data_dict, ref_frame_dict, float_dict, iblank_dict
 
 from ._binary_readers_writers import initial_check, read_block, write_block, \
     read_IBLANKblock, read_int, read_float, write_binary, write_string, \
@@ -145,6 +145,10 @@ def _read_loading_header(self, loading_filename):
                     # get handle to existing zone in list
                     zone = self.zones[nz]
 
+                    # set loading header length
+                    zone.loading_header_length = \
+                        structured_header_length[self.loading_time_type]
+
                     # read loading zone name
                     name = read_string(bytes_data,
                                        zone_info_start + i*zone.loading_header_length, 32)
@@ -171,6 +175,10 @@ def _read_loading_header(self, loading_filename):
 
                     # get handle to existing zone in list
                     zone = self.zones[nz]
+
+                    # set loading header length
+                    zone.loading_header_length = \
+                        structured_header_length[self.loading_time_type]
 
                     # read loading zone name
                     name = read_string(bytes_data,

@@ -18,8 +18,8 @@ import numpy as np
 
 from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, \
-    loading_time_dict, geometry_time_dict, centered_dict, loading_data_dict, \
-    ref_frame_dict, float_dict, iblank_dict
+    loading_time_dict, geometry_time_dict, structured_header_length, \
+    centered_dict, loading_data_dict, ref_frame_dict, float_dict, iblank_dict
 
 from ._binary_readers_writers import initial_check, read_block, write_block, \
     read_IBLANKblock, read_int, read_float, write_binary, write_string, \
@@ -91,6 +91,9 @@ def _read_geometry_header(self, geometry_filename):
                 # instantiate zone and read info from file
                 zone = StructuredZone()
 
+                zone.geometry_header_length = \
+                    structured_header_length[self.geometry_time_type]
+
                 zone.number = len(self.zones)
 
                 # reads geometry zone name (32 bytes)
@@ -115,8 +118,8 @@ def _read_geometry_header(self, geometry_filename):
                 # instantiate zone and read info from file
                 zone = StructuredZone()
 
-                # increase header length to account for 'Nt'
-                zone.geometry_header_length += VALUE_LENGTH
+                zone.geometry_header_length = \
+                    structured_header_length[self.geometry_time_type]
 
                 zone.number = len(self.zones)
 
