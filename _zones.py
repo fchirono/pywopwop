@@ -125,6 +125,7 @@ class StructuredZone(Zone):
         _, self.iMax, self.jMax = XYZ_coord.shape
 
         self.geometry = StructuredConstantGeometry(XYZ_coord, normal_coord)
+
         self._update_geometry_info_str()
 
 

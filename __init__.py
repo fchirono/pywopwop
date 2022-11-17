@@ -32,8 +32,8 @@ from ._binary_readers_writers import initial_check, read_block, write_block, \
 
 from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, \
-    loading_time_dict, geometry_time_dict, centered_dict, loading_data_dict, \
-    ref_frame_dict, float_dict, iblank_dict
+    loading_time_dict, geometry_time_dict, structured_header_length, \
+    centered_dict, loading_data_dict, ref_frame_dict, float_dict, iblank_dict
 
 from ._sigma_processing import extract_sigma_var_names, process_sigma_fn_file, \
     process_sigma_geom_file, write_p3d_file, process_sigma_files
@@ -282,7 +282,10 @@ class PWWPatch:
         zone.number = len(self.zones)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # adds geometry data to zone
+        # sets geometry header length, adds geometry data to zone
+
+        self.geometry_header_length = structured_header_length[self.geometry_time_type]
+
         if self.geometry_time_type == 'constant':
             zone.add_StructuredConstantGeometry(XYZ_coord, normal_coord)
 
@@ -298,6 +301,9 @@ class PWWPatch:
         if loading_data is not None:
 
             # --------------------------------------------------------------
+            # set loading header length
+            self.loading_header_length = structured_header_length[self.loading_time_type]
+
             if self.loading_time_type == 'constant':
                 zone.add_StructuredConstantLoading(loading_data,
                                                    self.loading_data_type)

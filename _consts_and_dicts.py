@@ -63,6 +63,11 @@ geometry_time_dict = {**loading_time_dict,
                       'quasiperiodic'            :5,
                       'mult_time_quasiperiodc'   :6}
 
+# structured header size, in bytes
+structured_header_length = {'constant'  : 40,
+                            'aperiodic' : 44,
+                            'periodic'  : 48}
+
 # whether normal vectors and areas are node-centered or face-centered
 centered_dict = {'node' : 1,
                  'face' : 2}
