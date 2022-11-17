@@ -14,8 +14,6 @@ Author:
 
 import numpy as np
 
-from ._consts_and_dicts import VALUE_LENGTH
-
 
 # ##########################################################################
 # %% PSU-WOPWOP parent class Zone
