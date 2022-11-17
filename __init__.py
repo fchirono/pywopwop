@@ -175,6 +175,7 @@ class PWWPatch:
         _read_loading_header(self, loading_filename)
         _read_loading_data(self, loading_filename)
 
+
     # *************************************************************************
     # file writers
     def write_geometry_file(self, geometry_filename):
@@ -272,7 +273,6 @@ class PWWPatch:
                 (Nt, iMax, jMax) for pressure data, (Nt, 3, iMax, jMax) for
                 loading vector data, and (Nt, 5, iMax, jMax) for flow
                 parameters (rho, rho*u, rho*v, rho*w, p').
-
         """
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -475,6 +475,7 @@ def _list_compare_attrs(obj1, obj2, attrs_to_ignore=[], level=0):
     return is_equal
 
 
+# #############################################################################
 def compare_pwwpatches(pwwpatch1, pwwpatch2):
     """
     Compares the contents of two PWWPatches, informs whether contents are
@@ -514,6 +515,7 @@ def compare_pwwpatches(pwwpatch1, pwwpatch2):
 
     return
 
+
 # #############################################################################
 # %% Auxiliary functions
 # #############################################################################
@@ -536,6 +538,7 @@ def get_time_from_xdmf(xdmf_filenames):
         t[i] = (root[0][0][0]).get('Value')
 
     return t
+
 
 """
 Levels of comment lines

@@ -39,6 +39,7 @@ class Zone:
         self.loading = None
 
 
+    # *************************************************************************
     def __str__(self):
         str1 = '\n\tGeometry name:          ' + self.geometry_name
         str2 = '\n\tLoading name:           ' + self.loading_name
@@ -49,6 +50,7 @@ class Zone:
         return str1+str2+str3+str4+str5
 
 
+    # *************************************************************************
     def _set_string(self, string, attr_name, length):
         """
         Writes input string to given attribute name, enforcing ASCII
@@ -89,6 +91,7 @@ class StructuredZone(Zone):
         self._update_geometry_info_str()
 
 
+    # *************************************************************************
     def _update_geometry_info_str(self):
         str_iMax = '\n\t--> iMax:               ' + str(self.iMax)
         str_jMax = '\n\t--> jMax:               ' + str(self.jMax)
@@ -421,5 +424,4 @@ class StructuredAperiodicLoading():
 
             # copy input data
             self.flow_params = np.copy(loading_data)
-
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
