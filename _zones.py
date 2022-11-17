@@ -85,8 +85,8 @@ class StructuredZone(Zone):
         self.geometry_name = ''
         self.loading_name = ''
 
-        self.geometry_header_length += 2*VALUE_LENGTH
-        self.loading_header_length += 2*VALUE_LENGTH
+        self.geometry_header_length = 40
+        self.loading_header_length = 40
 
         self._update_geometry_info_str()
 
@@ -156,8 +156,8 @@ class StructuredZone(Zone):
         # updates Nt, iMax, jMax
         self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
 
-        # increase geometry_header_length (must contain 'Nt' as well)
-        self.geometry_header_length += VALUE_LENGTH
+        # # increase geometry_header_length (must contain 'Nt' as well)
+        # self.geometry_header_length += VALUE_LENGTH
 
         self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord)
         self._update_geometry_info_str()
@@ -234,8 +234,8 @@ class StructuredZone(Zone):
                 "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-        # increase loading_header_length (must contain 'Nt' as well)
-        self.loading_header_length += VALUE_LENGTH
+        # # increase loading_header_length (must contain 'Nt' as well)
+        # self.loading_header_length += VALUE_LENGTH
 
         self.loading = StructuredAperiodicLoading(loading_data, loading_data_type)
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-

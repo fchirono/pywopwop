@@ -299,7 +299,7 @@ class PWWPatch:
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # sets geometry header length, adds geometry data to zone
 
-        self.geometry_header_length = \
+        zone.geometry_header_length = \
             structured_header_length[self.geometry_time_type]
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
