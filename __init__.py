@@ -314,7 +314,7 @@ class PWWPatch:
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         elif self.geometry_time_type == 'aperiodic':
 
-            assert self.time_steps, \
+            assert hasattr(self, 'time_steps'), \
                 "Can't create structured aperiodic geometry - PWWPatch instance does not have 'time_steps' attribute!"
 
             zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
@@ -350,7 +350,7 @@ class PWWPatch:
             # --------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
 
-                assert self.time_steps, \
+                assert hasattr(self, 'time_steps'), \
                     "Can't create structured aperiodic loading - PWWPatch instance does not have 'time_steps' attribute!"
 
                 zone.add_StructuredAperiodicLoading(loading_data,
