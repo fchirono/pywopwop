@@ -335,7 +335,8 @@ class PWWPatch:
         if loading_data is not None:
 
             # set loading header length
-            self.loading_header_length = structured_header_length[self.loading_time_type]
+            zone.loading_header_length = \
+                structured_header_length[self.loading_time_type]
 
             # --------------------------------------------------------------
             if self.loading_time_type == 'constant':
