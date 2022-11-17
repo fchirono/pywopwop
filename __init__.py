@@ -189,7 +189,8 @@ class PWWPatch:
 
     # **********************************************************************
     def add_StructuredZone(self, name, XYZ_coord, normal_coord,
-                           calc_thickness_noise=True, loading_data=None):
+                           calc_thickness_noise=True, loading_data=None,
+                           time_steps=None):
         """
         Adds a new structured zone to PWWPatch instance. Expected argument
         array shapes and types will depend on attributes of current PWWPatch
@@ -221,6 +222,12 @@ class PWWPatch:
             Array containing loading data. Its expected shape will depend on
             'loading_time_type' and 'loading_data_type' attributes of the
             parent PWWPatch instance; see Notes below. Default is None.
+
+        time_steps : (Nt,) array_like, optional
+            Array of time values to be used with aperiodic geometry and/or
+            loading. When initialized, Zone first looks for 'time_steps' in
+            PWWPatch instance holding Zone, and only then reads input argument.
+            Default is None.
 
         Returns
         -------
@@ -281,41 +288,75 @@ class PWWPatch:
         # new zone number is the current length of 'zones' attribute
         zone.number = len(self.zones)
 
+        # checks if 'time_steps' and 'Nt' attributes have already been defined
+        # in PWWPatch; if not, check arguments to 'add_StructuredZone', and
+        # copy to PWWPatch if there
+        if not hasattr(self, 'time_steps'):
+            if time_steps:
+                self.time_steps = time_steps
+                self.Nt = self.time_steps.shape[0]
+
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # sets geometry header length, adds geometry data to zone
 
-        self.geometry_header_length = structured_header_length[self.geometry_time_type]
+        self.geometry_header_length = \
+            structured_header_length[self.geometry_time_type]
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         if self.geometry_time_type == 'constant':
             zone.add_StructuredConstantGeometry(XYZ_coord, normal_coord)
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         elif self.geometry_time_type == 'periodic':
             # TODO: implement structured periodic geometry
             raise NotImplementedError("Can't add Periodic Geometry data to StructuredZone - not implemented yet!")
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         elif self.geometry_time_type == 'aperiodic':
+
+            assert self.time_steps, \
+                "Can't create structured aperiodic geometry - PWWPatch instance does not have 'time_steps' attribute!"
+
             zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
+
+            # -----------------------------------------------------------------
+            # check if PWWPatch already has attribute 'Nt'
+            if hasattr(self, 'Nt'):
+                # If yes, check for match with zone.Nt
+                assert self.Nt == zone.Nt, \
+                    "Number of timesteps in aperiodic structured zone does not match existing 'Nt' in PWWPatch!"
+            else:
+                # store 'Nt' in PWWPatch
+                self.Nt = zone.Nt
+            # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
         # adds loading data, if there is any
         if loading_data is not None:
 
-            # --------------------------------------------------------------
             # set loading header length
             self.loading_header_length = structured_header_length[self.loading_time_type]
 
+            # --------------------------------------------------------------
             if self.loading_time_type == 'constant':
                 zone.add_StructuredConstantLoading(loading_data,
                                                    self.loading_data_type)
 
+            # --------------------------------------------------------------
             elif self.loading_time_type == 'periodic':
                 # TODO: implement structured periodic loading
                 raise NotImplementedError("Can't add Structured Periodic Loading data to StructuredZone - not implemented yet!")
 
+            # --------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
+
+                assert self.time_steps, \
+                    "Can't create structured aperiodic loading - PWWPatch instance does not have 'time_steps' attribute!"
+
                 zone.add_StructuredAperiodicLoading(loading_data,
                                                     self.loading_data_type)
 
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # check if PWWPatch already has attribute 'Nt'
                 if hasattr(self, 'Nt'):
                     # If yes, check for match with zone.Nt
@@ -324,6 +365,7 @@ class PWWPatch:
                 else:
                     # store 'Nt' in PWWPatch
                     self.Nt = zone.Nt
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 
             # ----------------------------------------------------------------
             # set zone loading data flag
