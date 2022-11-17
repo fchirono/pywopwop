@@ -28,15 +28,16 @@ from ._zones import StructuredZone
 
 
 
-# ##########################################################################
+# #############################################################################
 # %%PSU-WOPWOP geometry file readers
-# ##########################################################################
+# #############################################################################
 
 def _read_geometry_header(self, geometry_filename):
     """
     Reads PSU-WOPWOP geometry header info from 'geometry_filename'.
     """
 
+    # *************************************************************************
     # do initial check for 'magic number' and endianness
     file_endianness = initial_check(geometry_filename)
     assert file_endianness == ENDIANNESS, \
@@ -45,6 +46,7 @@ def _read_geometry_header(self, geometry_filename):
     # open fileand read binary content
     with open(geometry_filename, 'rb') as f:
         bytes_data = f.read()
+
 
     # check version number - must be '1'and '0'
     self.version_number_major = read_int(bytes_data, 4)
@@ -62,26 +64,38 @@ def _read_geometry_header(self, geometry_filename):
     geom_comment = read_string(bytes_data, 44, 1024)
     self.set_geometry_comment(geom_comment)
 
+    # *************************************************************************
     # read format string (8 ints, 32 bytes, starting at index 1068)
     self.geometry_format_string = []
     for n in range(8):
         self.geometry_format_string.append(read_int(bytes_data, 1068 + 4*n))
 
     # Populate file type description
-    self.geometry_type      = reverse_dict(geom_dict, self.geometry_format_string[0])
+    self.geometry_type      = reverse_dict(geom_dict,
+                                           self.geometry_format_string[0])
+
     self.n_zones            = self.geometry_format_string[1]
-    self.is_structured      = reverse_dict(structured_dict, self.geometry_format_string[2])
-    self.geometry_time_type = reverse_dict(geometry_time_dict, self.geometry_format_string[3])
-    self.centered_type      = reverse_dict(centered_dict, self.geometry_format_string[4])
-    self.float_type         = reverse_dict(float_dict, self.geometry_format_string[5])
-    self.has_iblank         = reverse_dict(iblank_dict, self.geometry_format_string[6])
 
+    self.is_structured      = reverse_dict(structured_dict,
+                                           self.geometry_format_string[2])
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    self.geometry_time_type = reverse_dict(geometry_time_dict,
+                                           self.geometry_format_string[3])
+
+    self.centered_type      = reverse_dict(centered_dict,
+                                           self.geometry_format_string[4])
+
+    self.float_type         = reverse_dict(float_dict,
+                                           self.geometry_format_string[5])
+
+    self.has_iblank         = reverse_dict(iblank_dict,
+                                           self.geometry_format_string[6])
+
+    # *************************************************************************
     # read zone info (starting at index 1100)
     if self.is_structured == True:
 
-        # ---------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         if self.geometry_time_type == 'constant':
 
             for nz in range(self.n_zones):
@@ -108,7 +122,7 @@ def _read_geometry_header(self, geometry_filename):
                 zone._update_geometry_info_str()
                 self.zones.append(zone)
 
-        # ---------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         elif self.geometry_time_type == 'aperiodic':
 
             for nz in range(self.n_zones):
@@ -137,27 +151,33 @@ def _read_geometry_header(self, geometry_filename):
                 zone._update_geometry_info_str()
                 self.zones.append(zone)
 
+            # -----------------------------------------------------------------
             # Store 'Nt' in PWWPatch, check all zones have identical 'Nt'
             self.Nt = self.zones[0].Nt
             for z in range(self.n_zones):
                 assert self.zones[z].Nt == self.Nt, \
                     "Error in file '{}': Zone {} has {} timesteps, while Zone 0 has {}!".format(geometry_filename, z, zone.Nt, self.Nt)
+            # -----------------------------------------------------------------
 
-        # ---------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: implement non-constant non-aperiodic geometries
             raise NotImplementedError("Can't read geometries that are not constant nor aperiodic - not implemented yet!")
-        # ---------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
+    # *************************************************************************
     else:
         # TODO: implement non-structured headers
         raise NotImplementedError("Can't read non-structured geometry zone info - not implemented yet!")
 
+    # *************************************************************************
     assert (self.n_zones == len(self.zones)), \
         "Error in file '{}': Number of zones in format string doesn't match file data!".format(geometry_filename)
 
+    # *************************************************************************
 
-# ##########################################################################
+
+# #############################################################################
 def _read_geometry_data(self, geometry_filename):
     """
     Reads PSU-WOPWOP geometry data from 'geometry_filename'.
@@ -167,11 +187,11 @@ def _read_geometry_data(self, geometry_filename):
     with open(geometry_filename, 'rb') as f:
         bytes_data = f.read()
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+    # *************************************************************************
     # If file is structured
     if self.is_structured == True:
 
-        # ---------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # constant geometry
         if self.geometry_time_type == 'constant':
 
@@ -181,7 +201,7 @@ def _read_geometry_data(self, geometry_filename):
             # for each zone
             for nz in range(self.n_zones):
 
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # create empty numpy arrays for XYZ coordinates and normal
                 # coordinates (and IBLANK data, if included)
                 XYZ_coord = np.zeros((3, self.zones[nz].iMax, self.zones[nz].jMax),
@@ -197,19 +217,19 @@ def _read_geometry_data(self, geometry_filename):
                         np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
                                  dtype=np.int32)
 
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # read XYZ coords and next index
                 self.zones[nz].geometry.XYZ_coord, field_start = \
                     read_block(bytes_data, field_start, 3,
                                self.zones[nz].iMax, self.zones[nz].jMax)
 
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # read normal vector coords and next index
                 self.zones[nz].geometry.normal_coord, field_start = \
                     read_block(bytes_data, field_start, 3,
                                self.zones[nz].iMax, self.zones[nz].jMax)
 
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # if file contains IBLANK (int) data, read that
                 if self.has_iblank == True:
                     self.zones[nz].geometry.iblank, field_start = \
@@ -218,22 +238,22 @@ def _read_geometry_data(self, geometry_filename):
                                          self.zones[nz].jMax)
 
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # aperiodic geometry
         elif self.geometry_time_type == 'aperiodic':
 
             # start index for reading coordinates and normal vectors data
             field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
 
-            # ----------------------------------------------------------------
+            # -----------------------------------------------------------------
             # for each timestep...
             for nt in range(self.Nt):
 
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each zone
                 for nz in range(self.n_zones):
 
-                    # ........................................................
+                    # .........................................................
                     # create empty numpy arrays for XYZ coordinates, normal
                     # coordinates, IBLANK data (if included), and time steps
                     XYZ_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
@@ -249,10 +269,9 @@ def _read_geometry_data(self, geometry_filename):
                             np.zeros((self.Nt, self.zones[nz].iMax, self.zones[nz].jMax),
                                      dtype=np.int32)
 
-                    # store zone time steps (compare all zones' timesteps later)
                     self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
 
-                    # ........................................................
+                    # .........................................................
                     # read current time value and next index
                     self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
 
@@ -272,28 +291,30 @@ def _read_geometry_data(self, geometry_filename):
                             read_IBLANKblock(bytes_data, field_start,
                                              self.zones[nz].iMax,
                                              self.zones[nz].jMax)
+                    # .........................................................
 
-            # ----------------------------------------------------------------
+            # -----------------------------------------------------------------
             # compare time_steps across all zones, ensure they are identical
             self.time_steps = np.copy(self.zones[0].time_steps)
             for nz in range(self.n_zones):
                 assert np.allclose(self.zones[nz].time_steps, self.time_steps),\
                     "Error reading file {}: Zone {} time steps do not match Zone 0 time steps!".format(geometry_filename, nz)
+            # -----------------------------------------------------------------
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: read non-constant and non-aperiodic geometry data
             raise NotImplementedError("Can't read geometry data that is not constant nor aperiodic - not implemented yet!")
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+    # *************************************************************************
     else:
         # TODO: implement non-structured data reader
         raise NotImplementedError("Can't read non-structured geometry zone data - not implemented yet!")
 
 
-# ##########################################################################
+# #############################################################################
 # %%PSU-WOPWOP geometry file writers
-# ##########################################################################
+# #############################################################################
 
 def _write_geometry_header(self, geometry_filename):
     """
@@ -323,11 +344,11 @@ def _write_geometry_header(self, geometry_filename):
         for n in range(8):
             write_binary(file,self.geometry_format_string[n])
 
-        # --------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # write zone info
         if self.is_structured == True:
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             if self.geometry_time_type == 'constant':
 
                 # for each zone...
@@ -340,7 +361,7 @@ def _write_geometry_header(self, geometry_filename):
                     write_binary(file,self.zones[nz].iMax)
                     write_binary(file,self.zones[nz].jMax)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             elif self.geometry_time_type == 'aperiodic':
 
                 # for each zone...
@@ -356,20 +377,20 @@ def _write_geometry_header(self, geometry_filename):
                     write_binary(file,self.zones[nz].iMax)
                     write_binary(file,self.zones[nz].jMax)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             else:
                 # TODO: implement non-constant non-aperiodic geometries
                 raise NotImplementedError("Can't write geometry headers that are not constant nor aperiodic - not implemented yet!")
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
 
-        # --------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: implement non-structured headers
             raise NotImplementedError("Can't write non-structured geometry zone info - not implemented yet!")
-        # ---------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 
-# ##########################################################################
+# #############################################################################
 def _write_geometry_data(self, geometry_filename):
     """
     Writes PSU-WOPWOP geometry patch data to 'geometry_filename'
@@ -380,11 +401,11 @@ def _write_geometry_data(self, geometry_filename):
     # open file in append mode - no need to adjust index
     with open(geometry_filename, 'ab') as file:
 
-        # --------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # If file is structured
         if self.is_structured == True:
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             # constant geometry
             if self.geometry_time_type == 'constant':
 
@@ -397,7 +418,7 @@ def _write_geometry_data(self, geometry_filename):
                     if self.has_iblank == True:
                         write_block(file,self.zones[nz].geometry.iblank)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             # aperiodic geometry
             elif self.geometry_time_type == 'aperiodic':
 
@@ -415,14 +436,15 @@ def _write_geometry_data(self, geometry_filename):
                         if self.has_iblank == True:
                             write_block(file,self.zones[nz].geometry.iblank)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             else:
                 # TODO: implement non-constant non-aperiodic geometries
                 raise NotImplementedError("Can't write geometry data that is not constant nor aperiodic - not implemented yet!")
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
 
-        # --------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: implement non-structured headers
             raise NotImplementedError("Can't write non-structured geometry data - not implemented yet!")
-        # ---------------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+

@@ -18,9 +18,9 @@ import struct
 from ._consts_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
 
 
-# ##########################################################################
+# #############################################################################
 # %% PSU-WOPWOP initial file check for 'magic number' and endianness
-# ##########################################################################
+# #############################################################################
 
 def initial_check(filename):
     """
@@ -51,9 +51,9 @@ def initial_check(filename):
     return endianness_flag
 
 
-# ##########################################################################
+# #############################################################################
 # %% PSU-WOPWOP Plot3D-like block readers and writers
-# ##########################################################################
+# #############################################################################
 
 def read_block(bytes_data, start_index, num_dims, iMax, jMax):
     """
@@ -94,22 +94,21 @@ def read_block(bytes_data, start_index, num_dims, iMax, jMax):
     -----
     The data in the file is assumed to be organized in Fortran order:
 
-    #####################################################################
+    *************************************************************************
     -Dim 0 (i.e X):
 
         X(i=0, j=0),    X(i=1, j=0),    ...     X(i=iMax, j=0)
         X(i=0, j=1),    ...             ...     X(i=iMax, j=1)
         ...                                     ...
         X(i=0, j=jMax)  ...                     X(i=iMax, j=jMax)
-    #####################################################################
+    *************************************************************************
     -Dim 1 (i.e. Y):
 
         Y(i=0, j=0),    Y(i=1, j=0),    ...     Y(i=iMax, j=0)
         Y(i=1, j=0),    ...
 
         ...etc...
-
-    #####################################################################
+    *************************************************************************
     """
 
     # read surface pressures - i.e. (iMax, jMax)-shaped
@@ -125,6 +124,7 @@ def read_block(bytes_data, start_index, num_dims, iMax, jMax):
 
                 block_data[i, j], _ = read_float(bytes_data, current_index)
 
+    # *************************************************************************
     # read XYZ or XY - i.e. (num_dims, iMax, jMax)-shaped
     else:
         block_data = np.zeros((num_dims, iMax, jMax), dtype=np.float32)
@@ -140,12 +140,15 @@ def read_block(bytes_data, start_index, num_dims, iMax, jMax):
 
                     block_data[n, i, j], _ = read_float(bytes_data, current_index)
 
+    # *************************************************************************
     # increase start index by ('value_length' bytes * num_dims coords * iMax * jMax)
     next_index = start_index + VALUE_LENGTH*(num_dims*iMax*jMax)
+    # *************************************************************************
 
     return block_data, next_index
 
 
+# #############################################################################
 def write_block(file, block_data):
     """
     Writes a block of data in PLOT3D-like format to a binary file.
@@ -185,7 +188,7 @@ def write_block(file, block_data):
                 write_binary(file, block_data[n, i, j])
 
 
-
+# #############################################################################
 def read_IBLANKblock(bytes_data, start_index, iMax, jMax):
     """
     Reads a block of IBLANK data in PLOT3D format from a binary file.
@@ -218,12 +221,12 @@ def read_IBLANKblock(bytes_data, start_index, iMax, jMax):
     -----
     The data in the file is assumed to be organized as:
 
-    #####################################################################
+    **************************************************************************
         X(i=0, j=0),    X(i=1, j=0),    ...     X(i=iMax, j=0)
         X(i=0, j=1),    ...             ...     X(i=iMax, j=1)
         ...                                     ...
         X(i=0, j=jMax)  ...                     X(i=iMax, j=jMax)
-    #####################################################################
+    **************************************************************************
 
     """
 
@@ -244,9 +247,9 @@ def read_IBLANKblock(bytes_data, start_index, iMax, jMax):
     return IBLANK_data, next_index
 
 
-# ##########################################################################
+# #############################################################################
 # %% PSU-WOPWOP string reader / writer
-# ##########################################################################
+# #############################################################################
 
 def write_string(file, string, max_length):
     """
@@ -265,6 +268,7 @@ def write_string(file, string, max_length):
     file.write(string[:max_length].encode('ascii'))
 
 
+# #############################################################################
 def read_string(obj_name, start_index, len_string):
     """
     Reads strings of arbitrary length from binary file object.
@@ -276,9 +280,9 @@ def read_string(obj_name, start_index, len_string):
     return mystring
 
 
-# ##########################################################################
+# #############################################################################
 # %% PSU-WOPWOP int and float reader / writer
-# ##########################################################################
+# #############################################################################
 
 def read_int(obj_name, start_index, n_bytes=VALUE_LENGTH,
              endianness_flag=ENDIANNESS):
@@ -316,6 +320,7 @@ def read_int(obj_name, start_index, n_bytes=VALUE_LENGTH,
                          obj_name[start_index:start_index + n_bytes])[0]
 
 
+# #############################################################################
 def read_float(obj_name, start_index, n_bytes=VALUE_LENGTH,
                endianness_flag=ENDIANNESS):
     """
@@ -361,6 +366,7 @@ def read_float(obj_name, start_index, n_bytes=VALUE_LENGTH,
     return float_value, next_index
 
 
+# #############################################################################
 def write_binary(file, data, length=VALUE_LENGTH,
                  endianness_flag=ENDIANNESS, is_signed=IS_SIGNED):
     """

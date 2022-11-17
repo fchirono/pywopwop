@@ -15,9 +15,9 @@ Author:
 import numpy as np
 
 
-# ##########################################################################
+# #############################################################################
 # %% PSU-WOPWOP parent class Zone
-# ##########################################################################
+# #############################################################################
 
 class Zone:
     """
@@ -66,9 +66,9 @@ class Zone:
         setattr(self, attr_name, string[:length])
 
 
-# ##########################################################################
+# #############################################################################
 # %% PSU-WOPWOP classes for structured zone
-# ##########################################################################
+# #############################################################################
 
 class StructuredZone(Zone):
     """
@@ -101,7 +101,7 @@ class StructuredZone(Zone):
             self.geometry_info_str += str_Nt
 
 
-    # **********************************************************************
+    # *************************************************************************
     def add_StructuredConstantGeometry(self, XYZ_coord, normal_coord):
         """
         Adds structured, constant geometry data to current structured zone.
@@ -127,13 +127,13 @@ class StructuredZone(Zone):
         self._update_geometry_info_str()
 
 
-    # **********************************************************************
+    # *************************************************************************
     def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord):
         # TODO: implement Structured Periodic Geometry
         raise NotImplementedError("Can't add Structured Periodic Geometry data - not implemented yet!")
 
 
-    # **********************************************************************
+    # *************************************************************************
     def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord):
         """
         Adds structured, aperiodic geometry data to current structured zone.
@@ -158,7 +158,7 @@ class StructuredZone(Zone):
         self._update_geometry_info_str()
 
 
-    # **********************************************************************
+    # *************************************************************************
     def add_StructuredConstantLoading(self, loading_data, loading_data_type):
         """
         Adds structured constant loading to current structured zone.
@@ -179,7 +179,9 @@ class StructuredZone(Zone):
 
         """
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # check 'loading_data_type' arg vs. loading data array shape
+
         if loading_data_type == 'surf_pressure':
             assert loading_data.shape == (self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for constant 'surf_pressure' (iMax, jMax)!"
@@ -191,20 +193,21 @@ class StructuredZone(Zone):
         elif loading_data_type == 'flow_params':
             assert loading_data.shape == (5, self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for constant 'flow_params' (5, iMax, jMax)!"
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
         self.loading = StructuredConstantLoading(loading_data, loading_data_type)
 
 
-    # **********************************************************************
+    # *************************************************************************
     def add_StructuredPeriodicLoading(self, loading_data, loading_data_type):
         # TODO: implement Structured Periodic Loading
         raise NotImplementedError("Can't add Structured Periodic Loading data - not implemented yet!")
 
 
-    # **********************************************************************
+    # *************************************************************************
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # check if Zone already has attribute 'Nt' (e.g. from aperiodic geometry)
         if hasattr(self, 'Nt'):
             # check for match
@@ -214,8 +217,9 @@ class StructuredZone(Zone):
             # store 'Nt' in StructuredZone
             self.Nt = loading_data.shape[0]
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # check 'loading_data_type' arg vs. loading data array shape
+
         if loading_data_type == 'surf_pressure':
             assert loading_data.shape == (self.Nt, self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for aperiodic 'surf_pressure' (Nt, iMax, jMax)!"
@@ -227,15 +231,15 @@ class StructuredZone(Zone):
         elif loading_data_type == 'flow_params':
             assert loading_data.shape == (self.Nt, 5, self.iMax, self.jMax), \
                 "'loading_data' does not match expected shape for aperiodic 'flow_params' (Nt, 5, iMax, jMax)!"
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
         self.loading = StructuredAperiodicLoading(loading_data, loading_data_type)
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 
-# ##########################################################################
+# #############################################################################
 # %% PSU-WOPWOP classes for structured geometries
-# ##########################################################################
+# #############################################################################
 
 class StructuredConstantGeometry():
     """
@@ -267,6 +271,7 @@ class StructuredConstantGeometry():
         self.normal_coord = np.copy(normal_coord)
 
 
+# #############################################################################
 class StructuredAperiodicGeometry():
     """
     Class to store structured, aperiodic geometry data, containing the number
@@ -297,9 +302,9 @@ class StructuredAperiodicGeometry():
         self.normal_coord = np.copy(normal_coord)
 
 
-# ##########################################################################
+# #############################################################################
 # %% PSU-WOPWOP classes for structured loading
-# ##########################################################################
+# #############################################################################
 
 class StructuredConstantLoading():
     """
@@ -324,7 +329,7 @@ class StructuredConstantLoading():
 
     def __init__(self, loading_data, loading_data_type):
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # if data is (iMax, jMax)-shaped array of surface pressures
         if loading_data_type == 'surf_pressure':
 
@@ -335,7 +340,7 @@ class StructuredConstantLoading():
             # copy input data
             self.pressures = np.copy(loading_data)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # if data is (3, iMax, jMax)-shaped array of surface loading vectors
         elif loading_data_type == 'surf_loading_vec':
 
@@ -346,7 +351,7 @@ class StructuredConstantLoading():
             # copy input data
             self.loading_vectors = np.copy(loading_data)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # if data is (5, iMax, jMax)-shaped array of flow parameters
         elif loading_data_type == 'flow_params':
 
@@ -357,9 +362,10 @@ class StructuredConstantLoading():
             # copy input data
             self.flow_params = np.copy(loading_data)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 
+# #############################################################################
 class StructuredAperiodicLoading():
     """
     Class to store structured, aperiodic pressure, loading vector, or flow
@@ -383,7 +389,7 @@ class StructuredAperiodicLoading():
 
     def __init__(self, loading_data, loading_data_type):
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # if data is (Nt, iMax, jMax)-shaped array of surface pressures
         if loading_data_type == 'surf_pressure':
 
@@ -394,7 +400,7 @@ class StructuredAperiodicLoading():
             # copy input data
             self.pressures = np.copy(loading_data)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # if data is (Nt, 3, iMax, jMax)-shaped array of surface loading vectors
         elif loading_data_type == 'surf_loading_vec':
 
@@ -405,8 +411,7 @@ class StructuredAperiodicLoading():
             # copy input data
             self.loading_vectors = np.copy(loading_data)
 
-
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # if data is (Nt, 5, iMax, jMax)-shaped array of flow parameters
         elif loading_data_type == 'flow_params':
 
@@ -417,4 +422,4 @@ class StructuredAperiodicLoading():
             # copy input data
             self.flow_params = np.copy(loading_data)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*

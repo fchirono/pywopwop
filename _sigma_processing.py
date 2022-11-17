@@ -21,9 +21,9 @@ from ._binary_readers_writers import read_block, write_block, read_int, \
     write_binary
 
 
-# %% #######################################################################
+# %% ##########################################################################
 # PSU-WOPWOP Sigma surface file converters - first approach
-# ##########################################################################
+# #############################################################################
 
 def process_sigma_geom_file(filename_geom, output_path='timesteps',
                             geometry_suffix='sigma_'):
@@ -67,21 +67,21 @@ def process_sigma_geom_file(filename_geom, output_path='timesteps',
     - nt : time index
     """
 
-    # **********************************************************************
+    # *************************************************************************
     # check if output path exists; if it doesn't, create it. Also creates
     # parent paths, if necessary
 
     path = pathlib.Path(output_path)
     path.mkdir(parents=True, exist_ok=True)
 
-
-    # **********************************************************************
+    # *************************************************************************
     # read multiple-timestep geometry (.x) file
 
     with open(filename_geom, 'rb') as f:
         geom_data = f.read()
 
-    # ********************** Read file header *****************************
+    # *************************************************************************
+    # read file header
 
     # create lists of iMax, jMax, kMax, nVars for each block
     iMax_list = []
@@ -100,7 +100,9 @@ def process_sigma_geom_file(filename_geom, output_path='timesteps',
     # end of header - set start index for beginning of geometry data
     start_index = 12*nz + 16
 
-    # ********************* Read geometry data *************************
+    # *************************************************************************
+    # Read geometry data
+
     # create list of zones
     zones = []
 
@@ -112,42 +114,43 @@ def process_sigma_geom_file(filename_geom, output_path='timesteps',
         timeseries_y = []
         timeseries_z = []
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # read and append 'x' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
             timeseries_x.append(block)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # read and append 'y' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
             timeseries_y.append(block)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # read and append 'z' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
             timeseries_z.append(block)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         timeseries = [timeseries_x, timeseries_y, timeseries_z]
 
         # append current timestep list to block list
         zones.append(timeseries)
 
 
-    # ********** Write multiple single-timestep geometry files ************
+    # *************************************************************************
+    # write multiple single-timestep geometry files
 
     # for each timestep...
     for nt in range(min(kMax_list)):
 
         with open(output_path + geometry_suffix + '{:03d}.x'.format(nt), 'wb') as file:
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # write file header
 
             write_binary(file, Nzones)
@@ -157,18 +160,17 @@ def process_sigma_geom_file(filename_geom, output_path='timesteps',
                 write_binary(file, jMax_list[nz])
                 write_binary(file, 1)
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # write geometry data
 
             # for each block in current time step...
             for nz in range(Nzones):
                 for nx in range(3):
                     write_block(file, zones[nz][nx][nt])
-            # --------------------------------------------------------------
-
-    # **********************************************************************
+            # -----------------------------------------------------------------
 
 
+# #############################################################################
 def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
                           function_suffix='sigma_'):
     """
@@ -221,19 +223,21 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
 
     """
 
-    # **********************************************************************
+    # *************************************************************************
     # check if output path exists; if it doesn't, create it. Also creates
     # parent paths, if necessary
 
     path = pathlib.Path(output_path)
     path.mkdir(parents=True, exist_ok=True)
 
-    # **********************************************************************
+    # *************************************************************************
     # read function (.fn) file
     with open(filename_fn, 'rb') as f:
         function_data = f.read()
 
-    # ********************** Read file header *****************************
+    # *************************************************************************
+    # read file header
+
     # read number of zones (i.e. independent meshes) in file
     Nzones = read_int(function_data, 0)
 
@@ -252,7 +256,8 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
     # end of header - set start index for beginning of function data
     start_index = 16*nz + 20
 
-    # ********************** Read function data *****************************
+    # *************************************************************************
+    # read function data
 
     # create list of zones
     zones = []
@@ -289,7 +294,9 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
     # The source times of each zone are not identical; hence, determine what
     # source time ranges overlap with all other zones, and process only these
 
-    # ------------------------ old code --------------------------------
+    # *************************************************************************
+    # OLD CODE
+    #
     # # extract vector of source times of first zone
     # n_sourcetime = min(kMax_list)
     #
@@ -297,7 +304,7 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
     # for it in range(n_sourcetime):
     #     sourcetime[it] = zones[0][0][it][0,0]
     #
-    # --------------------------------------------------------------------
+    # *************************************************************************
 
     # create array of source times vs zones
     n_sourcetime = min(kMax_list)
@@ -319,7 +326,8 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
     # create vector of source times for zone 1 that overlap with all others
     sourcetime_final = sourcetime[0, start_nt[0]:end_nt[0]]
 
-    # ********** Write multiple single-timestep function files ************
+    # *************************************************************************
+    # write multiple single-timestep function files
 
     # For each time step...
     for nt in range(sourcetime_final.shape[0]):
@@ -327,7 +335,7 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
         # Create new "sigma_{:03d}.fn" files containing function data
         with open(output_path + function_suffix + '{:03d}.fn'.format(nt), 'wb') as file:
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # write file header
             write_binary(file, Nzones)
 
@@ -337,7 +345,7 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
                 write_binary(file, 1)
                 write_binary(file, nVars_list[nz])
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # write data
 
             # for each block in current time step...
@@ -347,15 +355,14 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
                 for nvar in range(nVars_list[nz]):
                     # write data within overlapping source time range
                     write_block(file, zones[nz][nvar][nt + start_nt[nz]])
-            # --------------------------------------------------------------
-
+            # -----------------------------------------------------------------
 
     return sourcetime_final
 
 
-# %% #######################################################################
+# %% ##########################################################################
 # PSU-WOPWOP Sigma surface file converters - second approach
-# ##########################################################################
+# #############################################################################
 
 def process_sigma_files(filename_geom, filename_fn, filename_nam,
                         output_path='timesteps/', geometry_suffix='sigma_',
@@ -392,7 +399,7 @@ def process_sigma_files(filename_geom, filename_fn, filename_nam,
                    geometry_suffix, function_suffix)
 
 
-
+# #############################################################################
 def read_sigma_geom_file(filename_geom):
     """
     Reads a multiple-timestep Sigma geometry (.x) file, and returns a list of
@@ -409,7 +416,7 @@ def read_sigma_geom_file(filename_geom):
     - i,j : structured mesh indices
     """
 
-    # **********************************************************************
+    # *************************************************************************
     # read multiple-timestep geometry (.x) file
 
     print('\nReading geometry file "' + filename_geom + '" ...')
@@ -417,7 +424,7 @@ def read_sigma_geom_file(filename_geom):
     with open(filename_geom, 'rb') as f:
         geom_data = f.read()
 
-    # **********************************************************************
+    # *************************************************************************
     # Read file header
 
     # create lists of iMax, jMax, kMax, nVars for each block
@@ -442,7 +449,7 @@ def read_sigma_geom_file(filename_geom):
     # end of header - set start index for beginning of geometry data
     start_index = 12*nz + 16
 
-    # **********************************************************************
+    # *************************************************************************
     # Read geometry data
 
     # create list of zones
@@ -457,37 +464,39 @@ def read_sigma_geom_file(filename_geom):
         timeseries_y = []
         timeseries_z = []
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # read and append 'x' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
             timeseries_x.append(block)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # read and append 'y' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
             timeseries_y.append(block)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # read and append 'z' coordinate data from each time step
         for it in range(kMax_list[nz]):
             block, start_index = read_block(geom_data, start_index, 1,
                                             iMax_list[nz], jMax_list[nz])
             timeseries_z.append(block)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         timeseries = [timeseries_x, timeseries_y, timeseries_z]
 
         # append current timestep list to block list
         zones_geom.append(timeseries)
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
     print('\tFinished reading geometry file!')
     return zones_geom, geo_list
 
 
+# #############################################################################
 def write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
                            output_path='timesteps', geometry_suffix='sigma_'):
     """
@@ -540,14 +549,14 @@ def write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
     - nt: time index
     """
 
-    # **********************************************************************
+    # *************************************************************************
     # check if output path exists; if it doesn't, create it. Also creates
     # parent paths, if necessary
 
     path = pathlib.Path(output_path)
     path.mkdir(parents=True, exist_ok=True)
 
-    # **********************************************************************
+    # *************************************************************************
     # parse input list for parameters
 
     print("\nWriting geometry files...")
@@ -555,7 +564,7 @@ def write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
 
     Nzones, iMax_list, jMax_list, kMax_list = geo_list
 
-    # **********************************************************************
+    # *************************************************************************
     # Write multiple single-timestep geometry files
 
     # for each timestep...
@@ -564,7 +573,7 @@ def write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
 
         with open(output_path + geometry_suffix + '{:03d}.x'.format(nt), 'wb') as file:
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # write file header
 
             write_binary(file, Nzones)
@@ -574,33 +583,33 @@ def write_sigma_geom_files(zones_geom, geo_list, start_nt, N_timesteps,
                 write_binary(file, jMax_list[nz])
                 write_binary(file, 1)
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # write geometry data
 
             # for each block in current time step...
             for nz in range(Nzones):
                 for nx in range(3):
                     write_block(file, zones_geom[nz][nx][nt + start_nt[nz]])
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
 
     print("\tFinished writing geometry files!")
-    # **********************************************************************
+    # *************************************************************************
 
 
-
+# #############################################################################
 def read_sigma_fn_file(filename_fn):
 
-
-    # **********************************************************************
+    # *************************************************************************
     # read function (.fn) file
-
 
     print('\nReading functional file "' + filename_fn + '" ...')
 
     with open(filename_fn, 'rb') as f:
         function_data = f.read()
 
-    # ********************** Read file header *****************************
+    # *************************************************************************
+    # read file header
+
     # read number of zones (i.e. independent meshes) in file
     Nzones = read_int(function_data, 0)
 
@@ -624,7 +633,8 @@ def read_sigma_fn_file(filename_fn):
     # end of header - set start index for beginning of function data
     start_index = 16*nz + 20
 
-    # ********************** Read function data *****************************
+    # *************************************************************************
+    # read function data
 
     # create list of zones
     zones_fn = []
@@ -660,9 +670,12 @@ def read_sigma_fn_file(filename_fn):
         zones_fn.append(var_list)
 
     print("\tFinished reading functional file!")
+    # *************************************************************************
+
     return zones_fn, fn_list
 
 
+# #############################################################################
 def process_sigma_sourcetimes(zones_fn, fn_list):
 
     # The source times of each zone are not identical; hence, determine what
@@ -693,6 +706,7 @@ def process_sigma_sourcetimes(zones_fn, fn_list):
     return sourcetime_final, start_nt
 
 
+# #############################################################################
 def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
                          output_path='timesteps', function_suffix='sigma_'):
     """
@@ -705,7 +719,8 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
 
     print("\tN_timesteps = {}".format(sourcetime.shape[0]))
 
-    # ********** Write multiple single-timestep function files ************
+    # *************************************************************************
+    # write multiple single-timestep function files
 
     # For each time step...
     for nt in range(sourcetime.shape[0]):
@@ -714,7 +729,7 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
         # Create new "sigma_{:03d}.fn" files containing function data
         with open(output_path + function_suffix + '{:03d}.fn'.format(nt), 'wb') as file:
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # write file header
             write_binary(file, Nzones)
 
@@ -724,7 +739,7 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
                 write_binary(file, 1)
                 write_binary(file, nVars_list[nz])
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # write data
 
             # for each block in current time step...
@@ -734,12 +749,14 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
                 for nvar in range(nVars_list[nz]):
                     # write data within overlapping source time range
                     write_block(file, zones_fn[nz][nvar][nt + start_nt[nz]])
-            # --------------------------------------------------------------
-    print("\tFinished writing functional files!")
+            # -----------------------------------------------------------------
 
-# %% #######################################################################
-# PSU-WOPWOP Sigma surface auxiliary functions
-# ##########################################################################
+    print("\tFinished writing functional files!")
+    # *************************************************************************
+
+# #############################################################################
+# %% PSU-WOPWOP Sigma surface auxiliary functions
+# #############################################################################
 
 def extract_sigma_var_names(filename_nam):
     """
@@ -764,6 +781,7 @@ def extract_sigma_var_names(filename_nam):
     return var_names
 
 
+# #############################################################################
 def write_p3d_file(output_filename, output_path, sourcetime, var_names,
                    geometry_suffix='sigma_', function_suffix='sigma_'):
     """
@@ -806,12 +824,15 @@ def write_p3d_file(output_filename, output_path, sourcetime, var_names,
                   '\t"auto-detect-format" : true,',
                   '\t"filenames" : [']
 
+    # *************************************************************************
     with open(output_path + output_filename + '.p3d', 'w') as file:
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # write p3d header
         for line in p3d_header:
             file.write(line+'\n')
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # write one line for each time step
         for nt in range(sourcetime.shape[0]):
             time_string = '\t\t{{"time" : {:.6f},'.format(sourcetime[nt])
@@ -821,6 +842,7 @@ def write_p3d_file(output_filename, output_path, sourcetime, var_names,
 
         file.write('\t\t],\n')
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # write sigma variables names
         function_string = '\t"function-names" : ['
 
@@ -833,3 +855,6 @@ def write_p3d_file(output_filename, output_path, sourcetime, var_names,
         function_string += ']\n'
         file.write(function_string)
         file.write('}')
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+    # *************************************************************************

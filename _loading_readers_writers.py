@@ -24,9 +24,9 @@ from ._binary_readers_writers import initial_check, read_block, write_block, \
     read_int, read_float, write_binary, write_string, read_string
 
 
-# ##########################################################################
+# #############################################################################
 # %%PSU-WOPWOP loading file readers
-# ##########################################################################
+# #############################################################################
 
 def _read_loading_header(self, loading_filename):
     """
@@ -53,8 +53,7 @@ def _read_loading_header(self, loading_filename):
     loading_comment = read_string(bytes_data, 12, 1024)
     self.set_loading_comment(loading_comment)
 
-
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # *************************************************************************
     # read format string (10 ints, 40 bytes, starting at index 1036),
     # assert loading file info vs. previously read from geometry file
 
@@ -62,7 +61,7 @@ def _read_loading_header(self, loading_filename):
     for n in range(10):
         self.loading_format_string.append(read_int(bytes_data, 1036 + 4*n))
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # *************************************************************************
     # Verify file type description
 
     # --> loading_format_string[0] is '2' to indicate functional data file
@@ -93,11 +92,13 @@ def _read_loading_header(self, loading_filename):
             == reverse_dict(float_dict, self.loading_format_string[7])), \
         "Loading file 'float_type' property does not match!"
 
-    # --> loading_format_string[8] is reserved for future use, and must be '0' in this version
-    # --> loading_format_string[9] is reserved for future use, and must be '0' in this version
+    # --> loading_format_string[8] is reserved for future use, and must be '0'
+    # in this version
 
+    # --> loading_format_string[9] is reserved for future use, and must be '0'
+    # in this version
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # *************************************************************************
     # zone specification
 
     # read number of zones containing functional data (4 bytes)
@@ -106,16 +107,15 @@ def _read_loading_header(self, loading_filename):
     # create list of zones containing functional data
     # -->>  negative numbers indicate zones for which WOPWOP should *NOT*
     #       calculate thickness noise - e.g. loading patch
-    #
-    # -->> PSU_WOPWOP zone list indices are one-based - subtract one to
-    #       obtain zero-based (Python) indices
     self.zones_with_loading_data = []
 
     for z in range(self.n_zones_with_loading_data):
+
+        # PSU_WOPWOP zone list indices are one-based - subtract one to obtain
+        # zero-based (Python) indices
         self.zones_with_loading_data.append(read_int(bytes_data, 1080 + z*4) - 1)
 
-
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # *************************************************************************
     # read header info
 
     zone_info_start = 1080 + self.n_zones_with_loading_data*4
@@ -123,11 +123,11 @@ def _read_loading_header(self, loading_filename):
     # version 1.0
     if self.version_number_minor == 0:
 
-        # --------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # structured loading
         if self.is_structured == True:
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             if self.loading_time_type == 'constant':
 
                 for i, nz in enumerate(self.zones_with_loading_data):
@@ -144,21 +144,27 @@ def _read_loading_header(self, loading_filename):
 
                     # read loading zone name
                     name = read_string(bytes_data,
-                                       zone_info_start + i*zone.loading_header_length, 32)
+                                       zone_info_start + i*zone.loading_header_length,
+                                       32)
+
                     zone._set_string(name, 'loading_name', 32)
 
                     # assert iMax and jMax match
                     iMax_fromfile = read_int(bytes_data,
-                                             zone_info_start + 32 + i*zone.loading_header_length)
+                                             zone_info_start + 32
+                                             + i*zone.loading_header_length)
+
                     jMax_fromfile = read_int(bytes_data,
-                                             zone_info_start + 36 + i*zone.loading_header_length)
+                                             zone_info_start + 36
+                                             + i*zone.loading_header_length)
+
                     assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
                         "(iMax, jMax) in Zone {} from loading file don't match existing values in PWWPatch instance!".format(nz)
 
                     # set loading data flag
                     zone.has_loading_data = True
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
 
                 for i, nz in enumerate(self.zones_with_loading_data):
@@ -181,7 +187,8 @@ def _read_loading_header(self, loading_filename):
                     # .........................................................
                     # read number of timesteps
                     loading_Nt = read_int(bytes_data,
-                                          zone_info_start + 32 + i*zone.loading_header_length)
+                                          zone_info_start + 32
+                                          + i*zone.loading_header_length)
 
                     # check if 'Nt' attribute already exists (e.g. from aperiodic geometry)
                     if hasattr(self, 'Nt'):
@@ -195,38 +202,47 @@ def _read_loading_header(self, loading_filename):
                     # .........................................................
                     # assert iMax and jMax match
                     iMax_fromfile = read_int(bytes_data,
-                                             zone_info_start + 36 + i*zone.loading_header_length)
-                    jMax_fromfile = read_int(bytes_data,
-                                             zone_info_start + 40 + i*zone.loading_header_length)
+                                             zone_info_start + 36
+                                             + i*zone.loading_header_length)
 
-                    assert ((zone.iMax == iMax_fromfile) and (zone.jMax == jMax_fromfile)), \
+                    jMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 40
+                                             + i*zone.loading_header_length)
+
+                    assert ((zone.iMax == iMax_fromfile)
+                            and (zone.jMax == jMax_fromfile)), \
                         "(iMax, jMax) in Zone {} from loading file don't match existing values in PWWPatch instance!".format(nz)
 
                     # set loading data flag
                     zone.has_loading_data = True
 
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # check if 'time_steps' attribute already exists (e.g. from aperiodic geometry)
                 if not hasattr(self, 'time_steps'):
                     # store 'Nt' in PWWPatch
                     self.time_steps = np.zeros(self.Nt, dtype=np.float32)
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             else:
                 # TODO: implement non-constant non-aperiodic loading
                 raise NotImplementedError("Can't read loading data that is not constant nor aperiodic - not implemented yet!")
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: implement non-structured loading
             raise NotImplementedError("Can't read non-structured loading data - not implemented yet!")
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # *************************************************************************
     # TODO: implement header reader for version 1.1
     elif self.version_number2 == '1':
         raise NotImplementedError("Can't read loading data file v1.1 header - not implemented yet!")
+    # *************************************************************************
 
 
-# ##########################################################################
+# #############################################################################
 def _read_loading_data(self, loading_filename):
     """
     Reads PSU-WOPWOP loading data from 'loading_filename'.
@@ -240,16 +256,17 @@ def _read_loading_data(self, loading_filename):
     # structured loading
     if self.is_structured == True:
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         if self.loading_time_type == 'constant':
 
             # start index for reading functional data
             # end of format string + zone specification + header
             field_start = (1076
                            + (1 + self.n_zones_with_loading_data)*4
-                           + self.n_zones_with_loading_data*self.zones[0].loading_header_length)
+                           + (self.n_zones_with_loading_data
+                              * self.zones[0].loading_header_length))
 
-            # ----------------------------------------------------------------
+            # -----------------------------------------------------------------
             # if data is surface pressure
             if self.loading_data_type == 'surf_pressure':
 
@@ -257,10 +274,12 @@ def _read_loading_data(self, loading_filename):
                 for nz in self.zones_with_loading_data:
 
                     # create empty numpy arrays for pressure data
-                    pressures = np.zeros((self.zones[nz].iMax, self.zones[nz].jMax),
+                    pressures = np.zeros((self.zones[nz].iMax,
+                                          self.zones[nz].jMax),
                                          dtype=np.float32)
 
-                    self.zones[nz].add_StructuredConstantLoading(pressures, 'surf_pressure')
+                    self.zones[nz].add_StructuredConstantLoading(pressures,
+                                                                 'surf_pressure')
 
                     # read pressure data and next index
                     self.zones[nz].loading.pressures, field_start = \
@@ -268,7 +287,7 @@ def _read_loading_data(self, loading_filename):
                                    self.zones[nz].iMax,
                                    self.zones[nz].jMax)
 
-            # ----------------------------------------------------------------
+            # -----------------------------------------------------------------
             # if data is loading vectors
             elif self.loading_data_type == 'surf_loading_vec':
 
@@ -280,7 +299,8 @@ def _read_loading_data(self, loading_filename):
                                                 self.zones[nz].jMax),
                                                dtype=np.float32)
 
-                    self.zones[nz].add_StructuredConstantLoading(loading_vectors, 'surf_loading_vec')
+                    self.zones[nz].add_StructuredConstantLoading(loading_vectors,
+                                                                 'surf_loading_vec')
 
                     # read pressure data and next index
                     self.zones[nz].loading.loading_vectors, field_start = \
@@ -288,7 +308,7 @@ def _read_loading_data(self, loading_filename):
                                    self.zones[nz].iMax,
                                    self.zones[nz].jMax)
 
-            # ----------------------------------------------------------------
+            # -----------------------------------------------------------------
             elif self.loading_data_type == 'flow_params':
 
                 # for each zone containing data:
@@ -300,7 +320,8 @@ def _read_loading_data(self, loading_filename):
                                             self.zones[nz].jMax),
                                            dtype=np.float32)
 
-                    self.zones[nz].add_StructuredConstantLoading(flow_params, 'flow_params')
+                    self.zones[nz].add_StructuredConstantLoading(flow_params,
+                                                                 'flow_params')
 
                     # read pressure data and next index
                     self.zones[nz].loading.flow_params, field_start = \
@@ -315,7 +336,8 @@ def _read_loading_data(self, loading_filename):
             # end of format string + zone specification + header
             field_start = (1076
                            + (1 + self.n_zones_with_loading_data)*VALUE_LENGTH
-                           + self.n_zones_with_loading_data*self.zones[0].loading_header_length)
+                           + (self.n_zones_with_loading_data
+                              * self.zones[0].loading_header_length))
 
             # -----------------------------------------------------------------
             # if data is surface pressure
@@ -325,17 +347,20 @@ def _read_loading_data(self, loading_filename):
                 # pressure data and time steps
                 for nz in self.zones_with_loading_data:
 
-                    pressures = np.zeros((self.Nt, self.zones[nz].iMax,
+                    pressures = np.zeros((self.Nt,
+                                          self.zones[nz].iMax,
                                           self.zones[nz].jMax),
                                          dtype=np.float32)
 
-                    self.zones[nz].add_StructuredAperiodicLoading(pressures, 'surf_pressure')
+                    self.zones[nz].add_StructuredAperiodicLoading(pressures,
+                                                                  'surf_pressure')
 
                     # initialize 'time_steps' attribute in current Zone if it
                     # doesn't already exist (e.g. from reading aperiodic
                     # geometry);
                     if not hasattr(self.zones[nz], 'time_steps'):
-                        self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each timestep...
@@ -376,7 +401,8 @@ def _read_loading_data(self, loading_filename):
                     # doesn't already exist (e.g. from reading aperiodic
                     # geometry);
                     if not hasattr(self.zones[nz], 'time_steps'):
-                        self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each timestep...
@@ -416,7 +442,8 @@ def _read_loading_data(self, loading_filename):
                     # doesn't already exist (e.g. from reading aperiodic
                     # geometry);
                     if not hasattr(self.zones[nz], 'time_steps'):
-                        self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each timestep...
@@ -450,16 +477,16 @@ def _read_loading_data(self, loading_filename):
             # TODO: read non-constant, non-aperiodic loading data
             raise NotImplementedError("Can't read non-constant or non-aperiodic loading data - not implemented yet!")
 
-    # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+    # *************************************************************************
     else:
         # TODO: read non-structured loading data
         raise NotImplementedError("Can't read non-structured loading data - not implemented yet!")
+    # *************************************************************************
 
 
-
-# ##########################################################################
+# #############################################################################
 # %%PSU-WOPWOP loading file writers
-# ##########################################################################
+# #############################################################################
 
 def _write_loading_header(self, loading_filename):
     """
@@ -485,7 +512,7 @@ def _write_loading_header(self, loading_filename):
         for n in range(10):
             write_binary(file, self.loading_format_string[n])
 
-        # --------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # write zone specification
 
         # write number of zones with data
@@ -496,12 +523,12 @@ def _write_loading_header(self, loading_filename):
         for z in self.zones_with_loading_data:
             write_binary(file, (z + 1))
 
-        # --------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*# --------------------------------------------------------------
         # write zone info
 
         if self.is_structured == True:
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             if self.loading_time_type == 'constant':
 
                 # for each zone containing data...
@@ -514,7 +541,7 @@ def _write_loading_header(self, loading_filename):
                     write_binary(file, self.zones[nz].iMax)
                     write_binary(file, self.zones[nz].jMax)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
 
                 # for each zone containing data...
@@ -529,21 +556,20 @@ def _write_loading_header(self, loading_filename):
                     # write iMax and jMax (4 byte ints)
                     write_binary(file, self.zones[nz].iMax)
                     write_binary(file, self.zones[nz].jMax)
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             else:
                 # TODO: implement non-constant, non-aperiodic functional data header
                 raise NotImplementedError("Can't write non-constant, non-aperiodic loading data header - not implemented yet!")
+            # -----------------------------------------------------------------
 
-        # ------------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: implement non-structured headers
             raise NotImplementedError("Can't write non-structured loading data header - not implemented yet!")
-
-        # ------------------------------------------------------------
-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 
-# ##########################################################################
+# #############################################################################
 def _write_loading_data(self, loading_filename):
     """
     Writes PSU-WOPWOP functional data to 'loading_filename'
@@ -554,15 +580,15 @@ def _write_loading_data(self, loading_filename):
     # open file in append mode - no need to adjust index
     with open(loading_filename, 'ab') as file:
 
-        # -----------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # structured loading
         if self.is_structured == True:
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             # constant geometry
             if self.loading_time_type == 'constant':
 
-                # ......................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 if self.loading_data_type == 'surf_pressure':
 
                     # for each zone...
@@ -570,7 +596,7 @@ def _write_loading_data(self, loading_filename):
                         nz = abs(nz)
                         write_block(file, self.zones[nz].loading.pressures)
 
-                # ......................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 elif self.loading_data_type == 'surf_loading_vec':
 
                     # for each zone...
@@ -578,7 +604,7 @@ def _write_loading_data(self, loading_filename):
                         nz = abs(nz)
                         write_block(file, self.zones[nz].loading.loading_vectors)
 
-                # ......................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 elif self.loading_data_type == 'flow_params':
 
                     # for each zone...
@@ -586,51 +612,57 @@ def _write_loading_data(self, loading_filename):
                         nz = abs(nz)
                         write_block(file, self.zones[nz].loading.flow_params)
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
 
-                # ......................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 if self.loading_data_type == 'surf_pressure':
 
                     # for each time step...
                     for nt, time in enumerate(self.time_steps):
+
                         # for each zone...
                         for nz in self.zones_with_loading_data:
                             nz = abs(nz)
                             write_binary(file, time)
-                            write_block(file, self.zones[nz].loading.pressures[nt, :, :])
+                            write_block(file,
+                                        self.zones[nz].loading.pressures[nt, :, :])
 
-                # ......................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 elif self.loading_data_type == 'surf_loading_vec':
 
                     # for each time step...
                     for nt, time in enumerate(self.time_steps):
+
                         # for each zone...
                         for nz in self.zones_with_loading_data:
                             nz = abs(nz)
                             write_binary(file, time)
-                            write_block(file, self.zones[nz].loading.loading_vectors[nt, :, :, :])
+                            write_block(file,
+                                        self.zones[nz].loading.loading_vectors[nt, :, :, :])
 
-                # ......................................................
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 elif self.loading_data_type == 'flow_params':
 
                     # for each time step...
                     for nt, time in enumerate(self.time_steps):
+
                         # for each zone...
                         for nz in self.zones_with_loading_data:
                             nz = abs(nz)
                             # write time value and block of flow params
                             write_binary(file, time)
-                            write_block(file, self.zones[nz].loading.flow_params[nt, :, :, :])
+                            write_block(file,
+                                        self.zones[nz].loading.flow_params[nt, :, :, :])
 
-            # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+            # -----------------------------------------------------------------
             else:
                 # TODO: write non-constant, non-aperiodic loading data
                 raise NotImplementedError("Can't write non-constant, non-aperiodic loading data - not implemented yet!")
 
-        # -----------------------------------------------------------
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
             # TODO: write non-structured loading data
             raise NotImplementedError("Can't write non-structured loading data - not implemented yet!")
-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 

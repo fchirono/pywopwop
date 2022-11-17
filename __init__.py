@@ -40,9 +40,9 @@ from ._sigma_processing import extract_sigma_var_names, process_sigma_fn_file, \
 
 
 
-# ##########################################################################
+# #############################################################################
 # %%PSU-WOPWOP main class PWWPatch
-# ##########################################################################
+# #############################################################################
 
 class PWWPatch:
     """
@@ -91,7 +91,7 @@ class PWWPatch:
         self.n_zones_with_loading_data = 0
 
 
-    # **********************************************************************
+    # *************************************************************************
     def _set_string(self, string, attr_name, length):
         """
         Writes input string to given attribute name, enforcing ASCII
@@ -119,7 +119,7 @@ class PWWPatch:
         self._set_string(string, 'loading_comment', 1024)
 
 
-    # **********************************************************************
+    # *************************************************************************
     def print_info(self, zones_info=False):
         """
         Prints a summary of the file info. By default, it skips the zones'
@@ -164,7 +164,7 @@ class PWWPatch:
         print('\n\n')
 
 
-    # **********************************************************************
+    # *************************************************************************
     # file readers
     def read_geometry_file(self, geometry_filename):
         _read_geometry_header(self, geometry_filename)
@@ -175,7 +175,7 @@ class PWWPatch:
         _read_loading_header(self, loading_filename)
         _read_loading_data(self, loading_filename)
 
-
+    # *************************************************************************
     # file writers
     def write_geometry_file(self, geometry_filename):
         _write_geometry_header(self, geometry_filename)
@@ -187,7 +187,7 @@ class PWWPatch:
         _write_loading_data(self, loading_filename)
 
 
-    # **********************************************************************
+    # *************************************************************************
     def add_StructuredZone(self, name, XYZ_coord, normal_coord,
                            calc_thickness_noise=True, loading_data=None,
                            time_steps=None):
@@ -275,6 +275,7 @@ class PWWPatch:
 
         """
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # check PWWPatch instance is indeed structured
         assert (self.is_structured == True), \
             "Cannot add structured zone - PWWPatch instance is not structured!"
@@ -288,15 +289,17 @@ class PWWPatch:
         # new zone number is the current length of 'zones' attribute
         zone.number = len(self.zones)
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # checks if 'time_steps' and 'Nt' attributes have already been defined
         # in PWWPatch; if not, check arguments to 'add_StructuredZone', and
         # copy to PWWPatch if there
+
         if not hasattr(self, 'time_steps'):
             if time_steps:
                 self.time_steps = time_steps
                 self.Nt = self.time_steps.shape[0]
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # sets geometry header length, adds geometry data to zone
 
         zone.geometry_header_length = \
@@ -330,7 +333,7 @@ class PWWPatch:
                 self.Nt = zone.Nt
             # -----------------------------------------------------------------
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # adds loading data, if there is any
         if loading_data is not None:
 
@@ -338,17 +341,17 @@ class PWWPatch:
             zone.loading_header_length = \
                 structured_header_length[self.loading_time_type]
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             if self.loading_time_type == 'constant':
                 zone.add_StructuredConstantLoading(loading_data,
                                                    self.loading_data_type)
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             elif self.loading_time_type == 'periodic':
                 # TODO: implement structured periodic loading
                 raise NotImplementedError("Can't add Structured Periodic Loading data to StructuredZone - not implemented yet!")
 
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             elif self.loading_time_type == 'aperiodic':
 
                 assert hasattr(self, 'time_steps'), \
@@ -368,7 +371,7 @@ class PWWPatch:
                     self.Nt = zone.Nt
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 
-            # ----------------------------------------------------------------
+            # -----------------------------------------------------------------
             # set zone loading data flag
             zone.has_loading_data = True
 
@@ -381,7 +384,7 @@ class PWWPatch:
                 zone.calc_thickness_noise = False
                 self.zones_with_loading_data.append(-zone.number)
 
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # append new zone to zones list
         self.zones.append(zone)
 
@@ -389,13 +392,13 @@ class PWWPatch:
         self._update_n_zones()
 
 
-    # **********************************************************************
+    # *************************************************************************
     def _update_n_zones(self):
         self.n_zones = len(self.zones)
         self.n_zones_with_loading_data = len(self.zones_with_loading_data)
 
 
-    # **********************************************************************
+    # *************************************************************************
     def _build_loading_format_string(self):
         """
         Create list of data format values, later written to loading file as
@@ -438,9 +441,9 @@ class PWWPatch:
         self.geometry_format_string.append(RESERVED_DIGIT)
 
 
-# ##########################################################################
+# #############################################################################
 # %% Functions to compare two PWWPatch instances for identical content
-# ##########################################################################
+# #############################################################################
 
 def _list_compare_attrs(obj1, obj2, attrs_to_ignore=[], level=0):
     """
@@ -511,9 +514,9 @@ def compare_pwwpatches(pwwpatch1, pwwpatch2):
 
     return
 
-# ##########################################################################
+# #############################################################################
 # %% Auxiliary functions
-# ##########################################################################
+# #############################################################################
 
 def get_time_from_xdmf(xdmf_filenames):
     """
@@ -537,10 +540,14 @@ def get_time_from_xdmf(xdmf_filenames):
 """
 Levels of comment lines
 
-# #############################################################################
-    # *************************************************************************
-        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-            # -----------------------------------------------------------------
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-                    # .........................................................
+# ############################################################################# 0
+    # ************************************************************************* 1
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* 2
+            # ----------------------------------------------------------------- 3
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- 4
+                    # ......................................................... 5
+                        # . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+                            # \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 7
+                                # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ 8
+                                    # / / / / / / / / / / / / / / / / / / / / / 9
 """
