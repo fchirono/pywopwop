@@ -39,7 +39,6 @@ from ._sigma_processing import extract_sigma_var_names, process_sigma_fn_file, \
     process_sigma_geom_file, write_p3d_file, process_sigma_files
 
 
-
 # #############################################################################
 # %%PSU-WOPWOP main class PWWPatch
 # #############################################################################
@@ -292,7 +291,7 @@ class PWWPatch:
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # checks if 'time_steps' and 'Nt' attributes have already been defined
         # in PWWPatch; if not, check arguments to 'add_StructuredZone', and
-        # copy to PWWPatch if there
+        # copy to PWWPatch
 
         if not hasattr(self, 'time_steps'):
             if time_steps:
