@@ -519,25 +519,6 @@ def compare_pwwpatches(pwwpatch1, pwwpatch2):
 # %% Auxiliary functions
 # #############################################################################
 
-def get_time_from_xdmf(xdmf_filenames):
-    """
-    Reads a list of XDMF files and get the time instants corresponding to each
-    file/timestep. XDMF file structure is assumed known.
-    """
-
-    import xml.etree.ElementTree as ET
-
-    N_filenames = len(xdmf_filenames)
-
-    t = np.zeros(N_filenames)
-
-    for i, filename in enumerate(xdmf_filenames):
-        tree = ET.parse(filename)
-        root = tree.getroot()
-        t[i] = (root[0][0][0]).get('Value')
-
-    return t
-
 
 """
 Levels of comment lines
