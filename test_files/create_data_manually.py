@@ -1,5 +1,5 @@
 """
-Test script for pywopwop - https://github.com/fchirono/pywopwop
+pywopwop - https://github.com/fchirono/pywopwop
 
     This script creates a toy dataset manually and shows how to introduce
     data into a PWWPatch instance.
