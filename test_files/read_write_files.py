@@ -45,10 +45,12 @@ write_files = False
 
 
 # *****************************************************************************
-# CASE 5: constant geometry, aperiodic loading
+# CASE 5: constant geometry, aperiodic loading [geometry OK, loading NOT CORRECT]
+#   --> not reading time steps correctly!
 wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case5/'
 geometry_filename = 'constGeo_short.dat'
 loading_filename = 'AperLoadingShort.dat'
+
 
 # %% initialize new instance, read files
 myWopwopData = PWW.PWWPatch()
