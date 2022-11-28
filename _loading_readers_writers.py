@@ -465,9 +465,11 @@ def _read_loading_data(self, loading_filename):
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 
             # -----------------------------------------------------------------
-            # compare time_steps across all zones, ensure they are identical
-            self.time_steps = np.copy(self.zones[0].time_steps)
-            for nz in range(self.n_zones):
+            # compare time_steps across all zones with loading data, ensure
+            # they are identical
+            nz_l = self.zones_with_loading_data[0]
+            self.time_steps = np.copy(self.zones[nz_l].time_steps)
+            for nz in self.zones_with_loading_data:
                 assert np.allclose(self.zones[nz].time_steps, self.time_steps),\
                     "Error reading file {}: Zone {} time steps do not match Zone 0 time steps!".format(loading_filename, nz)
             # -----------------------------------------------------------------
