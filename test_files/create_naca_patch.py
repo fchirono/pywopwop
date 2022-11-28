@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Sample code for generating an airfoil surface, extracting the normal vectors
-and visualising it using PyVista.
+pywopwop - https://github.com/fchirono/pywopwop
 
-Based on the following issue: https://github.com/pyvista/pyvista-support/issues/506
+    Sample code for generating an airfoil surface, extracting the normal
+    vectors and visualising the geometry using PyVista.
+
+    Based on the following issue posted on the PyVista Github page:
+        https://github.com/pyvista/pyvista-support/issues/506
 
 Author:
     Fabio Casagrande Hirono
-    Sep 2021
+    Nov 2022
 """
 
 
@@ -16,8 +19,9 @@ import pyvista as pv
 
 import pywopwop as PWW
 
-# %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-# build a generic airfoil using 'airfoils' package (available on PyPI)
+write_files = False
+
+# %% build a generic airfoil using 'airfoils' package (available on PyPI)
 # ---> https://airfoils.readthedocs.io/en/latest/index.html
 
 # from airfoils import Airfoil
@@ -95,18 +99,17 @@ XYZ[:, :, 1] = (np.sin(theta_twist*XYZ[:, :, 2]/z_max)*XYZ[:, :, 0]
                 + np.cos(theta_twist*XYZ[:, :, 2]/z_max)*XYZ[:, :, 1])
 
 
-# %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-# pass the mesh points to the StructuredGrid constructor, plot mesh points for
-# visual inspection
+# %% pass the mesh points to the StructuredGrid constructor
 
 airfoil = pv.StructuredGrid(XYZ[:, :, 0], XYZ[:, :, 1], XYZ[:, :, 2])
 
-airfoil.plot(background='w', show_edges=True, pbr=True, metallic=1.0, roughness=0.4)
+# plot mesh points for visual inspection
+#   --> zoom/pan with mouse, press 'Q' to return to console
+airfoil.plot(background='w', show_edges=True, pbr=True, metallic=1.0,
+             roughness=0.4)
 
 
-# %% *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-# Use pyvista to obtain surface normal vectors, plot normal vectors for
-# inspection
+# %% Use pyvista to obtain surface normal vectors, plot normal vectors for inspection
 
 # extract PolyData representation of mesh
 airfoil2 = airfoil.extract_surface()
@@ -115,41 +118,58 @@ airfoil2 = airfoil.extract_surface()
 airfoil2 = airfoil2.compute_normals(flip_normals=True)
 normals = (airfoil2.point_normals).reshape(XYZ.shape)
 
+# copy normal vectors back to StructuredGrid, including correct point ordering
+ID_list = airfoil2.point_data['vtkOriginalPointIds']
+airfoil.point_data['Normals'] = np.empty((airfoil.n_points, 3))
+airfoil.point_data['Normals'][ID_list, :] = airfoil2.point_data['Normals']
+
+# ****************************************************************************
+# # to recover data from pyvista StructuredGrid as numpy arrays:
+# # --> note: Fortran ordering required!
+#
+# XYZ = airfoil.points.reshape((iMax, jMax, 3), order='F')
+# normals = airfoil.point_data['Normals'].reshape((iMax, jMax, 3), order='F')
+
+# ****************************************************************************
 # plot mesh with normal vectors and save a screenshot
+#   --> zoom/pan with mouse, press 'Q' to return to console
 plotter = pv.Plotter()
-plotter.add_mesh(airfoil2, show_edges=True)
-plotter.add_arrows(airfoil2.points, airfoil2.point_normals, mag=0.02)
+plotter.add_mesh(airfoil, show_edges=True, color='grey')
+plotter.add_arrows(airfoil.points,
+                   airfoil.point_data['Normals'], mag=0.02)
 
 plotter.show_bounds(bounds=[0., 1, 0., 1, 0, 5], grid='front', location='outer',
                     all_edges=True)
 plotter.show(auto_close=False)
 # plotter.show(screenshot='my_normal_vectors.png')
 
-# %%
-# Build pywopwop patch object with structured grid geometry
+# %% Build pywopwop patch object with structured grid geometry
 
-# create empty instance of PWW Patch File
+# create empty instance of PWWPatch
 rotorblade_patch = PWW.PWWPatch()
 
 # add header info
-rotorblade_patch.geom_type = 'geometry'
 rotorblade_patch.is_structured = True
-rotorblade_patch.geometry_time_type = 'constant'
 rotorblade_patch.centered_type = 'node'
 rotorblade_patch.float_type = 'single'
-rotorblade_patch.iblank_included = 'n'
-rotorblade_patch.units_string = 'Pa'
+rotorblade_patch.has_iblank = False
+rotorblade_patch.set_units_string('Pa')
 
-rotorblade_patch.geometry_comment = 'Test geometry file for single blade'
+# add geometry info
+rotorblade_patch.geometry_type = 'geometry'
+rotorblade_patch.geometry_time_type = 'constant'
+rotorblade_patch.set_geometry_comment('Test geometry file for single blade')
 
 
-# add rotor blade geometry and normals to patch obj
-rotorblade_patch.add_StructuredZone('Rotor blade', XYZ.T, normals.T,
+# add rotor blade geometry and normals to patch obj (no loading data)
+rotorblade_patch.add_StructuredZone('Rotor blade',
+                                    XYZ.T, normals.T,
                                     calc_thickness_noise=True)
 
 # print info
-rotorblade_patch.print_info()
+rotorblade_patch.print_info(zones_info=True)
 
 # create PSU-WOPWOP patch file
-rotorblade_geom_filename = 'NACA4812_patch.dat'
-rotorblade_patch.write_geometry_file(rotorblade_geom_filename)
+if write_files:
+    rotorblade_geom_filename = 'NACA4812_patch.dat'
+    rotorblade_patch.write_geometry_file(rotorblade_geom_filename)
