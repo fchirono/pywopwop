@@ -507,9 +507,16 @@ def compare_pwwpatches(pwwpatch1, pwwpatch2):
                                                 pwwpatch2.zones[z].geometry,
                                                 [], 2)
 
-        loading_is_equal, _ = _list_compare_attrs(pwwpatch1.zones[z].loading,
-                                                  pwwpatch2.zones[z].loading,
-                                                  [], 2)
+        # if zone has loading info (i.e. zone.loading is not None):
+        if pwwpatch1.zones[z].loading:
+            loading_is_equal, _ = _list_compare_attrs(pwwpatch1.zones[z].loading,
+                                                      pwwpatch2.zones[z].loading,
+                                                      [], 2)
+
+        # else, assert both patches' zones have None as loading info
+        else:
+            p2_none = (pwwpatch2.zones[z].loading is None)
+            assert p2_none, "PWWPatch1 and PWWPatch2 zone {} have different loading info!".format(z)
 
     is_equal = is_equal & zones_are_equal & geom_are_equal & loading_is_equal
 
