@@ -46,7 +46,6 @@ write_files = True
 
 # *****************************************************************************
 # CASE 5: constant geometry, aperiodic loading [OK]
-#   --> not reading time steps correctly!
 wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case5/'
 geometry_filename = 'constGeo_short.dat'
 loading_filename = 'AperLoadingShort.dat'
