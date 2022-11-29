@@ -38,7 +38,7 @@ write_files = True
 
 
 # *****************************************************************************
-# # CASE 4: constant [?] surface geometry, periodic loading vectors [NOT IMPLEMENTED]
+# # CASE 4: constant surface geometry, periodic loading vectors [NOT IMPLEMENTED]
 # wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case4/'
 # geometry_filename = 'HART_Blade.dat'
 # loading_filename = 'HART_Bladeloading.dat'
