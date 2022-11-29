@@ -19,7 +19,7 @@ rng = np.random.default_rng()
 
 import pywopwop as PWW
 
-write_files = False
+write_files = True
 
 # %% Define directory containing geometry and loading files, plus filenames
 
@@ -45,7 +45,7 @@ write_files = False
 
 
 # *****************************************************************************
-# CASE 5: constant geometry, aperiodic loading [geometry OK, loading NOT CORRECT]
+# CASE 5: constant geometry, aperiodic loading [OK]
 #   --> not reading time steps correctly!
 wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case5/'
 geometry_filename = 'constGeo_short.dat'
@@ -68,8 +68,7 @@ if write_files:
 myWopwopData2 = PWW.PWWPatch()
 myWopwopData2.read_geometry_file(wopwop_dir + 'geometry_file.dat')
 myWopwopData2.read_loading_file(wopwop_dir + 'loading_file.dat')
-
-
 myWopwopData2.print_info(zones_info=True)
 
+# compare patches' contents
 PWW.compare_pwwpatches(myWopwopData, myWopwopData2)
