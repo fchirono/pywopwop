@@ -63,3 +63,13 @@ myWopwopData.print_info(zones_info=True)
 if write_files:
     myWopwopData.write_geometry_file(wopwop_dir + 'geometry_file.dat')
     myWopwopData.write_loading_file(wopwop_dir + 'loading_file.dat')
+
+# re-read files
+myWopwopData2 = PWW.PWWPatch()
+myWopwopData2.read_geometry_file(wopwop_dir + 'geometry_file.dat')
+myWopwopData2.read_loading_file(wopwop_dir + 'loading_file.dat')
+
+
+myWopwopData2.print_info(zones_info=True)
+
+PWW.compare_pwwpatches(myWopwopData, myWopwopData2)
