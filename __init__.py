@@ -452,8 +452,12 @@ def _list_compare_attrs(obj1, obj2, attrs_to_ignore=[], level=0):
 
     is_equal = True
 
+    # list of attributes that differ between objects
+    list_diff = []
+
     # list all attributes in obj
     list_attrs = list(obj1.__dict__.keys())
+
     # remove attrs in 'attrs_to_ignore'
     for attr in attrs_to_ignore:
         list_attrs.remove(attr)
@@ -465,13 +469,15 @@ def _list_compare_attrs(obj1, obj2, attrs_to_ignore=[], level=0):
         if type(attr1) is np.ndarray:
             if not np.allclose(attr1, attr2):
                 print(level*'\t' + '{} : different'.format(attr))
+                list_diff.append(attr)
                 is_equal = False
         else:
             if attr1 != attr2:
                 print(level*'\t' + '{} : different'.format(attr))
+                list_diff.append(attr)
                 is_equal = False
 
-    return is_equal
+    return is_equal, list_diff
 
 
 # #############################################################################
@@ -484,26 +490,26 @@ def compare_pwwpatches(pwwpatch1, pwwpatch2):
     is_equal = True
 
     # iterate over and compare both patches, assert equality so far
-    is_equal = _list_compare_attrs(pwwpatch1, pwwpatch2, ['zones',], 0)
-    assert is_equal, "PWWPatches are not identical!"
+    is_equal, list_attrs = _list_compare_attrs(pwwpatch1, pwwpatch2, ['zones',], 0)
+    assert is_equal, "PWWPatches are not identical! See attributes {}".format(list_attrs)
 
     # if no differences were detected so far, check zones' contents as well
     print("Patches' attributes equal so far; comparing zones now...\t")
 
     for z in range(pwwpatch1.n_zones):
         print('Zone {}:'.format(z))
-        zones_are_equal = _list_compare_attrs(pwwpatch1.zones[z],
-                                              pwwpatch2.zones[z],
-                                              ['geometry', 'loading'], 1)
+        zones_are_equal, _= _list_compare_attrs(pwwpatch1.zones[z],
+                                                pwwpatch2.zones[z],
+                                                ['geometry', 'loading'], 1)
 
         # compare geometry and loading contents
-        geom_are_equal = _list_compare_attrs(pwwpatch1.zones[z].geometry,
-                                             pwwpatch2.zones[z].geometry,
-                                             [], 2)
+        geom_are_equal, _ = _list_compare_attrs(pwwpatch1.zones[z].geometry,
+                                                pwwpatch2.zones[z].geometry,
+                                                [], 2)
 
-        loading_is_equal = _list_compare_attrs(pwwpatch1.zones[z].loading,
-                                               pwwpatch2.zones[z].loading,
-                                               [], 2)
+        loading_is_equal, _ = _list_compare_attrs(pwwpatch1.zones[z].loading,
+                                                  pwwpatch2.zones[z].loading,
+                                                  [], 2)
 
     is_equal = is_equal & zones_are_equal & geom_are_equal & loading_is_equal
 
