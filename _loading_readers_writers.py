@@ -261,10 +261,11 @@ def _read_loading_data(self, loading_filename):
 
             # start index for reading functional data
             # end of format string + zone specification + header
+            z0_data = self.zones_with_loading_data[0]   # 1st zone with loading data
             field_start = (1076
                            + (1 + self.n_zones_with_loading_data)*4
                            + (self.n_zones_with_loading_data
-                              * self.zones[0].loading_header_length))
+                              * self.zones[z0_data].loading_header_length))
 
             # -----------------------------------------------------------------
             # if data is surface pressure
@@ -334,10 +335,11 @@ def _read_loading_data(self, loading_filename):
 
             # start index for reading functional data
             # end of format string + zone specification + header
+            z0_data = self.zones_with_loading_data[0]   # 1st zone with loading data
             field_start = (1076
-                           + (1 + self.n_zones_with_loading_data)*VALUE_LENGTH
+                           + (1 + self.n_zones_with_loading_data)*4
                            + (self.n_zones_with_loading_data
-                              * self.zones[0].loading_header_length))
+                              * self.zones[z0_data].loading_header_length))
 
             # -----------------------------------------------------------------
             # if data is surface pressure
