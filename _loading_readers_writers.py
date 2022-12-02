@@ -224,9 +224,83 @@ def _read_loading_header(self, loading_filename):
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 
             # -----------------------------------------------------------------
+            elif self.loading_time_type == 'periodic':
+
+                for i, nz in enumerate(self.zones_with_loading_data):
+
+                    # remove sign from zone index
+                    nz = abs(nz)
+
+                    # get handle to existing zone in list
+                    zone = self.zones[nz]
+
+                    # set loading header length
+                    zone.loading_header_length = \
+                        structured_header_length[self.loading_time_type]
+
+                    # read loading zone name
+                    name = read_string(bytes_data,
+                                       zone_info_start + i*zone.loading_header_length, 32)
+                    zone._set_string(name, 'loading_name', 32)
+
+                    # .........................................................
+                    # read period
+                    loading_period = read_float(bytes_data,
+                                                zone_info_start + 32
+                                                + i*zone.loading_header_length)
+
+                    # check if 'period' attribute already exists (e.g. from periodic geometry)
+                    if hasattr(self, 'period'):
+                        # check for match
+                        assert loading_period == self.period, \
+                            "Period in Zone {} loading data does not match existing PWWPatch instance 'period'!".format(nz)
+                    else:
+                        # store 'period' in PWWPatch
+                        self.period = loading_period
+
+                    # .........................................................
+                    # read number of timesteps
+                    loading_Nt = read_int(bytes_data,
+                                          zone_info_start + 36
+                                          + i*zone.loading_header_length)
+
+                    # check if 'Nt' attribute already exists (e.g. from periodic geometry)
+                    if hasattr(self, 'Nt'):
+                        # check for match
+                        assert loading_Nt == self.Nt, \
+                            "Number of timesteps in Zone {} loading data does not match existing PWWPatch instance 'Nt'!".format(nz)
+                    else:
+                        # store 'Nt' in PWWPatch
+                        self.Nt = loading_Nt
+
+                    # .........................................................
+                    # assert iMax and jMax match
+                    iMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 40
+                                             + i*zone.loading_header_length)
+
+                    jMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 44
+                                             + i*zone.loading_header_length)
+
+                    assert ((zone.iMax == iMax_fromfile)
+                            and (zone.jMax == jMax_fromfile)), \
+                        "(iMax, jMax) in Zone {} from loading file don't match existing values in PWWPatch instance!".format(nz)
+
+                    # set loading data flag
+                    zone.has_loading_data = True
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # check if 'time_steps' attribute already exists (e.g. from aperiodic geometry)
+                if not hasattr(self, 'time_steps'):
+                    # store 'Nt' in PWWPatch
+                    self.time_steps = np.zeros(self.Nt, dtype=np.float32)
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
             else:
-                # TODO: implement non-constant non-aperiodic loading
-                raise NotImplementedError("Can't read loading data that is not constant nor aperiodic - not implemented yet!")
+                # TODO: implement other loading header reader
+                raise NotImplementedError("Can't read loading header that is not constant, aperiodic or periodic - not implemented yet!")
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
