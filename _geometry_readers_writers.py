@@ -160,9 +160,51 @@ def _read_geometry_header(self, geometry_filename):
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-        else:
-            # TODO: implement non-constant non-aperiodic geometries
-            raise NotImplementedError("Can't read geometries that are not constant nor aperiodic - not implemented yet!")
+        elif self.geometry_time_type == 'periodic':
+
+            for nz in range(self.n_zones):
+                # instantiate zone and read info from file
+                zone = StructuredZone()
+
+                zone.geometry_header_length = \
+                    structured_header_length[self.geometry_time_type]
+
+                zone.number = len(self.zones)
+
+                # reads geometry zone name (32 bytes)
+                name = read_string(bytes_data,
+                                   1100 + nz*zone.geometry_header_length, 32)
+                zone._set_string(name, 'name', 32)
+                zone._set_string(name, 'geometry_name', 32)
+
+                # reads period, number of timesteps, and structured dimensions
+                zone.period = read_float(bytes_data,
+                                         1100 + 32 + nz*zone.geometry_header_length)
+
+                zone.Nt = read_int(bytes_data,
+                                   1100 + 36 + nz*zone.geometry_header_length)
+
+                zone.iMax = read_int(bytes_data,
+                                     1100 + 40 + nz*zone.geometry_header_length)
+                zone.jMax = read_int(bytes_data,
+                                     1100 + 44 + nz*zone.geometry_header_length)
+
+                zone._update_geometry_info_str()
+                self.zones.append(zone)
+
+            # -----------------------------------------------------------------
+            # Store 'Nt' in PWWPatch, check all zones have identical 'Nt'
+            self.Nt = self.zones[0].Nt
+            for z in range(self.n_zones):
+                assert self.zones[z].Nt == self.Nt, \
+                    "Error in file '{}': Zone {} has {} timesteps, while Zone 0 has {}!".format(geometry_filename, z, zone.Nt, self.Nt)
+            # -----------------------------------------------------------------
+            # Store 'period' in PWWPatch, check all zones have identical 'period'
+            self.period = self.zones[0].period
+            for z in range(self.n_zones):
+                assert self.zones[z].period == self.period, \
+                    "Error in file '{}': Zone {} has period {} s, while Zone 0 has {}!".format(geometry_filename, z, zone.period, self.period)
+            # -----------------------------------------------------------------
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
     # *************************************************************************
