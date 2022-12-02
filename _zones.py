@@ -131,9 +131,34 @@ class StructuredZone(Zone):
 
 
     # *************************************************************************
-    def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord):
-        # TODO: implement Structured Periodic Geometry
-        raise NotImplementedError("Can't add Structured Periodic Geometry data - not implemented yet!")
+    def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord, period):
+        """
+        Adds structured, periodic geometry data to current structured zone.
+
+        Parameters
+        ----------
+        XYZ_coord : (Nt, 3, iMax, jMax) array_like
+            Array of mesh point coordinates to be added per timestep.
+
+        normal_coord : (Nt, 3, iMax, jMax) array_like
+            Array of normal vector coordinates to be added per timestep.
+
+        period : float
+            Period, in seconds.
+
+        Returns
+        -------
+        None.
+        """
+
+        # updates Nt, iMax, jMax
+        self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
+
+        # adds period
+        self.period = period
+
+        self.geometry = StructuredPeriodicGeometry(XYZ_coord, normal_coord, period)
+        self._update_geometry_info_str()
 
 
     # *************************************************************************
