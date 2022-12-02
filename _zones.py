@@ -306,6 +306,42 @@ class StructuredAperiodicGeometry():
 
 
 # #############################################################################
+class StructuredPeriodicGeometry():
+    """
+    Class to store structured, periodic geometry data, containing the number
+    of timesteps and the period in seconds.
+
+    Parameters
+    ----------
+    XYZ_coord : (Nt, 3, iMax, jMax) array_like
+        Array of mesh point coordinates to be added at each timestep.
+
+    normal_coord : (Nt, 3, iMax, jMax) array_like
+        Array of normal vector coordinates to be added at each timestep.
+
+    period : float
+        Period, in seconds.
+
+    Returns
+    -------
+    None.
+    """
+
+    def __init__(self, XYZ_coord, normal_coord, period):
+
+        assert XYZ_coord.ndim == 4, \
+            "'XYZ_coord' dimensions do not match for Structured Aperiodic Geometry data!"
+
+        assert normal_coord.ndim == 4, \
+            "'normal_coord' dimensions do not match for Structured Aperiodic Geometry data!"
+
+        self.XYZ_coord = np.copy(XYZ_coord)
+        self.normal_coord = np.copy(normal_coord)
+
+        self.period = period
+
+
+# #############################################################################
 # %% PSU-WOPWOP classes for structured loading
 # #############################################################################
 
