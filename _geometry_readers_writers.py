@@ -204,8 +204,11 @@ def _read_geometry_header(self, geometry_filename):
             for z in range(self.n_zones):
                 assert self.zones[z].period == self.period, \
                     "Error in file '{}': Zone {} has period {} s, while Zone 0 has {}!".format(geometry_filename, z, zone.period, self.period)
-            # -----------------------------------------------------------------
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        else:
+            # TODO: implement other geometries header reader
+            raise NotImplementedError("Can't read geometry header that is not constant, aperiodic or periodic - not implemented yet!")
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
     # *************************************************************************
@@ -279,7 +282,6 @@ def _read_geometry_data(self, geometry_filename):
                         read_IBLANKblock(bytes_data, field_start,
                                          self.zones[nz].iMax,
                                          self.zones[nz].jMax)
-
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # aperiodic geometry
@@ -408,6 +410,12 @@ def _read_geometry_data(self, geometry_filename):
                     "Error reading file {}: Zone {} time steps do not match Zone 0 time steps!".format(geometry_filename, nz)
             # -----------------------------------------------------------------
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        else:
+            # TODO: implement other geometries data reader
+            raise NotImplementedError("Can't read geometry data that is not constant, aperiodic or periodic - not implemented yet!")
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
     # *************************************************************************
     else:
         # TODO: implement non-structured data reader
@@ -499,6 +507,11 @@ def _write_geometry_header(self, geometry_filename):
                     # write iMax and jMax (4 byte ints)
                     write_binary(file, self.zones[nz].iMax)
                     write_binary(file, self.zones[nz].jMax)
+
+            # -----------------------------------------------------------------
+            else:
+                # TODO: implement other geometries header writer
+                raise NotImplementedError("Can't write geometry header that is not constant, aperiodic or periodic - not implemented yet!")
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -555,9 +568,27 @@ def _write_geometry_data(self, geometry_filename):
                             write_block(file,self.zones[nz].geometry.iblank)
 
             # -----------------------------------------------------------------
+            # periodic geometry
+            elif self.geometry_time_type == 'periodic':
+
+                # for each timestep...
+                for nt in range(self.Nt):
+
+                    # for each zone
+                    for nz in range(self.n_zones):
+
+                        # write current time step and geometry data
+                        write_binary(file, self.time_steps[nt])
+                        write_block(file, self.zones[nz].geometry.XYZ_coord)
+                        write_block(file, self.zones[nz].geometry.normal_coord)
+
+                        if self.has_iblank == True:
+                            write_block(file,self.zones[nz].geometry.iblank)
+
+            # -----------------------------------------------------------------
             else:
-                # TODO: implement non-constant non-aperiodic geometries
-                raise NotImplementedError("Can't write geometry data that is not constant nor aperiodic - not implemented yet!")
+                # TODO: implement other geometries data writer
+                raise NotImplementedError("Can't write geometry data that is not constant, aperiodic or periodic - not implemented yet!")
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
