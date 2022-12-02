@@ -190,7 +190,7 @@ class PWWPatch:
     # *************************************************************************
     def add_StructuredZone(self, name, XYZ_coord, normal_coord,
                            calc_thickness_noise=True, loading_data=None,
-                           time_steps=None):
+                           time_steps=None, period=None):
         """
         Adds a new structured zone to PWWPatch instance. Expected argument
         array shapes and types will depend on attributes of current PWWPatch
@@ -220,25 +220,32 @@ class PWWPatch:
 
         loading_data : tuple (loading_data), optional
             Array containing loading data. Its expected shape will depend on
-            'loading_time_type' and 'loading_data_type' attributes of the
-            parent PWWPatch instance; see Notes below. Default is None.
+            'loading_time_type' and 'loading_data_type' attributes of PWWPatch
+            instance; see Notes below. Default is None.
 
         time_steps : (Nt,) array_like, optional
             Array of time values to be used with aperiodic geometry and/or
-            loading. When initialized, Zone first looks for 'time_steps' in
-            PWWPatch instance holding Zone, and only then reads input argument.
-            Default is None.
+            loading. When initialized, Zone first looks for 'time_steps'
+            attribute in PWWPatch instance holding Zone, and only then reads
+            input argument. Default is None.
+
+        period : float, optional
+            Period, in seconds, for periodic geometry and/or loading. When
+            initialized, Zone first looks for 'period' attribute in PWWPatch
+            instance holding Zone, and only then reads input argument. Default
+            is None.
+
 
         Returns
         -------
         None.
 
+
         Notes
         -----
         The type of input data for the geometry and loading will depend on the
         'geometry_time_type' and 'loading_time_type' attributes of the parent
-        PWWPatch instance containing the zones. For the moment, only 'constant'
-        data types are implemented.
+        PWWPatch instance containing the zones.
 
         If  'geometry_time_type' is 'constant', the geometry arrays are:
 
@@ -248,7 +255,8 @@ class PWWPatch:
             normal_coord : (3, iMax, jMax) array_like
                 Array of normal vector coordinates to be added.
 
-        If  'geometry_time_type' is 'aperiodic', the geometry arrays are:
+        If  'geometry_time_type' is 'aperiodic' or 'periodic', the geometry
+        arrays are:
 
             XYZ_coord : (Nt, 3, iMax, jMax) array_like
                 Array of mesh point coordinates to be added per timestep.
@@ -265,7 +273,8 @@ class PWWPatch:
                 vector data, and (5, iMax, jMax) for flow parameters
                 (rho, rho*u, rho*v, rho*w, p').
 
-        If 'loading time_type' is 'aperiodic', the loading information is:
+        If 'loading time_type' is 'aperiodic' or periodic, the loading
+        information is:
 
             loading_data : (Nt, iMax, jMax) or (Nt, 3, iMax, jMax) or (Nt, 5, iMax, jMax) array_like
                 Array of aperiodic loading data to be added. Its shape is
@@ -289,18 +298,20 @@ class PWWPatch:
         zone.number = len(self.zones)
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-        # checks if 'time_steps' and 'Nt' attributes have already been defined
-        # in PWWPatch; if not, check arguments to 'add_StructuredZone', and
-        # copy to PWWPatch
+        # if PWWPatch doesn't have attributes 'time_steps', 'Nt' and/or
+        # 'period' already defined, copy from arguments to 'add_StructuredZone'
 
         if not hasattr(self, 'time_steps'):
             if time_steps:
                 self.time_steps = time_steps
                 self.Nt = self.time_steps.shape[0]
 
+        if not hasattr(self, 'period'):
+            if period:
+                self.period = period
+
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         # sets geometry header length, adds geometry data to zone
-
         zone.geometry_header_length = \
             structured_header_length[self.geometry_time_type]
 
@@ -310,14 +321,22 @@ class PWWPatch:
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         elif self.geometry_time_type == 'periodic':
-            # TODO: implement structured periodic geometry
-            raise NotImplementedError("Can't add Periodic Geometry data to StructuredZone - not implemented yet!")
+
+            zone.add_StructuredPeriodicGeometry(XYZ_coord, normal_coord, period)
+
+            # -----------------------------------------------------------------
+            # check if PWWPatch already has attribute 'Nt'
+            if hasattr(self, 'Nt'):
+                # If yes, check for match with zone.Nt
+                assert self.Nt == zone.Nt, \
+                    "Number of timesteps in periodic structured zone does not match existing 'Nt' in PWWPatch!"
+            else:
+                # store 'Nt' in PWWPatch
+                self.Nt = zone.Nt
+            # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         elif self.geometry_time_type == 'aperiodic':
-
-            assert hasattr(self, 'time_steps'), \
-                "Can't create structured aperiodic geometry - PWWPatch instance does not have 'time_steps' attribute!"
 
             zone.add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
 
