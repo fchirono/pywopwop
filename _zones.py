@@ -231,12 +231,6 @@ class StructuredZone(Zone):
 
 
     # *************************************************************************
-    def add_StructuredPeriodicLoading(self, loading_data, loading_data_type):
-        # TODO: implement Structured Periodic Loading
-        raise NotImplementedError("Can't add Structured Periodic Loading data - not implemented yet!")
-
-
-    # *************************************************************************
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -244,7 +238,7 @@ class StructuredZone(Zone):
         if hasattr(self, 'Nt'):
             # check for match
             assert loading_data.shape[0] == self.Nt, \
-                "Number of timesteps in 'loading_data' does not match existing 'Nt'!"
+                "Number of timesteps in 'loading_data' does not match existing 'Nt' in StructuredZone!"
         else:
             # store 'Nt' in StructuredZone
             self.Nt = loading_data.shape[0]
@@ -266,6 +260,49 @@ class StructuredZone(Zone):
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
         self.loading = StructuredAperiodicLoading(loading_data, loading_data_type)
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+
+    # *************************************************************************
+    def add_StructuredPeriodicLoading(self, loading_data, loading_data_type, period):
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # check if Zone already has attribute 'Nt' (e.g. from periodic geometry)
+        if hasattr(self, 'Nt'):
+            # check for match
+            assert loading_data.shape[0] == self.Nt, \
+                "Number of timesteps in 'loading_data' does not match existing 'Nt' in StructuredZone!"
+        else:
+            # store 'Nt' in StructuredZone
+            self.Nt = loading_data.shape[0]
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # check if Zone already has attribute 'period' (e.g. from periodic geometry)
+        if hasattr(self, 'period'):
+            # check for match
+            assert period == self.period, \
+                "Input argument 'period' does not match existing 'period' in StructuredZone!"
+        else:
+            # store 'Nt' in StructuredZone
+            self.period = period
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # check 'loading_data_type' arg vs. loading data array shape
+
+        if loading_data_type == 'surf_pressure':
+            assert loading_data.shape == (self.Nt, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for periodic 'surf_pressure' (Nt, iMax, jMax)!"
+
+        elif loading_data_type == 'surf_loading_vec':
+            assert loading_data.shape == (self.Nt, 3, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for periodic 'surf_loading_vec' (Nt, 3, iMax, jMax)!"
+
+        elif loading_data_type == 'flow_params':
+            assert loading_data.shape == (self.Nt, 5, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for periodic 'flow_params' (Nt, 5, iMax, jMax)!"
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+        self.loading = StructuredPeriodicLoading(loading_data, loading_data_type)
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 
