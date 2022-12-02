@@ -337,8 +337,7 @@ class StructuredPeriodicGeometry():
 
         self.XYZ_coord = np.copy(XYZ_coord)
         self.normal_coord = np.copy(normal_coord)
-
-        self.period = period
+        self.period = np.copy(period)
 
 
 # #############################################################################
