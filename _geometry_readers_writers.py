@@ -482,9 +482,23 @@ def _write_geometry_header(self, geometry_filename):
                     write_binary(file,self.zones[nz].jMax)
 
             # -----------------------------------------------------------------
-            else:
-                # TODO: implement non-constant non-aperiodic geometries
-                raise NotImplementedError("Can't write geometry headers that are not constant nor aperiodic - not implemented yet!")
+            elif self.geometry_time_type == 'periodic':
+
+                # for each zone...
+                for nz in range(self.n_zones):
+
+                    # write name (32-byte string)
+                    write_string(file, self.zones[nz].geometry_name, 32)
+
+                    # write period
+                    write_binary(file, self.period)
+
+                    # write number of timesteps
+                    write_binary(file, self.Nt)
+
+                    # write iMax and jMax (4 byte ints)
+                    write_binary(file, self.zones[nz].iMax)
+                    write_binary(file, self.zones[nz].jMax)
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
