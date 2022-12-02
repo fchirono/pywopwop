@@ -103,6 +103,10 @@ class StructuredZone(Zone):
             str_Nt = '\n\t--> Nt:                 ' + str(self.Nt)
             self.geometry_info_str += str_Nt
 
+        if hasattr(self, 'period'):
+            str_period = '\n\t--> period:                 ' + str(self.period)
+            self.geometry_info_str += str_period
+
 
     # *************************************************************************
     def add_StructuredConstantGeometry(self, XYZ_coord, normal_coord):
