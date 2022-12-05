@@ -135,6 +135,31 @@ class StructuredZone(Zone):
 
 
     # *************************************************************************
+    def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord):
+        """
+        Adds structured, aperiodic geometry data to current structured zone.
+
+        Parameters
+        ----------
+        XYZ_coord : (Nt, 3, iMax, jMax) array_like
+            Array of mesh point coordinates to be added per timestep.
+
+        normal_coord : (Nt, 3, iMax, jMax) array_like
+            Array of normal vector coordinates to be added per timestep.
+
+        Returns
+        -------
+        None.
+        """
+
+        # updates Nt, iMax, jMax
+        self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
+
+        self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord)
+        self._update_geometry_info_str()
+
+
+    # *************************************************************************
     def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord, period):
         """
         Adds structured, periodic geometry data to current structured zone.
@@ -161,32 +186,7 @@ class StructuredZone(Zone):
         # adds period
         self.period = period
 
-        self.geometry = StructuredPeriodicGeometry(XYZ_coord, normal_coord, period)
-        self._update_geometry_info_str()
-
-
-    # *************************************************************************
-    def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord):
-        """
-        Adds structured, aperiodic geometry data to current structured zone.
-
-        Parameters
-        ----------
-        XYZ_coord : (Nt, 3, iMax, jMax) array_like
-            Array of mesh point coordinates to be added per timestep.
-
-        normal_coord : (Nt, 3, iMax, jMax) array_like
-            Array of normal vector coordinates to be added per timestep.
-
-        Returns
-        -------
-        None.
-        """
-
-        # updates Nt, iMax, jMax
-        self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
-
-        self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord)
+        self.geometry = StructuredPeriodicGeometry(XYZ_coord, normal_coord)
         self._update_geometry_info_str()
 
 
@@ -283,7 +283,7 @@ class StructuredZone(Zone):
             assert period == self.period, \
                 "Input argument 'period' does not match existing 'period' in StructuredZone!"
         else:
-            # store 'Nt' in StructuredZone
+            # store 'period' in StructuredZone
             self.period = period
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
