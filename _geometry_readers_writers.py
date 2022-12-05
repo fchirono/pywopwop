@@ -178,8 +178,8 @@ def _read_geometry_header(self, geometry_filename):
                 zone._set_string(name, 'geometry_name', 32)
 
                 # reads period, number of timesteps, and structured dimensions
-                zone.period = read_float(bytes_data,
-                                         1100 + 32 + nz*zone.geometry_header_length)
+                zone.period, _ = read_float(bytes_data,
+                                            1100 + 32 + nz*zone.geometry_header_length)
 
                 zone.Nt = read_int(bytes_data,
                                    1100 + 36 + nz*zone.geometry_header_length)
