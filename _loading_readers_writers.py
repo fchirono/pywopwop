@@ -552,6 +552,151 @@ def _read_loading_data(self, loading_filename):
                     "Error reading file {}: Zone {} time steps do not match Zone 0 time steps!".format(loading_filename, nz)
             # -----------------------------------------------------------------
 
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        elif self.loading_time_type == 'periodic':
+
+            # start index for reading functional data
+            # end of format string + zone specification + header
+            z0_data = self.zones_with_loading_data[0]   # 1st zone with loading data
+            field_start = (1076
+                           + (1 + self.n_zones_with_loading_data)*4
+                           + (self.n_zones_with_loading_data
+                              * self.zones[z0_data].loading_header_length))
+
+            # -----------------------------------------------------------------
+            # if data is surface pressure
+            if self.loading_data_type == 'surf_pressure':
+
+                # for each zone with loading data, add empty numpy arrays for
+                # pressure data and time steps
+                for nz in self.zones_with_loading_data:
+
+                    pressures = np.zeros((self.Nt,
+                                          self.zones[nz].iMax,
+                                          self.zones[nz].jMax),
+                                         dtype=np.float32)
+
+                    self.zones[nz].add_StructuredPeriodicLoading(pressures,
+                                                                 'surf_pressure')
+
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
+
+                        # read current time value and next index
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read pressure data and next index
+                        self.zones[nz].loading.pressures[nt, :, :], field_start = \
+                            read_block(bytes_data, field_start, 1,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
+            # if data is loading vectors
+            elif self.loading_data_type == 'surf_loading_vec':
+
+                # for each zone with loading data, add empty numpy arrays for
+                # loading vector data and time steps
+                for nz in self.zones_with_loading_data:
+
+                    loading_vectors = np.zeros((self.Nt, 3,
+                                                self.zones[nz].iMax,
+                                                self.zones[nz].jMax),
+                                               dtype=np.float32)
+
+                    self.zones[nz].add_StructuredPeriodicLoading(loading_vectors,
+                                                                 'surf_loading_vec')
+
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic
+                    # geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
+
+                        # read current time value and next index
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read loading vector data and next index
+                        self.zones[nz].loading.loading_vectors[nt, :, :, :], field_start = \
+                            read_block(bytes_data, field_start, 3,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
+            elif self.loading_data_type == 'flow_params':
+
+                # for each zone with loading data, add empty numpy arrays for
+                # flow parameter data and time steps
+                for nz in self.zones_with_loading_data:
+
+                    flow_params = np.zeros((self.Nt, 5,
+                                            self.zones[nz].iMax,
+                                            self.zones[nz].jMax),
+                                           dtype=np.float32)
+
+                    self.zones[nz].add_StructuredPeriodicLoading(flow_params,
+                                                                 'flow_params')
+
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic
+                    # geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
+
+                        # read current time value and next index
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read flow parameter data and next index
+                        self.zones[nz].loading.flow_params[nt, :, :, :], field_start = \
+                            read_block(bytes_data, field_start, 5,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
+            # compare time_steps across all zones with loading data, ensure
+            # they are identical
+            nz_l = self.zones_with_loading_data[0]
+            self.time_steps = np.copy(self.zones[nz_l].time_steps)
+            for nz in self.zones_with_loading_data:
+                assert np.allclose(self.zones[nz].time_steps, self.time_steps),\
+                    "Error reading file {}: Zone {} time steps do not match Zone 0 time steps!".format(loading_filename, nz)
+            # -----------------------------------------------------------------
+
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
