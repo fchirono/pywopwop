@@ -245,9 +245,9 @@ def _read_loading_header(self, loading_filename):
 
                     # .........................................................
                     # read period
-                    loading_period = read_float(bytes_data,
-                                                zone_info_start + 32
-                                                + i*zone.loading_header_length)
+                    loading_period, _ = read_float(bytes_data,
+                                                   zone_info_start + 32
+                                                   + i*zone.loading_header_length)
                     zone.period = loading_period
 
                     # check if 'period' attribute already exists in PWWPatch
@@ -577,7 +577,8 @@ def _read_loading_data(self, loading_filename):
                                          dtype=np.float32)
 
                     self.zones[nz].add_StructuredPeriodicLoading(pressures,
-                                                                 'surf_pressure')
+                                                                 'surf_pressure',
+                                                                 self.period)
 
                     # initialize 'time_steps' attribute in current Zone if it
                     # doesn't already exist (e.g. from reading aperiodic geometry);
@@ -618,7 +619,8 @@ def _read_loading_data(self, loading_filename):
                                                dtype=np.float32)
 
                     self.zones[nz].add_StructuredPeriodicLoading(loading_vectors,
-                                                                 'surf_loading_vec')
+                                                                 'surf_loading_vec',
+                                                                 self.period)
 
                     # initialize 'time_steps' attribute in current Zone if it
                     # doesn't already exist (e.g. from reading aperiodic
@@ -659,7 +661,8 @@ def _read_loading_data(self, loading_filename):
                                            dtype=np.float32)
 
                     self.zones[nz].add_StructuredPeriodicLoading(flow_params,
-                                                                 'flow_params')
+                                                                 'flow_params',
+                                                                 self.period)
 
                     # initialize 'time_steps' attribute in current Zone if it
                     # doesn't already exist (e.g. from reading aperiodic
