@@ -782,10 +782,30 @@ def _write_loading_header(self, loading_filename):
                     # write iMax and jMax (4 byte ints)
                     write_binary(file, self.zones[nz].iMax)
                     write_binary(file, self.zones[nz].jMax)
+
+            # -----------------------------------------------------------------
+            elif self.loading_time_type == 'periodic':
+
+                # for each zone containing data...
+                for nz in self.zones_with_loading_data:
+
+                    # write name (32-byte string)
+                    write_string(file, self.zones[nz].loading_name, 32)
+
+                    # write period
+                    write_binary(file, self.period)
+
+                    # write number of timesteps
+                    write_binary(file, self.Nt)
+
+                    # write iMax and jMax (4 byte ints)
+                    write_binary(file, self.zones[nz].iMax)
+                    write_binary(file, self.zones[nz].jMax)
+
             # -----------------------------------------------------------------
             else:
-                # TODO: implement non-constant, non-aperiodic functional data header
-                raise NotImplementedError("Can't write non-constant, non-aperiodic loading data header - not implemented yet!")
+                # TODO: write multiple time file aperiodic loading header
+                raise NotImplementedError("Can't write multiple time file aperiodic loading header - not implemented yet!")
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
