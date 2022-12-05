@@ -248,8 +248,10 @@ def _read_loading_header(self, loading_filename):
                     loading_period = read_float(bytes_data,
                                                 zone_info_start + 32
                                                 + i*zone.loading_header_length)
+                    zone.period = loading_period
 
-                    # check if 'period' attribute already exists (e.g. from periodic geometry)
+                    # check if 'period' attribute already exists in PWWPatch
+                    # (e.g. from periodic geometry)
                     if hasattr(self, 'period'):
                         # check for match
                         assert loading_period == self.period, \
@@ -550,10 +552,11 @@ def _read_loading_data(self, loading_filename):
                     "Error reading file {}: Zone {} time steps do not match Zone 0 time steps!".format(loading_filename, nz)
             # -----------------------------------------------------------------
 
+
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
-            # TODO: read non-constant, non-aperiodic loading data
-            raise NotImplementedError("Can't read non-constant or non-aperiodic loading data - not implemented yet!")
+            # TODO: read multiple time file aperiodic loading data
+            raise NotImplementedError("Can't read multiple time file aperiodic loading data - not implemented yet!")
 
     # *************************************************************************
     else:
