@@ -375,7 +375,7 @@ class StructuredAperiodicGeometry():
 class StructuredPeriodicGeometry():
     """
     Class to store structured, periodic geometry data, containing the number
-    of timesteps and the period in seconds.
+    of timesteps.
 
     Parameters
     ----------
@@ -385,15 +385,12 @@ class StructuredPeriodicGeometry():
     normal_coord : (Nt, 3, iMax, jMax) array_like
         Array of normal vector coordinates to be added at each timestep.
 
-    period : float
-        Period, in seconds.
-
     Returns
     -------
     None.
     """
 
-    def __init__(self, XYZ_coord, normal_coord, period):
+    def __init__(self, XYZ_coord, normal_coord):
 
         assert XYZ_coord.ndim == 4, \
             "'XYZ_coord' dimensions do not match for Structured Aperiodic Geometry data!"
@@ -403,7 +400,6 @@ class StructuredPeriodicGeometry():
 
         self.XYZ_coord = np.copy(XYZ_coord)
         self.normal_coord = np.copy(normal_coord)
-        self.period = np.copy(period)
 
 
 # #############################################################################
