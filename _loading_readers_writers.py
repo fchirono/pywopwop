@@ -571,7 +571,7 @@ def _read_loading_data(self, loading_filename):
                 # pressure data and time steps
                 for nz in self.zones_with_loading_data:
 
-                    pressures = np.zeros((self.Nt,
+                    pressures = np.zeros((self.Nt+1,
                                           self.zones[nz].iMax,
                                           self.zones[nz].jMax),
                                          dtype=np.float32)
@@ -583,12 +583,12 @@ def _read_loading_data(self, loading_filename):
                     # initialize 'time_steps' attribute in current Zone if it
                     # doesn't already exist (e.g. from reading aperiodic geometry);
                     if not hasattr(self.zones[nz], 'time_steps'):
-                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                        self.zones[nz].time_steps = np.zeros((self.Nt+1,),
                                                              dtype=np.float32)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each timestep...
-                for nt in range(self.Nt):
+                for nt in range(self.Nt+1):
                     # for each zone...
                     for nz in self.zones_with_loading_data:
 
@@ -613,7 +613,7 @@ def _read_loading_data(self, loading_filename):
                 # loading vector data and time steps
                 for nz in self.zones_with_loading_data:
 
-                    loading_vectors = np.zeros((self.Nt, 3,
+                    loading_vectors = np.zeros((self.Nt+1, 3,
                                                 self.zones[nz].iMax,
                                                 self.zones[nz].jMax),
                                                dtype=np.float32)
@@ -626,12 +626,12 @@ def _read_loading_data(self, loading_filename):
                     # doesn't already exist (e.g. from reading aperiodic
                     # geometry);
                     if not hasattr(self.zones[nz], 'time_steps'):
-                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                        self.zones[nz].time_steps = np.zeros((self.Nt+1,),
                                                              dtype=np.float32)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each timestep...
-                for nt in range(self.Nt):
+                for nt in range(self.Nt+1):
                     # for each zone...
                     for nz in self.zones_with_loading_data:
 
@@ -655,7 +655,7 @@ def _read_loading_data(self, loading_filename):
                 # flow parameter data and time steps
                 for nz in self.zones_with_loading_data:
 
-                    flow_params = np.zeros((self.Nt, 5,
+                    flow_params = np.zeros((self.Nt+1, 5,
                                             self.zones[nz].iMax,
                                             self.zones[nz].jMax),
                                            dtype=np.float32)
@@ -668,12 +668,12 @@ def _read_loading_data(self, loading_filename):
                     # doesn't already exist (e.g. from reading aperiodic
                     # geometry);
                     if not hasattr(self.zones[nz], 'time_steps'):
-                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                        self.zones[nz].time_steps = np.zeros((self.Nt+1,),
                                                              dtype=np.float32)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each timestep...
-                for nt in range(self.Nt):
+                for nt in range(self.Nt+1):
                     # for each zone...
                     for nz in self.zones_with_loading_data:
 
