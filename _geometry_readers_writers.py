@@ -291,32 +291,33 @@ def _read_geometry_data(self, geometry_filename):
             field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
 
             # -----------------------------------------------------------------
+            # for each zone
+            for nz in range(self.n_zones):
+
+                # create empty numpy arrays for XYZ coordinates, normal
+                # coordinates, IBLANK data (if included), and time steps
+                XYZ_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                     dtype=np.float32)
+
+                normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                        dtype=np.float32)
+
+                self.zones[nz].add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
+
+                if self.has_iblank == True:
+                    self.zones[nz].geometry.iblank = \
+                        np.zeros((self.Nt, self.zones[nz].iMax, self.zones[nz].jMax),
+                                 dtype=np.int32)
+
+                self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
+
+            # -----------------------------------------------------------------
             # for each timestep...
             for nt in range(self.Nt):
 
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each zone
                 for nz in range(self.n_zones):
 
-                    # .........................................................
-                    # create empty numpy arrays for XYZ coordinates, normal
-                    # coordinates, IBLANK data (if included), and time steps
-                    XYZ_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                         dtype=np.float32)
-
-                    normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                            dtype=np.float32)
-
-                    self.zones[nz].add_StructuredAperiodicGeometry(XYZ_coord, normal_coord)
-
-                    if self.has_iblank == True:
-                        self.zones[nz].geometry.iblank = \
-                            np.zeros((self.Nt, self.zones[nz].iMax, self.zones[nz].jMax),
-                                     dtype=np.int32)
-
-                    self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
-
-                    # .........................................................
                     # read current time value and next index
                     self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
 
@@ -336,7 +337,6 @@ def _read_geometry_data(self, geometry_filename):
                             read_IBLANKblock(bytes_data, field_start,
                                              self.zones[nz].iMax,
                                              self.zones[nz].jMax)
-                    # .........................................................
 
             # -----------------------------------------------------------------
             # compare time_steps across all zones, ensure they are identical
@@ -354,33 +354,33 @@ def _read_geometry_data(self, geometry_filename):
             field_start = 1100 + self.n_zones*self.zones[0].geometry_header_length
 
             # -----------------------------------------------------------------
+            # for each zone
+            for nz in range(self.n_zones):
+
+                # create empty numpy arrays for XYZ coordinates, normal
+                # coordinates, IBLANK data (if included), and time steps
+                XYZ_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                     dtype=np.float32)
+
+                normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
+                                        dtype=np.float32)
+
+                self.zones[nz].add_StructuredPeriodicGeometry(XYZ_coord, normal_coord)
+
+                if self.has_iblank == True:
+                    self.zones[nz].geometry.iblank = \
+                        np.zeros((self.Nt, self.zones[nz].iMax, self.zones[nz].jMax),
+                                 dtype=np.int32)
+
+                self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
+
+            # -----------------------------------------------------------------
             # for each timestep...
             for nt in range(self.Nt):
 
-                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # for each zone
                 for nz in range(self.n_zones):
 
-                    # .........................................................
-                    # create empty numpy arrays for XYZ coordinates, normal
-                    # coordinates, IBLANK data (if included), and time steps
-                    XYZ_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                         dtype=np.float32)
-
-                    normal_coord = np.zeros((self.Nt, 3, self.zones[nz].iMax, self.zones[nz].jMax),
-                                            dtype=np.float32)
-
-                    self.zones[nz].add_StructuredPeriodicGeometry(XYZ_coord, normal_coord,
-                                                                  self.period)
-
-                    if self.has_iblank == True:
-                        self.zones[nz].geometry.iblank = \
-                            np.zeros((self.Nt, self.zones[nz].iMax, self.zones[nz].jMax),
-                                     dtype=np.int32)
-
-                    self.zones[nz].time_steps = np.zeros((self.Nt,), dtype=np.float32)
-
-                    # .........................................................
                     # read current time value and next index
                     self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
 
@@ -400,7 +400,6 @@ def _read_geometry_data(self, geometry_filename):
                             read_IBLANKblock(bytes_data, field_start,
                                              self.zones[nz].iMax,
                                              self.zones[nz].jMax)
-                    # .........................................................
 
             # -----------------------------------------------------------------
             # compare time_steps across all zones, ensure they are identical
