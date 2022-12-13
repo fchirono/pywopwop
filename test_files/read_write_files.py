@@ -32,6 +32,7 @@ write_files = True
 
 # *****************************************************************************
 # # CASE 2: permeable surface with constant geometry, periodic flow data [OK]
+# #   --> periodic loading does NOT have extra time step at the end [?]
 # wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case2/'
 # geometry_filename = 'reduced_geometry.dat'
 # loading_filename = 'reduced_flow_data.dat'
