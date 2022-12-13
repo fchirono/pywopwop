@@ -38,8 +38,8 @@ write_files = True
 
 
 # *****************************************************************************
-# CASE 4: constant surface geometry, periodic loading vectors [OK-ish]
-#   --> periodic loading has a repeated time step at the end [?]
+# CASE 4: constant surface geometry, periodic loading vectors [OK]
+#   --> periodic loading has an extra time step at the end [?]
 wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case4/'
 geometry_filename = 'HART_Blade.dat'
 loading_filename = 'HART_Bladeloading.dat'
