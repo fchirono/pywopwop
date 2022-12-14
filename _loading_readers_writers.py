@@ -16,12 +16,12 @@ Author:
 
 import numpy as np
 
-from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
+from pywopwop._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     reverse_dict, structured_dict, loading_time_dict, structured_header_length, \
     centered_dict, loading_data_dict, ref_frame_dict, float_dict
 
-from ._binary_readers_writers import initial_check, read_block, write_block, \
-    read_int, read_float, write_binary, write_string, read_string
+from pywopwop._binary_readers_writers import initial_check, read_block, \
+    write_block, read_int, read_float, write_binary, write_string, read_string
 
 
 # #############################################################################

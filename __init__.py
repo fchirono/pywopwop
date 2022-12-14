@@ -17,26 +17,27 @@ Author:
 import numpy as np
 
 
-from ._zones import Zone, StructuredZone, StructuredConstantGeometry, \
+from pywopwop._zones import Zone, StructuredZone, StructuredConstantGeometry, \
     StructuredConstantLoading, StructuredAperiodicLoading
 
-from ._geometry_readers_writers import _read_geometry_header, \
+from pywopwop._geometry_readers_writers import _read_geometry_header, \
     _read_geometry_data, _write_geometry_header, _write_geometry_data
 
-from ._loading_readers_writers import _read_loading_header, _read_loading_data,\
-    _write_loading_header, _write_loading_data
+from pywopwop._loading_readers_writers import _read_loading_header, \
+    _read_loading_data, _write_loading_header, _write_loading_data
 
-from ._binary_readers_writers import initial_check, read_block, write_block, \
-    read_IBLANKblock, read_int, read_float, write_binary, write_string, \
-    read_string
+from pywopwop._binary_readers_writers import initial_check, read_block, \
+    write_block, read_IBLANKblock, read_int, read_float, write_binary, \
+    write_string, _string
 
-from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
+from pywopwop._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, \
     loading_time_dict, geometry_time_dict, structured_header_length, \
     centered_dict, loading_data_dict, ref_frame_dict, float_dict, iblank_dict
 
-from ._sigma_processing import extract_sigma_var_names, process_sigma_fn_file, \
-    process_sigma_geom_file, write_p3d_file, process_sigma_files
+from pywopwop._sigma_processing import extract_sigma_var_names, \
+    process_sigma_fn_file, process_sigma_geom_file, write_p3d_file, \
+    process_sigma_files
 
 
 # #############################################################################

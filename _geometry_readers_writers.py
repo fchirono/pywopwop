@@ -16,15 +16,15 @@ Author:
 
 import numpy as np
 
-from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, reverse_dict, \
+from pywopwop._consts_and_dicts import MAGICNUMBER, ENDIANNESS, reverse_dict, \
     geom_dict, structured_dict, geometry_time_dict, structured_header_length, \
     centered_dict, float_dict, iblank_dict
 
-from ._binary_readers_writers import initial_check, read_block, write_block, \
-    read_IBLANKblock, read_int, read_float, write_binary, write_string, \
-    read_string
+from pywopwop._binary_readers_writers import initial_check, read_block, \
+    write_block, read_IBLANKblock, read_int, read_float, write_binary, \
+    write_string, read_string
 
-from ._zones import StructuredZone
+from pywopwop._zones import StructuredZone
 
 
 
