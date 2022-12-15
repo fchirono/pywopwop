@@ -28,7 +28,7 @@ from pywopwop._loading_readers_writers import _read_loading_header, \
 
 from pywopwop._binary_readers_writers import initial_check, read_block, \
     write_block, read_IBLANKblock, read_int, read_float, write_binary, \
-    write_string, _string
+    write_string, read_string
 
 from pywopwop._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     IS_SIGNED, RESERVED_DIGIT, reverse_dict, geom_dict, structured_dict, \
