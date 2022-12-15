@@ -31,24 +31,26 @@ write_files = True
 
 
 # *****************************************************************************
-# # CASE 2: permeable surface with constant geometry, periodic flow data [NOT IMPLEMENTED]
+# # CASE 2: permeable surface with constant geometry, periodic flow data [OK]
+# #   --> periodic loading does NOT have extra time step at the end [?]
 # wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case2/'
 # geometry_filename = 'reduced_geometry.dat'
 # loading_filename = 'reduced_flow_data.dat'
 
 
 # *****************************************************************************
-# # CASE 4: constant surface geometry, periodic loading vectors [NOT IMPLEMENTED]
-# wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case4/'
-# geometry_filename = 'HART_Blade.dat'
-# loading_filename = 'HART_Bladeloading.dat'
+# CASE 4: constant surface geometry, periodic loading vectors [OK]
+#   --> periodic loading has an extra time step at the end [?]
+wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case4/'
+geometry_filename = 'HART_Blade.dat'
+loading_filename = 'HART_Bladeloading.dat'
 
 
 # *****************************************************************************
-# CASE 5: constant geometry, aperiodic loading [OK]
-wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case5/'
-geometry_filename = 'constGeo_short.dat'
-loading_filename = 'AperLoadingShort.dat'
+# # CASE 5: constant geometry, aperiodic loading [OK]
+# wopwop_dir = '../../OneDrive - University of Salford/PSU-WOPWOP_v3.4.4/case5/'
+# geometry_filename = 'constGeo_short.dat'
+# loading_filename = 'AperLoadingShort.dat'
 
 
 # %% initialize new instance, read files

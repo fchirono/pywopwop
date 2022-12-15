@@ -15,7 +15,7 @@ Author:
 import numpy as np
 import struct
 
-from ._consts_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
+from pywopwop._consts_and_dicts import ENDIANNESS, VALUE_LENGTH, IS_SIGNED
 
 
 # #############################################################################

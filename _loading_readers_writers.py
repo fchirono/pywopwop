@@ -16,12 +16,12 @@ Author:
 
 import numpy as np
 
-from ._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
+from pywopwop._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     reverse_dict, structured_dict, loading_time_dict, structured_header_length, \
     centered_dict, loading_data_dict, ref_frame_dict, float_dict
 
-from ._binary_readers_writers import initial_check, read_block, write_block, \
-    read_int, read_float, write_binary, write_string, read_string
+from pywopwop._binary_readers_writers import initial_check, read_block, \
+    write_block, read_int, read_float, write_binary, write_string, read_string
 
 
 # #############################################################################
@@ -224,9 +224,85 @@ def _read_loading_header(self, loading_filename):
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 
             # -----------------------------------------------------------------
+            elif self.loading_time_type == 'periodic':
+
+                for i, nz in enumerate(self.zones_with_loading_data):
+
+                    # remove sign from zone index
+                    nz = abs(nz)
+
+                    # get handle to existing zone in list
+                    zone = self.zones[nz]
+
+                    # set loading header length
+                    zone.loading_header_length = \
+                        structured_header_length[self.loading_time_type]
+
+                    # read loading zone name
+                    name = read_string(bytes_data,
+                                       zone_info_start + i*zone.loading_header_length, 32)
+                    zone._set_string(name, 'loading_name', 32)
+
+                    # .........................................................
+                    # read period
+                    loading_period, _ = read_float(bytes_data,
+                                                   zone_info_start + 32
+                                                   + i*zone.loading_header_length)
+                    zone.period = loading_period
+
+                    # check if 'period' attribute already exists in PWWPatch
+                    # (e.g. from periodic geometry)
+                    if hasattr(self, 'period'):
+                        # check for match
+                        assert loading_period == self.period, \
+                            "Period in Zone {} loading data does not match existing PWWPatch instance 'period'!".format(nz)
+                    else:
+                        # store 'period' in PWWPatch
+                        self.period = loading_period
+
+                    # .........................................................
+                    # read number of timesteps
+                    loading_Nt = read_int(bytes_data,
+                                          zone_info_start + 36
+                                          + i*zone.loading_header_length)
+
+                    # check if 'Nt' attribute already exists (e.g. from periodic geometry)
+                    if hasattr(self, 'Nt'):
+                        # check for match
+                        assert loading_Nt == self.Nt, \
+                            "Number of timesteps in Zone {} loading data does not match existing PWWPatch instance 'Nt'!".format(nz)
+                    else:
+                        # store 'Nt' in PWWPatch
+                        self.Nt = loading_Nt
+
+                    # .........................................................
+                    # assert iMax and jMax match
+                    iMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 40
+                                             + i*zone.loading_header_length)
+
+                    jMax_fromfile = read_int(bytes_data,
+                                             zone_info_start + 44
+                                             + i*zone.loading_header_length)
+
+                    assert ((zone.iMax == iMax_fromfile)
+                            and (zone.jMax == jMax_fromfile)), \
+                        "(iMax, jMax) in Zone {} from loading file don't match existing values in PWWPatch instance!".format(nz)
+
+                    # set loading data flag
+                    zone.has_loading_data = True
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # check if 'time_steps' attribute already exists (e.g. from aperiodic geometry)
+                if not hasattr(self, 'time_steps'):
+                    # store 'Nt' in PWWPatch
+                    self.time_steps = np.zeros(self.Nt, dtype=np.float32)
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
             else:
-                # TODO: implement non-constant non-aperiodic loading
-                raise NotImplementedError("Can't read loading data that is not constant nor aperiodic - not implemented yet!")
+                # TODO: implement other loading header reader
+                raise NotImplementedError("Can't read loading header that is not constant, aperiodic or periodic - not implemented yet!")
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -477,9 +553,158 @@ def _read_loading_data(self, loading_filename):
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        elif self.loading_time_type == 'periodic':
+
+            # start index for reading functional data
+            # end of format string + zone specification + header
+            z0_data = self.zones_with_loading_data[0]   # 1st zone with loading data
+            field_start = (1076
+                           + (1 + self.n_zones_with_loading_data)*4
+                           + (self.n_zones_with_loading_data
+                              * self.zones[z0_data].loading_header_length))
+
+            # -----------------------------------------------------------------
+            # if data is surface pressure
+            if self.loading_data_type == 'surf_pressure':
+
+                # for each zone with loading data, add empty numpy arrays for
+                # pressure data and time steps
+                for nz in self.zones_with_loading_data:
+
+                    pressures = np.zeros((self.Nt,
+                                          self.zones[nz].iMax,
+                                          self.zones[nz].jMax),
+                                         dtype=np.float32)
+
+                    self.zones[nz].add_StructuredPeriodicLoading(pressures,
+                                                                 'surf_pressure',
+                                                                 self.period)
+
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
+
+                        # read current time value and next index
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read pressure data and next index
+                        self.zones[nz].loading.pressures[nt, :, :], field_start = \
+                            read_block(bytes_data, field_start, 1,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
+            # if data is loading vectors
+            elif self.loading_data_type == 'surf_loading_vec':
+
+                # for each zone with loading data, add empty numpy arrays for
+                # loading vector data and time steps
+                for nz in self.zones_with_loading_data:
+
+                    loading_vectors = np.zeros((self.Nt, 3,
+                                                self.zones[nz].iMax,
+                                                self.zones[nz].jMax),
+                                               dtype=np.float32)
+
+                    self.zones[nz].add_StructuredPeriodicLoading(loading_vectors,
+                                                                 'surf_loading_vec',
+                                                                 self.period)
+
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic
+                    # geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
+
+                        # read current time value and next index
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read loading vector data and next index
+                        self.zones[nz].loading.loading_vectors[nt, :, :, :], field_start = \
+                            read_block(bytes_data, field_start, 3,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
+            elif self.loading_data_type == 'flow_params':
+
+                # for each zone with loading data, add empty numpy arrays for
+                # flow parameter data and time steps
+                for nz in self.zones_with_loading_data:
+
+                    flow_params = np.zeros((self.Nt, 5,
+                                            self.zones[nz].iMax,
+                                            self.zones[nz].jMax),
+                                           dtype=np.float32)
+
+                    self.zones[nz].add_StructuredPeriodicLoading(flow_params,
+                                                                 'flow_params',
+                                                                 self.period)
+
+                    # initialize 'time_steps' attribute in current Zone if it
+                    # doesn't already exist (e.g. from reading aperiodic
+                    # geometry);
+                    if not hasattr(self.zones[nz], 'time_steps'):
+                        self.zones[nz].time_steps = np.zeros((self.Nt,),
+                                                             dtype=np.float32)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # for each timestep...
+                for nt in range(self.Nt):
+                    # for each zone...
+                    for nz in self.zones_with_loading_data:
+
+                        # read current time value and next index
+                        self.zones[nz].time_steps[nt], field_start = read_float(bytes_data, field_start)
+
+                        # read flow parameter data and next index
+                        self.zones[nz].loading.flow_params[nt, :, :, :], field_start = \
+                            read_block(bytes_data, field_start, 5,
+                                       self.zones[nz].iMax,
+                                       self.zones[nz].jMax)
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                # TODO: assert all zones' time steps are identical!
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+
+            # -----------------------------------------------------------------
+            # compare time_steps across all zones with loading data, ensure
+            # they are identical
+            nz_l = self.zones_with_loading_data[0]
+            self.time_steps = np.copy(self.zones[nz_l].time_steps)
+            for nz in self.zones_with_loading_data:
+                assert np.allclose(self.zones[nz].time_steps, self.time_steps),\
+                    "Error reading file {}: Zone {} time steps do not match Zone 0 time steps!".format(loading_filename, nz)
+            # -----------------------------------------------------------------
+
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:
-            # TODO: read non-constant, non-aperiodic loading data
-            raise NotImplementedError("Can't read non-constant or non-aperiodic loading data - not implemented yet!")
+            # TODO: read multiple time file aperiodic loading data
+            raise NotImplementedError("Can't read multiple time file aperiodic loading data - not implemented yet!")
 
     # *************************************************************************
     else:
@@ -560,10 +785,30 @@ def _write_loading_header(self, loading_filename):
                     # write iMax and jMax (4 byte ints)
                     write_binary(file, self.zones[nz].iMax)
                     write_binary(file, self.zones[nz].jMax)
+
+            # -----------------------------------------------------------------
+            elif self.loading_time_type == 'periodic':
+
+                # for each zone containing data...
+                for nz in self.zones_with_loading_data:
+
+                    # write name (32-byte string)
+                    write_string(file, self.zones[nz].loading_name, 32)
+
+                    # write period
+                    write_binary(file, self.period)
+
+                    # write number of timesteps
+                    write_binary(file, self.Nt)
+
+                    # write iMax and jMax (4 byte ints)
+                    write_binary(file, self.zones[nz].iMax)
+                    write_binary(file, self.zones[nz].jMax)
+
             # -----------------------------------------------------------------
             else:
-                # TODO: implement non-constant, non-aperiodic functional data header
-                raise NotImplementedError("Can't write non-constant, non-aperiodic loading data header - not implemented yet!")
+                # TODO: write multiple time file aperiodic loading header
+                raise NotImplementedError("Can't write multiple time file aperiodic loading header - not implemented yet!")
             # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -660,9 +905,53 @@ def _write_loading_data(self, loading_filename):
                                         self.zones[nz].loading.flow_params[nt, :, :, :])
 
             # -----------------------------------------------------------------
+            elif self.loading_time_type == 'periodic':
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                if self.loading_data_type == 'surf_pressure':
+
+                    # for each time step...
+                    for nt, time in enumerate(self.time_steps):
+
+                        # for each zone...
+                        for nz in self.zones_with_loading_data:
+                            nz = abs(nz)
+                            write_binary(file, time)
+                            write_block(file,
+                                        self.zones[nz].loading.pressures[nt, :, :])
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                elif self.loading_data_type == 'surf_loading_vec':
+
+                    # for each time step...
+                    for nt, time in enumerate(self.time_steps):
+
+                        # for each zone...
+                        for nz in self.zones_with_loading_data:
+                            nz = abs(nz)
+                            write_binary(file, time)
+                            write_block(file,
+                                        self.zones[nz].loading.loading_vectors[nt, :, :, :])
+
+                # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+                elif self.loading_data_type == 'flow_params':
+
+                    # for each time step...
+                    for nt, time in enumerate(self.time_steps):
+
+                        # for each zone...
+                        for nz in self.zones_with_loading_data:
+                            nz = abs(nz)
+                            # write time value and block of flow params
+                            write_binary(file, time)
+                            write_block(file,
+                                        self.zones[nz].loading.flow_params[nt, :, :, :])
+
+            # -----------------------------------------------------------------
             else:
-                # TODO: write non-constant, non-aperiodic loading data
-                raise NotImplementedError("Can't write non-constant, non-aperiodic loading data - not implemented yet!")
+                # TODO: write multiple time file aperiodic loading data
+                raise NotImplementedError("Can't write multiple time file aperiodic loading data - not implemented yet!")
+            # -----------------------------------------------------------------
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         else:

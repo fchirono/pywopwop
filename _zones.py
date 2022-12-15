@@ -103,6 +103,10 @@ class StructuredZone(Zone):
             str_Nt = '\n\t--> Nt:                 ' + str(self.Nt)
             self.geometry_info_str += str_Nt
 
+        if hasattr(self, 'period'):
+            str_period = '\n\t--> period:                 ' + str(self.period)
+            self.geometry_info_str += str_period
+
 
     # *************************************************************************
     def add_StructuredConstantGeometry(self, XYZ_coord, normal_coord):
@@ -131,12 +135,6 @@ class StructuredZone(Zone):
 
 
     # *************************************************************************
-    def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord):
-        # TODO: implement Structured Periodic Geometry
-        raise NotImplementedError("Can't add Structured Periodic Geometry data - not implemented yet!")
-
-
-    # *************************************************************************
     def add_StructuredAperiodicGeometry(self, XYZ_coord, normal_coord):
         """
         Adds structured, aperiodic geometry data to current structured zone.
@@ -158,6 +156,37 @@ class StructuredZone(Zone):
         self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
 
         self.geometry = StructuredAperiodicGeometry(XYZ_coord, normal_coord)
+        self._update_geometry_info_str()
+
+
+    # *************************************************************************
+    def add_StructuredPeriodicGeometry(self, XYZ_coord, normal_coord, period):
+        """
+        Adds structured, periodic geometry data to current structured zone.
+
+        Parameters
+        ----------
+        XYZ_coord : (Nt, 3, iMax, jMax) array_like
+            Array of mesh point coordinates to be added per timestep.
+
+        normal_coord : (Nt, 3, iMax, jMax) array_like
+            Array of normal vector coordinates to be added per timestep.
+
+        period : float
+            Period, in seconds.
+
+        Returns
+        -------
+        None.
+        """
+
+        # updates Nt, iMax, jMax
+        self.Nt, _, self.iMax, self.jMax = XYZ_coord.shape
+
+        # adds period
+        self.period = period
+
+        self.geometry = StructuredPeriodicGeometry(XYZ_coord, normal_coord)
         self._update_geometry_info_str()
 
 
@@ -202,12 +231,6 @@ class StructuredZone(Zone):
 
 
     # *************************************************************************
-    def add_StructuredPeriodicLoading(self, loading_data, loading_data_type):
-        # TODO: implement Structured Periodic Loading
-        raise NotImplementedError("Can't add Structured Periodic Loading data - not implemented yet!")
-
-
-    # *************************************************************************
     def add_StructuredAperiodicLoading(self, loading_data, loading_data_type):
 
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -215,7 +238,7 @@ class StructuredZone(Zone):
         if hasattr(self, 'Nt'):
             # check for match
             assert loading_data.shape[0] == self.Nt, \
-                "Number of timesteps in 'loading_data' does not match existing 'Nt'!"
+                "Number of timesteps in 'loading_data' does not match existing 'Nt' in StructuredZone!"
         else:
             # store 'Nt' in StructuredZone
             self.Nt = loading_data.shape[0]
@@ -237,6 +260,49 @@ class StructuredZone(Zone):
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
         self.loading = StructuredAperiodicLoading(loading_data, loading_data_type)
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+
+    # *************************************************************************
+    def add_StructuredPeriodicLoading(self, loading_data, loading_data_type, period):
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # check if Zone already has attribute 'Nt' (e.g. from periodic geometry)
+        if hasattr(self, 'Nt'):
+            # check for match
+            assert loading_data.shape[0] == self.Nt, \
+                "Number of timesteps in 'loading_data' does not match existing 'Nt' in StructuredZone!"
+        else:
+            # store 'Nt' in StructuredZone
+            self.Nt = loading_data.shape[0]
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # check if Zone already has attribute 'period' (e.g. from periodic geometry)
+        if hasattr(self, 'period'):
+            # check for match
+            assert period == self.period, \
+                "Input argument 'period' does not match existing 'period' in StructuredZone!"
+        else:
+            # store 'period' in StructuredZone
+            self.period = period
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # check 'loading_data_type' arg vs. loading data array shape
+
+        if loading_data_type == 'surf_pressure':
+            assert loading_data.shape == (self.Nt, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for periodic 'surf_pressure' (Nt, iMax, jMax)!"
+
+        elif loading_data_type == 'surf_loading_vec':
+            assert loading_data.shape == (self.Nt, 3, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for periodic 'surf_loading_vec' (Nt, 3, iMax, jMax)!"
+
+        elif loading_data_type == 'flow_params':
+            assert loading_data.shape == (self.Nt, 5, self.iMax, self.jMax), \
+                "'loading_data' does not match expected shape for periodic 'flow_params' (Nt, 5, iMax, jMax)!"
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+        self.loading = StructuredPeriodicLoading(loading_data, loading_data_type)
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 
 
@@ -278,6 +344,37 @@ class StructuredConstantGeometry():
 class StructuredAperiodicGeometry():
     """
     Class to store structured, aperiodic geometry data, containing the number
+    of timesteps.
+
+    Parameters
+    ----------
+    XYZ_coord : (Nt, 3, iMax, jMax) array_like
+        Array of mesh point coordinates to be added at each timestep.
+
+    normal_coord : (Nt, 3, iMax, jMax) array_like
+        Array of normal vector coordinates to be added at each timestep.
+
+    Returns
+    -------
+    None.
+    """
+
+    def __init__(self, XYZ_coord, normal_coord):
+
+        assert XYZ_coord.ndim == 4, \
+            "'XYZ_coord' dimensions do not match for Structured Aperiodic Geometry data!"
+
+        assert normal_coord.ndim == 4, \
+            "'normal_coord' dimensions do not match for Structured Aperiodic Geometry data!"
+
+        self.XYZ_coord = np.copy(XYZ_coord)
+        self.normal_coord = np.copy(normal_coord)
+
+
+# #############################################################################
+class StructuredPeriodicGeometry():
+    """
+    Class to store structured, periodic geometry data, containing the number
     of timesteps.
 
     Parameters
@@ -421,6 +518,65 @@ class StructuredAperiodicLoading():
             # assert data ndims
             assert loading_data.ndim == 4,\
                 "'loading_data' dimensions do not match structured aperiodic flow parameters!"
+
+            # copy input data
+            self.flow_params = np.copy(loading_data)
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+
+
+# #############################################################################
+class StructuredPeriodicLoading():
+    """
+    Class to store structured, periodic pressure, loading vector, or flow
+    parameter data.
+
+    Parameters
+    ----------
+    loading_data : (Nt, iMax, jMax) or (Nt, 3, iMax, jMax) or (Nt, 5, iMax, jMax) array_like
+        The array of data to be added. Its shape is (Nt, iMax, jMax) for
+        pressure data, (Nt, 3, iMax, jMax) for loading vector data, and
+        (Nt, 5, iMax, jMax) for flow parameters (rho, rho*u, rho*v, rho*w, p').
+
+    loading_data_type : {'surf_pressure', 'surf_loading_vec', 'flow_params'} string
+        A string describing the type of loading data.
+
+    Returns
+    -------
+    None.
+
+    """
+
+    def __init__(self, loading_data, loading_data_type):
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # if data is (Nt, iMax, jMax)-shaped array of surface pressures
+        if loading_data_type == 'surf_pressure':
+
+            # assert data ndims
+            assert loading_data.ndim == 3,\
+                "'loading_data' dimensions do not match structured periodic surface pressure!"
+
+            # copy input data
+            self.pressures = np.copy(loading_data)
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # if data is (Nt, 3, iMax, jMax)-shaped array of surface loading vectors
+        elif loading_data_type == 'surf_loading_vec':
+
+            # assert data ndims
+            assert loading_data.ndim == 4,\
+                "'loading_data' dimensions do not match structured periodic surface loading vectors!"
+
+            # copy input data
+            self.loading_vectors = np.copy(loading_data)
+
+        # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+        # if data is (Nt, 5, iMax, jMax)-shaped array of flow parameters
+        elif loading_data_type == 'flow_params':
+
+            # assert data ndims
+            assert loading_data.ndim == 4,\
+                "'loading_data' dimensions do not match structured periodic flow parameters!"
 
             # copy input data
             self.flow_params = np.copy(loading_data)
