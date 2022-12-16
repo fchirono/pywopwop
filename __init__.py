@@ -339,7 +339,8 @@ class PWWPatch:
         # *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
         elif self.geometry_time_type == 'periodic':
 
-            zone.add_StructuredPeriodicGeometry(XYZ_coord, normal_coord, period)
+            zone.add_StructuredPeriodicGeometry(XYZ_coord, normal_coord,
+                                                self.period)
 
             # -----------------------------------------------------------------
             # check if PWWPatch already has attribute 'Nt'
@@ -394,7 +395,8 @@ class PWWPatch:
                     "Can't create structured periodic loading - PWWPatch instance does not have 'period' attribute!"
 
                 zone.add_StructuredPeriodicLoading(loading_data,
-                                                   self.loading_data_type)
+                                                   self.loading_data_type,
+                                                   self.period)
 
                 # -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
                 # check if PWWPatch already has attribute 'Nt'
