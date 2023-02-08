@@ -21,8 +21,8 @@ from pywopwop._binary_readers_writers import read_block, write_block, read_int,\
     write_binary
 
 
-# %% ##########################################################################
-# PSU-WOPWOP Sigma surface file converters - first approach
+# #############################################################################
+# %% PSU-WOPWOP Sigma surface file converters - first approach
 # #############################################################################
 
 def process_sigma_geom_file(filename_geom, output_path='timesteps',
@@ -360,8 +360,8 @@ def process_sigma_fn_file(filename_fn, filename_nam, output_path='timesteps',
     return sourcetime_final
 
 
-# %% ##########################################################################
-# PSU-WOPWOP Sigma surface file converters - second approach
+# #############################################################################
+# %% PSU-WOPWOP Sigma surface file converters - second approach
 # #############################################################################
 
 def process_sigma_files(filename_geom, filename_fn, filename_nam,
@@ -753,6 +753,7 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
 
     print("\tFinished writing functional files!")
     # *************************************************************************
+
 
 # #############################################################################
 # %% PSU-WOPWOP Sigma surface auxiliary functions
