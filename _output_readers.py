@@ -89,7 +89,6 @@ def read_pressures_obs_grid(filename, remove_mean=True):
     timesteps, and returns the values as a Numpy array 'data' with
     dimensions (Nvar, Nt, iMax, jMax).
 
-
     Parameters
     ----------
     filename : str
@@ -99,13 +98,11 @@ def read_pressures_obs_grid(filename, remove_mean=True):
         Boolean flag defining whether to remove the mean value of each variable.
         Default is True.
 
-
     Returns
     -------
     data : (Nvar, Nt, iMax, jMax)-shaped array_like
         Numpy array containing the 'Nvar' acoustic variables for each observer,
         for 'Nt' timesteps, for all (iMax x jMax) observers.
-
 
     Notes
     -----
@@ -160,16 +157,19 @@ def read_pressures_obs_grid(filename, remove_mean=True):
 # %% Readers for single-observer output files
 # #############################################################################
 
-def read_pressures_single_obs(filename, print_varnames=False):
+def read_pressures_single_obs(filename, remove_mean=True, print_varnames=False):
     """
     Reads a PSU-WOPWOP output file ('.tec') containing the acoustic pressure(s)
     time history at a single observer, and returns the output as a dictionary.
-
 
     Parameters
     ----------
     filename : str
         String containing the file to be read.
+
+    remove_mean : bool
+        Flag to determine whether to remove the mean value of the variables.
+        Default is True.
 
     print_varnames : bool, optional
         Boolean flag defining whether to print the variables' names found in
@@ -208,6 +208,9 @@ def read_pressures_single_obs(filename, print_varnames=False):
     output = {}
     for i, var in enumerate(var_list):
         output[var] = np.copy(values[:, i])
+
+        if remove_mean:
+            output[var] -= np.mean(output[var])
 
     if print_varnames:
         print('List of variables in {}:'.format(filename))
