@@ -35,9 +35,11 @@ from pywopwop._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
     loading_time_dict, geometry_time_dict, structured_header_length, \
     centered_dict, loading_data_dict, ref_frame_dict, float_dict, iblank_dict
 
-from pywopwop._sigma_processing import extract_sigma_var_names, \
-    process_sigma_fn_file, process_sigma_geom_file, write_p3d_file, \
-    process_sigma_files
+from pywopwop._sigma_processing import process_sigma_fn_file,\
+    process_sigma_geom_file, write_p3d_file, process_sigma_files
+
+from pywopwop._output_readers import read_namefile, interp_fs, \
+    read_pressures_single_obs, read_geometry_obs_grid, read_pressures_obs_grid
 
 
 # #############################################################################

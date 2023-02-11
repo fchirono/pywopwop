@@ -20,6 +20,8 @@ import pathlib
 from pywopwop._binary_readers_writers import read_block, write_block, read_int,\
     write_binary
 
+from pywopwop._output_readers import read_namefile
+
 
 # #############################################################################
 # %% PSU-WOPWOP Sigma surface file converters - first approach
@@ -372,7 +374,7 @@ def process_sigma_files(filename_geom, filename_fn, filename_nam,
     print("Begin processing Sigma files...")
 
     # extract names of Sigma variables from .nam file
-    var_names = extract_sigma_var_names(filename_nam)
+    var_names = read_namefile(filename_nam)
     print("Extracted sigma var names...")
 
     # read Sigma geometry file (multiple-timestep)
@@ -759,27 +761,31 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
 # %% PSU-WOPWOP Sigma surface auxiliary functions
 # #############################################################################
 
-def extract_sigma_var_names(filename_nam):
-    """
-    Parses a 'sigma.nam' file containing the variable names, and outputs a
-    list of these names.
 
-    Some vector components contain a semicolon in their name; if so, break
-    the name at the semicolon and keep just the 1st part.
-    """
+# def extract_sigma_var_names(filename_nam):
+#    # *******************************************************************
+#    # # --->>> MOVED TO _output_readers.read_namefile <<<---
+#    # *******************************************************************
+#     """
+#     Parses a 'sigma.nam' file containing the variable names, and outputs a
+#     list of these names.
 
-    var_names = []
-    with open(filename_nam, 'r') as file:
-        for line in file:
-            var_name = line.strip()
+#     Some vector components contain a semicolon in their name; if so, break
+#     the name at the semicolon and keep just the 1st part.
+#     """
 
-            # check for semicolon
-            if ';' in var_name:
-                var_name = var_name.split(';')[0]
+#     var_names = []
+#     with open(filename_nam, 'r') as file:
+#         for line in file:
+#             var_name = line.strip()
 
-            var_names.append(var_name)
+#             # check for semicolon
+#             if ';' in var_name:
+#                 var_name = var_name.split(';')[0]
 
-    return var_names
+#             var_names.append(var_name)
+
+#     return var_names
 
 
 # #############################################################################
