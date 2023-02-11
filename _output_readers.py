@@ -14,13 +14,106 @@ Author:
 
 import numpy as np
 
+from pywopwop._binary_readers_writers import read_block, read_int
+
+
+# #############################################################################
+# %% Readers for observer grid output files
+# #############################################################################
+
+
+def read_geometry_obs_grid(filename):
+    """
+    Reads PSU-WOPWOP output observer grid coordinate files.
+
+    File is PLOT3D-like, contains a single zone, and the 'k' dimension holds
+    the time information.
+
+    Output is (x, y, z) grid with dimensions (3, Nt, iMax, jMax)
+    """
+
+    with open(filename, 'rb') as f:
+        geom_data = f.read()
+
+    # spherical grid: nbTheta
+    iMax = read_int(geom_data, 0)
+
+    # spherical grid: nbPsi
+    jMax = read_int(geom_data, 4)
+
+    # number of timesteps ('k' dimension)
+    Nt = read_int(geom_data, 8)
+
+    # read blocks of obs coordinates
+    start_index= 12
+
+    # x, y, z are (Nt, iMax, jMax) blocks
+    x, next_index = read_block(geom_data, start_index, Nt, iMax, jMax)
+    y, next_index = read_block(geom_data, next_index, Nt, iMax, jMax)
+    z, next_index = read_block(geom_data, next_index, Nt, iMax, jMax)
+
+    xyz = np.stack((x, y, z), axis=0)
+
+    return xyz
+
+
+def read_pressures_obs_grid(filename, remove_mean=True):
+    """
+    Reads PSU-WOPWOP output observer grid data files.
+
+    File is PLOT3D-like, contains a single zone, and the 'k' dimension holds
+    the time information.
+
+    File can contain multiple variables, depending on how the PSU-WOPWOP case
+    was set up. A typical example contains 4 variables: time, thickness noise,
+    loading noise, and total noise. These are listed in the 'filename.nam'
+    file.
+
+    Output is a data array with dimensions (Nvar, Nt, iMax, jMax).
+
+    If 'remove_mean' is true (default), each variable has its mean value
+    removed before being output.
+    """
+
+    with open(filename, 'rb') as f:
+        pressure_data = f.read()
+
+    # spherical grid: nbTheta
+    iMax = read_int(pressure_data, 0)
+
+    # spherical grid: nbPsi
+    jMax = read_int(pressure_data, 4)
+
+    # number of timesteps ('k' dimension)
+    Nt = read_int(pressure_data, 8)
+
+    # Number of variables to read
+    #   --> e.g. time, thickness noise, loading noise, total noise
+    Nvar = read_int(pressure_data, 12)
+
+    data = np.zeros((Nvar, Nt, iMax, jMax))
+
+    next_index = 16
+
+    for n in range(Nvar):
+        data[n, ...], next_index = read_block(pressure_data, next_index,
+                                              Nt, iMax, jMax)
+
+    # remove mean of each variable
+    if remove_mean:
+        for n in range(1, Nvar):
+            mean = np.mean(data[n, ...], axis=0)
+            data[n, ...] += -mean
+
+    return data
+
 
 # #############################################################################
 # %% Readers for single-observer output files
 # #############################################################################
 
 
-def read_pressure_single_obs(filename, print_varnames=False):
+def read_pressures_single_obs(filename, print_varnames=False):
     """
     Reads a PSU-WOPWOP output file ('.tec') containing the acoustic pressure(s)
     time history at a single observer, and returns the output as a dictionary.
@@ -97,12 +190,10 @@ def _retrieve_var_list(lines):
     return varlist
 
 
-
-
-
 # #############################################################################
 # %% Auxiliary functions
 # #############################################################################
+
 
 def interp_fs(t_original, x_original, fs):
     """
