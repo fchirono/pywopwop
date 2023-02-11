@@ -759,27 +759,32 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
 # %% PSU-WOPWOP Sigma surface auxiliary functions
 # #############################################################################
 
-def extract_sigma_var_names(filename_nam):
-    """
-    Parses a 'sigma.nam' file containing the variable names, and outputs a
-    list of these names.
 
-    Some vector components contain a semicolon in their name; if so, break
-    the name at the semicolon and keep just the 1st part.
-    """
 
-    var_names = []
-    with open(filename_nam, 'r') as file:
-        for line in file:
-            var_name = line.strip()
+# def extract_sigma_var_names(filename_nam):
+#    # *******************************************************************
+#    # # --->>> MOVED TO _output_readers.read_namefile <<<---
+#    # *******************************************************************
+#     """
+#     Parses a 'sigma.nam' file containing the variable names, and outputs a
+#     list of these names.
 
-            # check for semicolon
-            if ';' in var_name:
-                var_name = var_name.split(';')[0]
+#     Some vector components contain a semicolon in their name; if so, break
+#     the name at the semicolon and keep just the 1st part.
+#     """
 
-            var_names.append(var_name)
+#     var_names = []
+#     with open(filename_nam, 'r') as file:
+#         for line in file:
+#             var_name = line.strip()
 
-    return var_names
+#             # check for semicolon
+#             if ';' in var_name:
+#                 var_name = var_name.split(';')[0]
+
+#             var_names.append(var_name)
+
+#     return var_names
 
 
 # #############################################################################
