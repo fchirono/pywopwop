@@ -9,7 +9,7 @@ pywopwop - https://github.com/fchirono/pywopwop
 
 Author:
     Fabio Casagrande Hirono
-    Nov 2022
+    Feb 2023
 """
 
 
@@ -165,16 +165,6 @@ def read_pressures_single_obs(filename, print_varnames=False):
     Reads a PSU-WOPWOP output file ('.tec') containing the acoustic pressure(s)
     time history at a single observer, and returns the output as a dictionary.
 
-    The file 'filename.tec' is in ASCII Tecplot 'POINT' format, and contains a
-    list of variable names. These variable names are used as the keys for the
-    output dictionary, while the values are one-dimensional Numpy arrays.
-
-    A typical PSU-WOPWOP run might contains the following variables:
-        - 'Observer Time (s)'
-        - 'Thickness Acoustic Pressure (Pa)'
-        - 'Loading Acoustic Pressure (Pa)'
-        - 'Total Acoustic Pressure (Pa)'
-
 
     Parameters
     ----------
@@ -190,6 +180,17 @@ def read_pressures_single_obs(filename, print_varnames=False):
     output : dict
         Dictionary containing the variables
 
+    Notes
+    -----
+    The file 'filename.tec' is in ASCII Tecplot 'POINT' format, and contains a
+    list of variable names. These variable names are used as the keys for the
+    output dictionary, while the values are one-dimensional Numpy arrays.
+
+    A typical PSU-WOPWOP run might contains the following variables:
+        - 'Observer Time (s)'
+        - 'Thickness Acoustic Pressure (Pa)'
+        - 'Loading Acoustic Pressure (Pa)'
+        - 'Total Acoustic Pressure (Pa)'
     """
 
     # First four rows do not contain numerical data
