@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 pywopwop - https://github.com/fchirono/pywopwop
 
@@ -55,7 +56,6 @@ def read_geometry_obs_grid(filename):
     x-y plane and positive towards +z-axis.
     """
 
-
     with open(filename, 'rb') as f:
         geom_data = f.read()
 
@@ -81,6 +81,7 @@ def read_geometry_obs_grid(filename):
     return xyz
 
 
+# #############################################################################
 def read_pressures_obs_grid(filename, remove_mean=True):
     """
     Reads a PSU-WOPWOP observer grid data ('.fn') file, containing the 'Nvar'
