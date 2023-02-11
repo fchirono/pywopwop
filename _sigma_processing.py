@@ -20,6 +20,8 @@ import pathlib
 from pywopwop._binary_readers_writers import read_block, write_block, read_int,\
     write_binary
 
+from pywopwop._output_readers import read_namefile
+
 
 # #############################################################################
 # %% PSU-WOPWOP Sigma surface file converters - first approach
@@ -372,7 +374,7 @@ def process_sigma_files(filename_geom, filename_fn, filename_nam,
     print("Begin processing Sigma files...")
 
     # extract names of Sigma variables from .nam file
-    var_names = extract_sigma_var_names(filename_nam)
+    var_names = read_namefile(filename_nam)
     print("Extracted sigma var names...")
 
     # read Sigma geometry file (multiple-timestep)
@@ -758,7 +760,6 @@ def write_sigma_fn_files(zones_fn, fn_list, sourcetime, start_nt,
 # #############################################################################
 # %% PSU-WOPWOP Sigma surface auxiliary functions
 # #############################################################################
-
 
 
 # def extract_sigma_var_names(filename_nam):
