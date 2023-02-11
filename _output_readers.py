@@ -26,13 +26,35 @@ from pywopwop._binary_readers_writers import read_block, read_int
 
 def read_geometry_obs_grid(filename):
     """
-    Reads PSU-WOPWOP output observer grid coordinate files.
+    Reads a PSU-WOPWOP observer grid geometry ('.x') file, containing the
+    locations of each observer in a ('iMax' x 'jMax') grid over 'Nt' timesteps,
+    and returns the observer positions (x, y, z) as a Numpy array 'xyz' with
+    dimensions (3, Nt, iMax, jMax).
 
-    File is PLOT3D-like, contains a single zone, and the 'k' dimension holds
-    the time information.
 
-    Output is (x, y, z) grid with dimensions (3, Nt, iMax, jMax)
+    Parameters
+    ----------
+    filename : str
+        String containing the observer grid geometry file name to be read.
+
+
+    Returns
+    -------
+    xyz : (3, Nt, iMax, jMax)-shaped array_like
+        Numpy array containing the (x, y, z) of each observer, for 'Nt'
+        timesteps, for all (iMax x jMax) observers.
+
+    Notes
+    -----
+    The '.x' file is PLOT3D-like, and contains a single zone with dimensions
+    (i, j, k). The 'k' dimension holds the time information.
+
+    For a spherical grid, index 'i' corresponds to azimuthal angle 'theta',
+    while index 'j' corresponds to elevation angle 'phi'. Azimuth is zero over
+    the +x-axis and positive towards +y-axis, while elevation is zero on the
+    x-y plane and positive towards +z-axis.
     """
+
 
     with open(filename, 'rb') as f:
         geom_data = f.read()
@@ -61,20 +83,43 @@ def read_geometry_obs_grid(filename):
 
 def read_pressures_obs_grid(filename, remove_mean=True):
     """
-    Reads PSU-WOPWOP output observer grid data files.
+    Reads a PSU-WOPWOP observer grid data ('.fn') file, containing the 'Nvar'
+    acoustic variables for each observer in a ('iMax' x 'jMax') grid over 'Nt'
+    timesteps, and returns the values as a Numpy array 'data' with
+    dimensions (Nvar, Nt, iMax, jMax).
 
-    File is PLOT3D-like, contains a single zone, and the 'k' dimension holds
-    the time information.
 
-    File can contain multiple variables, depending on how the PSU-WOPWOP case
-    was set up. A typical example contains 4 variables: time, thickness noise,
-    loading noise, and total noise. These are listed in the 'filename.nam'
-    file.
+    Parameters
+    ----------
+    filename : str
+        String containing the observer grid geometry file name to be read.
 
-    Output is a data array with dimensions (Nvar, Nt, iMax, jMax).
+    remove_mean : bool, optional
+        Boolean flag defining whether to remove the mean value of each variable.
+        Default is True.
 
-    If 'remove_mean' is true (default), each variable has its mean value
-    removed before being output.
+
+    Returns
+    -------
+    data : (Nvar, Nt, iMax, jMax)-shaped array_like
+        Numpy array containing the 'Nvar' acoustic variables for each observer,
+        for 'Nt' timesteps, for all (iMax x jMax) observers.
+
+
+    Notes
+    -----
+    The '.fn' file is PLOT3D-like, and contains a single zone with dimensions
+    (i, j, k). The 'k' dimension holds the time information.
+
+    For a spherical grid, index 'i' corresponds to azimuthal angle 'theta',
+    while index 'j' corresponds to elevation angle 'phi'. Azimuth is zero over
+    the +x-axis and positive towards +y-axis, while elevation is zero on the
+    x-y plane and positive towards +z-axis.
+
+    Data files can contain multiple variables, depending on how the PSU-WOPWOP
+    case was set up. A typical example contains 4 variables: time, thickness
+    noise, loading noise, and total noise. These are indicated in the
+    associated namelist file 'filename.nam'.
     """
 
     with open(filename, 'rb') as f:
