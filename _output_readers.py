@@ -114,7 +114,6 @@ def read_pressures_obs_grid(filename, remove_mean=True):
 # %% Readers for single-observer output files
 # #############################################################################
 
-
 def read_pressures_single_obs(filename, print_varnames=False):
     """
     Reads a PSU-WOPWOP output file ('.tec') containing the acoustic pressure(s)
@@ -171,6 +170,7 @@ def read_pressures_single_obs(filename, print_varnames=False):
     return output
 
 
+# #############################################################################
 def _retrieve_var_list(lines):
     """
     Reads the 2nd line of a PSU-WOPWOP single-observer output file and outputs
@@ -220,6 +220,7 @@ def read_namefile(filename):
     return var_names
 
 
+# #############################################################################
 def interp_fs(t_original, x_original, fs):
     """
     Interpolates an array of non-uniformly sampled values 'x_original', with
