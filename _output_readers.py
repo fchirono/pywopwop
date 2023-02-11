@@ -14,6 +14,8 @@ Author:
 
 import numpy as np
 
+
+from pywopwop._consts_and_dicts import VALUE_LENGTH
 from pywopwop._binary_readers_writers import read_block, read_int
 
 
@@ -39,13 +41,13 @@ def read_geometry_obs_grid(filename):
     iMax = read_int(geom_data, 0)
 
     # spherical grid: nbPsi
-    jMax = read_int(geom_data, 4)
+    jMax = read_int(geom_data, VALUE_LENGTH)
 
     # number of timesteps ('k' dimension)
-    Nt = read_int(geom_data, 8)
+    Nt = read_int(geom_data, 2*VALUE_LENGTH)
 
     # read blocks of obs coordinates
-    start_index= 12
+    start_index = 3*VALUE_LENGTH
 
     # x, y, z are (Nt, iMax, jMax) blocks
     x, next_index = read_block(geom_data, start_index, Nt, iMax, jMax)
@@ -82,18 +84,18 @@ def read_pressures_obs_grid(filename, remove_mean=True):
     iMax = read_int(pressure_data, 0)
 
     # spherical grid: nbPsi
-    jMax = read_int(pressure_data, 4)
+    jMax = read_int(pressure_data, VALUE_LENGTH)
 
     # number of timesteps ('k' dimension)
-    Nt = read_int(pressure_data, 8)
+    Nt = read_int(pressure_data, 2*VALUE_LENGTH)
 
     # Number of variables to read
     #   --> e.g. time, thickness noise, loading noise, total noise
-    Nvar = read_int(pressure_data, 12)
+    Nvar = read_int(pressure_data, 3*VALUE_LENGTH)
 
     data = np.zeros((Nvar, Nt, iMax, jMax))
 
-    next_index = 16
+    next_index = 4*VALUE_LENGTH
 
     for n in range(Nvar):
         data[n, ...], next_index = read_block(pressure_data, next_index,
