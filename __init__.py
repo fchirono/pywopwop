@@ -38,7 +38,7 @@ from pywopwop._consts_and_dicts import MAGICNUMBER, ENDIANNESS, VALUE_LENGTH, \
 from pywopwop._sigma_processing import process_sigma_fn_file,\
     process_sigma_geom_file, write_p3d_file, process_sigma_files
 
-from pywopwop._output_readers import read_namefile, read_pressure_single_obs,\
+from pywopwop._output_readers import read_namefile, read_pressures_single_obs,\
     interp_fs
 
 # #############################################################################
